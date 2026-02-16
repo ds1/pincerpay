@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SupabaseProvider } from "@/lib/supabase/provider";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "PincerPay Dashboard",
   description: "Merchant dashboard for PincerPay — on-chain USDC payments for AI agents",
