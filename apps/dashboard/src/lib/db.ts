@@ -5,7 +5,7 @@ let db: Database | undefined;
 
 export function getDb(): Database {
   if (!db) {
-    const result = createDb(process.env.DATABASE_URL!);
+    const result = createDb(process.env.DATABASE_URL!, { serverless: true });
     db = result.db;
   }
   return db;

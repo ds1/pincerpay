@@ -6,11 +6,13 @@ export * from "./schema/index.js";
 
 export type Database = ReturnType<typeof createDb>["db"];
 
-export function createDb(connectionString: string) {
+export function createDb(connectionString: string, options?: { serverless?: boolean }) {
+  const isPooler = connectionString.includes(":6543");
   const client = postgres(connectionString, {
-    max: 10,
+    max: options?.serverless ? 1 : 10,
     idle_timeout: 20,
     connect_timeout: 10,
+    prepare: isPooler ? false : true,
   });
 
   const db = drizzle(client, { schema });
