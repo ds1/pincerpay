@@ -31,5 +31,6 @@ export const transactions = pgTable(
     index("transactions_tx_hash_idx").on(table.txHash),
     index("transactions_status_idx").on(table.status),
     index("transactions_created_at_idx").on(table.createdAt),
+    index("transactions_merchant_chain_created_idx").on(table.merchantId, table.chainId, table.createdAt),
   ],
 );

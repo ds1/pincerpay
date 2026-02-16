@@ -14,6 +14,9 @@ const envSchema = z.object({
   /** RPC URLs (JSON: { "eip155:84532": "https://..." }) */
   RPC_URLS: z.string().optional(),
 
+  /** Comma-separated allowed CORS origins (e.g., "https://dashboard.pincerpay.com,https://api.merchant.com") */
+  CORS_ORIGINS: z.string().optional(),
+
   /** Rate limiting */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().default(120),
 

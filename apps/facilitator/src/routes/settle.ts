@@ -3,6 +3,7 @@ import type { x402Facilitator } from "@x402/core/facilitator";
 import type { Database } from "@pincerpay/db";
 import { transactions } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
+import { paymentRequestSchema } from "./schemas.js";
 
 export function createSettleRoute(
   facilitator: x402Facilitator,
@@ -17,14 +18,17 @@ export function createSettleRoute(
 
     try {
       const body = await c.req.json();
-      const { paymentPayload, paymentRequirements } = body;
+      const parsed = paymentRequestSchema.safeParse(body);
 
-      if (!paymentPayload || !paymentRequirements) {
+      if (!parsed.success) {
         return c.json(
-          { error: "Missing paymentPayload or paymentRequirements" },
+          { error: "Invalid request body", details: parsed.error.issues },
           400,
         );
       }
+
+      // Use the original body for x402 (preserves full types), Zod just validates structure
+      const { paymentPayload, paymentRequirements } = body;
 
       logger.info({
         msg: "settle_request",
@@ -42,7 +46,7 @@ export function createSettleRoute(
 
       // Record transaction in database
       if (result.success && merchantId) {
-        const amount = paymentRequirements.amount as string;
+        const amount = String(paymentRequirements.amount);
         const isOptimistic =
           BigInt(amount) < BigInt(1_000_000); // < 1 USDC
 

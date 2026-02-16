@@ -20,7 +20,7 @@ const config = loadConfig();
 const logger = createLogger(config.LOG_LEVEL);
 
 // ─── Database ───
-const db = createDb(config.DATABASE_URL);
+const { db, close: closeDb } = createDb(config.DATABASE_URL);
 
 // ─── x402 Facilitator ───
 const facilitator = new x402Facilitator();
@@ -66,7 +66,14 @@ facilitator.onSettleFailure(async (ctx) => {
 const app = new Hono<AppEnv>();
 
 // Global middleware
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: config.CORS_ORIGINS
+      ? config.CORS_ORIGINS.split(",").map((o) => o.trim())
+      : "*",
+  }),
+);
 app.use("*", loggingMiddleware(logger));
 
 // Health check (no auth)
@@ -95,9 +102,23 @@ logger.info({
   supported: facilitator.getSupported(),
 });
 
-serve({ fetch: app.fetch, port }, (info) => {
+const server = serve({ fetch: app.fetch, port }, (info) => {
   logger.info({
     msg: "facilitator_ready",
     url: `http://localhost:${info.port}`,
   });
 });
+
+// Graceful shutdown
+function shutdown(signal: string) {
+  logger.info({ msg: "shutting_down", signal });
+  server.close(() => {
+    closeDb().then(() => {
+      logger.info({ msg: "shutdown_complete" });
+      process.exit(0);
+    });
+  });
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

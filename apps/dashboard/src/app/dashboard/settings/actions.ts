@@ -19,6 +19,11 @@ export async function saveMerchantProfile(formData: FormData) {
   const chains = formData.getAll("chains") as string[];
   const webhookUrl = (formData.get("webhookUrl") as string) || null;
 
+  // Validate EVM wallet address
+  if (walletAddress && !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+    return { success: false, error: "Invalid EVM wallet address. Must be 0x followed by 40 hex characters." };
+  }
+
   // Check if merchant exists
   const [existing] = await db
     .select({ id: merchants.id })

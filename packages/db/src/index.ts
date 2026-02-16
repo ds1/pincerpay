@@ -4,7 +4,7 @@ import * as schema from "./schema/index.js";
 
 export * from "./schema/index.js";
 
-export type Database = ReturnType<typeof createDb>;
+export type Database = ReturnType<typeof createDb>["db"];
 
 export function createDb(connectionString: string) {
   const client = postgres(connectionString, {
@@ -13,5 +13,11 @@ export function createDb(connectionString: string) {
     connect_timeout: 10,
   });
 
-  return drizzle(client, { schema });
+  const db = drizzle(client, { schema });
+
+  return {
+    db,
+    /** Gracefully close the underlying postgres connection pool */
+    close: () => client.end(),
+  };
 }
