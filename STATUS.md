@@ -1,16 +1,22 @@
 # Project Status
 
-Last updated: 2026-02-15
+Last updated: 2026-02-16
 
-## Phase 1 MVP — Complete + Hardened
+## Phase 1 MVP — Deployed to Production
 
-All Phase 1 packages built and typechecking clean. Full workspace builds via `pnpm build`.
-47 tests across 5 test suites pass via `pnpm test`.
+All 6 workspace packages build clean. 47 tests pass. Facilitator + dashboard deployed to Railway.
+
+### Infrastructure
+- **Facilitator**: `https://pincerpayfacilitator-production.up.railway.app` — healthy, Base Sepolia EVM registered
+- **Dashboard**: `https://pincerpaydashboard-production.up.railway.app` / `https://pincerpay.com`
+- **Database**: Supabase PostgreSQL with RLS enabled on all tables
+- **Facilitator wallet**: `0x960E470581d17BcCd272F5Bd76A094077Cd907FE` (Base Sepolia: ~19 USDC + 0.049 ETH)
+- **CI**: GitHub Actions (typecheck → test → build)
 
 ### Completed
 - [x] Monorepo scaffold (pnpm + Turborepo + tsconfig bases)
 - [x] `packages/core` — chain configs (Base, Polygon, Solana), types, constants, Zod schemas
-- [x] `packages/db` — Drizzle schema (merchants, api_keys, paywalls, transactions)
+- [x] `packages/db` — Drizzle schema (merchants, api_keys, paywalls, transactions), NodeNext module resolution
 - [x] `apps/facilitator` — Hono x402 facilitator with EVM + Solana support
   - Routes: /verify, /settle, /supported, /health, /status/:txHash
   - Middleware: API key auth, rate limiting, pino logging
@@ -19,27 +25,32 @@ All Phase 1 packages built and typechecking clean. Full workspace builds via `pn
   - CORS restriction, Zod body validation, graceful shutdown
 - [x] `packages/merchant` — Express + Hono middleware wrapping @x402/express and @x402/hono
 - [x] `packages/agent` — PincerPayAgent with x402 fetch wrapper + spending policies + Solana support
-- [x] `apps/dashboard` — Next.js 15 merchant dashboard
-  - Supabase Auth (login/signup/logout)
+- [x] `apps/dashboard` — Next.js 15 merchant dashboard (standalone Docker output)
+  - Supabase Auth (login/signup/logout) via runtime SupabaseProvider
   - Dashboard overview with 30d stats
   - Transaction history table with clickable detail view
   - Paywall CRUD (create/toggle/delete)
   - Settings: merchant profile + API key management (create/revoke)
   - Analytics: recharts bar + line charts (volume by chain, daily volume)
   - Error boundaries, nav active state, wallet address validation
-- [x] Dockerfile for facilitator + .dockerignore
+- [x] Dockerfiles for facilitator + dashboard with build assertions
+- [x] Root `.dockerignore` for clean Docker builds
 - [x] Docker Compose for local dev (PostgreSQL + facilitator)
 - [x] Example apps (express-merchant, agent-weather)
 - [x] Environment templates (.env.example)
 - [x] Vitest test suite (core, agent, merchant, facilitator)
 - [x] GitHub Actions CI pipeline (typecheck → test → build)
+- [x] Supabase project setup + schema pushed via `pnpm db:push`
+- [x] Deploy facilitator to Railway (Docker)
+- [x] Deploy dashboard to Railway (Docker, standalone mode)
+- [x] Custom domain: pincerpay.com → Railway dashboard
+- [x] Fund facilitator wallet with testnet ETH + USDC on Base Sepolia
+- [x] RLS enabled on all database tables
+- [x] Agent test wallet funded: `0xDA335159D283F54005fE2b4cd0eB21F256f8B726` (1 USDC)
 
-## Up Next (Deploy + E2E)
-- [ ] Set up Supabase project and run `pnpm db:push`
-- [ ] Deploy facilitator to Railway (Docker)
-- [ ] Deploy dashboard to Vercel
-- [ ] Fund facilitator wallet with testnet USDC on Base Sepolia
+## In Progress
 - [ ] E2E test: merchant creates paywall → agent hits endpoint → 402 → sign → settle → dashboard shows tx
+- [ ] Set `CORS_ORIGINS` on facilitator to allow dashboard + merchant domains
 
 ## Phase 2 — Trust & Discovery (Not Started)
 - [ ] AP2 mandate validation in facilitator
