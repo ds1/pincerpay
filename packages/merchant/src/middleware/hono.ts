@@ -1,12 +1,12 @@
 import type { PincerPayConfig } from "@pincerpay/core";
 import { resolveChain } from "@pincerpay/core";
-import { toBaseUnits } from "../client.js";
 import {
   paymentMiddlewareFromConfig,
   type PaywallConfig,
 } from "@x402/hono";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import type { Network } from "@x402/core/types";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
 
 /**
  * Hono middleware factory for PincerPay merchants.
@@ -25,12 +25,14 @@ export function pincerpayHono(config: PincerPayConfig, paywallConfig?: PaywallCo
   const facilitatorUrl = config.facilitatorUrl ?? "https://facilitator.pincerpay.com";
 
   // Build x402-compatible routes config
+  // Pass price as Money (string) so the EVM server scheme handles conversion
+  // and automatically includes EIP-712 domain parameters (name, version)
   const x402Routes: Record<string, {
     accepts: Array<{
       scheme: string;
       network: Network;
       payTo: string;
-      price: { amount: string; asset: string };
+      price: string;
       maxTimeoutSeconds: number;
     }>;
     description: string;
@@ -38,7 +40,6 @@ export function pincerpayHono(config: PincerPayConfig, paywallConfig?: PaywallCo
 
   for (const [pattern, routeConfig] of Object.entries(config.routes)) {
     const chains = routeConfig.chains ?? (routeConfig.chain ? [routeConfig.chain] : ["base"]);
-    const amount = toBaseUnits(routeConfig.price);
 
     const accepts = chains.map((chainShorthand) => {
       const chain = resolveChain(chainShorthand);
@@ -48,10 +49,7 @@ export function pincerpayHono(config: PincerPayConfig, paywallConfig?: PaywallCo
         scheme: "exact" as const,
         network: chain.caip2Id as Network,
         payTo: config.merchantAddress,
-        price: {
-          amount,
-          asset: chain.usdcAddress,
-        },
+        price: routeConfig.price,
         maxTimeoutSeconds: 300,
       };
     });
@@ -72,10 +70,14 @@ export function pincerpayHono(config: PincerPayConfig, paywallConfig?: PaywallCo
     }),
   });
 
+  // Register EVM server scheme so the resource server can build payment requirements
+  const evmScheme = new ExactEvmScheme();
+  const schemes = [{ network: "eip155:*" as Network, server: evmScheme }];
+
   return paymentMiddlewareFromConfig(
     x402Routes,
     facilitatorClient,
-    undefined, // schemes
+    schemes,
     paywallConfig,
   );
 }
