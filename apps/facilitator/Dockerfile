@@ -28,8 +28,10 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/facilitator/node_modules ./apps/facilitator/node_modules
 COPY --from=builder /app/apps/facilitator/dist ./apps/facilitator/dist
 COPY --from=builder /app/apps/facilitator/package.json ./apps/facilitator/
+COPY --from=builder /app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
 COPY --from=builder /app/packages/core/package.json ./packages/core/
+COPY --from=builder /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
 COPY --from=builder /app/packages/db/package.json ./packages/db/
 
