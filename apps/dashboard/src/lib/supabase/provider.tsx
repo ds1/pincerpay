@@ -15,7 +15,9 @@ export function SupabaseProvider({
   publishableKey: string;
   children: ReactNode;
 }) {
-  const [supabase] = useState(() => createBrowserClient(url, publishableKey));
+  const [supabase] = useState(() =>
+    url && publishableKey ? createBrowserClient(url, publishableKey) : null,
+  );
   return (
     <SupabaseContext value={supabase}>{children}</SupabaseContext>
   );
