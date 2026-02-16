@@ -3,6 +3,7 @@ node_modules/
 
 # Environment variables
 .env*
+!.env.example
 
 # Next.js
 .next/
@@ -21,6 +22,7 @@ build/
 # Secrets
 *.pem
 *.key
+credentials.json
 
 # OS
 .DS_Store
@@ -29,3 +31,17 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Turbo
+.turbo/
+
+# Docker
+.docker/
+
+# Foundry
+contracts/cache/
+contracts/out/
+
+# Logs
+*.log
+*.tsbuildinfo

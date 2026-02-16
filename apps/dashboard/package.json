@@ -1,0 +1,34 @@
+{
+  "name": "@pincerpay/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pincerpay/core": "workspace:*",
+    "@pincerpay/db": "workspace:*",
+    "@supabase/supabase-js": "^2",
+    "@supabase/ssr": "^0.5",
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19",
+    "drizzle-orm": "^0.38",
+    "postgres": "^3.4",
+    "recharts": "^2",
+    "zod": "^3.24"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5.7"
+  }
+}

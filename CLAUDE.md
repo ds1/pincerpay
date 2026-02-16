@@ -1,11 +1,28 @@
 # PincerPay
 
-Payment processing application built with Next.js, TypeScript, Tailwind CSS, shadcn/ui, and Supabase.
+On-chain payment gateway for the agentic economy.
+
+## Tech Stack
+- **Monorepo:** pnpm workspaces + Turborepo
+- **Runtime:** Node.js 22+ (TypeScript)
+- **Facilitator:** Hono + @x402/core + @x402/evm + viem
+- **Dashboard:** Next.js 15 + Tailwind CSS v4 + Supabase Auth
+- **Database:** PostgreSQL (Supabase) + Drizzle ORM
+- **SDKs:** @pincerpay/merchant (Express/Hono), @pincerpay/agent (fetch wrapper)
 
 ## Commands
-- Dev: `npm run dev`
-- Build: `npm run build`
-- Lint: `npm run lint`
+```bash
+pnpm install          # Install all dependencies
+pnpm build            # Build all packages (via turbo)
+pnpm dev              # Dev mode for all packages
+pnpm db:generate      # Generate Drizzle migrations
+pnpm db:push          # Push schema to database
+
+# Individual packages
+pnpm --filter @pincerpay/facilitator dev    # Facilitator on :4402
+pnpm --filter @pincerpay/dashboard dev      # Dashboard on :3000
+pnpm --filter @pincerpay/core typecheck     # Typecheck core
+```
 
 ## Architecture
 

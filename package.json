@@ -1,0 +1,19 @@
+{
+  "name": "pincerpay",
+  "private": true,
+  "packageManager": "pnpm@10.29.3",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean",
+    "db:generate": "pnpm --filter @pincerpay/db generate",
+    "db:migrate": "pnpm --filter @pincerpay/db migrate",
+    "db:push": "pnpm --filter @pincerpay/db push"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5.7"
+  }
+}

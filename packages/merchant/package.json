@@ -1,0 +1,52 @@
+{
+  "name": "@pincerpay/merchant",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./express": {
+      "types": "./dist/middleware/express.d.ts",
+      "import": "./dist/middleware/express.js"
+    },
+    "./hono": {
+      "types": "./dist/middleware/hono.d.ts",
+      "import": "./dist/middleware/hono.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@x402/core": "^2.3",
+    "@x402/evm": "^2.3",
+    "@pincerpay/core": "workspace:*",
+    "zod": "^3.24"
+  },
+  "peerDependencies": {
+    "@x402/express": "^2.3",
+    "@x402/hono": "^2.3",
+    "express": "^4 || ^5",
+    "hono": "^4"
+  },
+  "peerDependenciesMeta": {
+    "@x402/express": { "optional": true },
+    "@x402/hono": { "optional": true },
+    "express": { "optional": true },
+    "hono": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/express": "^5",
+    "@x402/express": "^2.3",
+    "@x402/hono": "^2.3",
+    "express": "^5",
+    "hono": "^4",
+    "typescript": "^5.7"
+  }
+}
