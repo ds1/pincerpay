@@ -1,6 +1,6 @@
 # PincerPay
 
-On-chain USDC payment gateway for AI agents. No card rails. Instant settlement. Every chain.
+The payment gateway for the agentic economy. Accept payments from AI agents. Add a few lines of code. Settle instantly in USDC.
 
 ## Architecture
 
@@ -108,15 +108,34 @@ const response = await agent.fetch("https://api.example.com/weather");
 | Base Sepolia | eip155:84532 | Testnet |
 | Polygon | eip155:137 | Mainnet |
 | Polygon Amoy | eip155:80002 | Testnet |
-| Solana | solana:mainnet | Planned |
+| Solana | solana:mainnet | Supported |
+| Solana Devnet | solana:devnet | Testnet |
+
+## Deployment
+
+| Service | URL |
+|---|---|
+| Facilitator | `https://pincerpayfacilitator-production.up.railway.app` |
+| Dashboard | `https://pincerpay.com` |
+
+Both services are deployed to Railway via Docker. The facilitator is currently registered on **Base Sepolia** (testnet).
 
 ## Tech Stack
 
 - **Runtime:** Node.js 22 (pnpm monorepo + Turborepo)
-- **Facilitator:** Hono + @x402/core + @x402/evm + viem
+- **Facilitator:** Hono + @x402/core + @x402/evm + @x402/svm + viem
 - **Dashboard:** Next.js 15 + Tailwind CSS + Supabase Auth
 - **Database:** PostgreSQL (Supabase) + Drizzle ORM
+- **CI:** GitHub Actions (typecheck → test → build)
 - **Protocols:** x402 (Coinbase), AP2 (Phase 2), UCP (Phase 2)
+
+## Testing
+
+```bash
+pnpm test
+```
+
+47 tests across 5 suites (core, agent, merchant, facilitator).
 
 ## License
 

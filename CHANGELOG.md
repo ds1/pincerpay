@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.0 — 2026-02-16
+
+### Production Deployment
+
+- **Facilitator deployed** to Railway (Docker) — `https://pincerpayfacilitator-production.up.railway.app`
+  - Base Sepolia EVM registered, health check passing
+  - Wallet funded: 0x960E…07FE (~19 USDC + 0.049 ETH)
+- **Dashboard deployed** to Railway (Docker, Next.js standalone output) — `https://pincerpay.com`
+  - Custom domain configured with SSL
+  - Supabase Auth working (login/signup/logout)
+- **Docker build fixes**:
+  - Switched dashboard to Next.js standalone output mode for monorepo Docker builds
+  - Fixed ESM module resolution (`NodeNext`) in db package to ensure `.js` extensions in compiled output
+  - Added build-time assertions in Dockerfiles to catch missing `.js` extensions
+  - Root `.dockerignore` to reduce Docker context
+- **Runtime Supabase config**: Created SupabaseProvider (React context) so client-side code gets Supabase URL/key at runtime via server component props instead of build-time `NEXT_PUBLIC_*` inlining
+- **Middleware hardening**: Resilient error handling, runtime env var fallbacks
+- **Database security**: RLS enabled on all 4 tables (merchants, api_keys, paywalls, transactions)
+- **Landing page**: Updated copy to merchant-friendly messaging
+- **CI fix**: Handle missing Supabase env vars during `next build` prerendering
+- **Agent test wallet**: Generated and funded `0xDA33…8726` with 1 USDC on Base Sepolia
+- **Supabase project**: Schema pushed via `pnpm db:push`, RLS enabled
+
 ## 0.2.0 — 2026-02-15
 
 ### Hardening + Solana + Testing + Dashboard Polish
