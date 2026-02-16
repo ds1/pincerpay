@@ -1,6 +1,0 @@
-{
-  "buildCommand": "pnpm turbo build --filter=@pincerpay/dashboard",
-  "outputDirectory": "apps/dashboard/.next",
-  "installCommand": "pnpm install",
-  "framework": "nextjs"
-}
