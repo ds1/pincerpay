@@ -18,6 +18,7 @@ export default function SignUpPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (!supabase) return;
     const { error } = await supabase.auth.signUp({
       email,
       password,

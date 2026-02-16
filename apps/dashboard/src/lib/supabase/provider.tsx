@@ -23,10 +23,6 @@ export function SupabaseProvider({
   );
 }
 
-export function useSupabase(): SupabaseClient {
-  const ctx = useContext(SupabaseContext);
-  if (!ctx) {
-    throw new Error("useSupabase must be used within a SupabaseProvider");
-  }
-  return ctx;
+export function useSupabase(): SupabaseClient | null {
+  return useContext(SupabaseContext);
 }

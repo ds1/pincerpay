@@ -23,6 +23,7 @@ export function Sidebar({ email }: { email: string }) {
       : pathname.startsWith(href);
 
   async function handleLogout() {
+    if (!supabase) return;
     await supabase.auth.signOut();
     router.push("/login");
   }
