@@ -1,4 +1,4 @@
-export { merchants } from "./merchants.js";
-export { apiKeys } from "./api-keys.js";
-export { paywalls } from "./paywalls.js";
-export { transactions } from "./transactions.js";
+export { merchants } from "./merchants";
+export { apiKeys } from "./api-keys";
+export { paywalls } from "./paywalls";
+export { transactions } from "./transactions";

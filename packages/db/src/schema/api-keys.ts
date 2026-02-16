@@ -1,5 +1,5 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { merchants } from "./merchants.js";
+import { merchants } from "./merchants";
 
 export const apiKeys = pgTable(
   "api_keys",
