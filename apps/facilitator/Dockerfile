@@ -26,6 +26,7 @@ RUN pnpm --filter @pincerpay/facilitator build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/facilitator/node_modules ./apps/facilitator/node_modules
 COPY --from=builder /app/apps/facilitator/dist ./apps/facilitator/dist
