@@ -19,9 +19,13 @@ export async function saveMerchantProfile(formData: FormData) {
   const chains = formData.getAll("chains") as string[];
   const webhookUrl = (formData.get("webhookUrl") as string) || null;
 
-  // Validate EVM wallet address
-  if (walletAddress && !/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
-    return { success: false, error: "Invalid EVM wallet address. Must be 0x followed by 40 hex characters." };
+  // Validate wallet address (EVM or Solana)
+  if (walletAddress) {
+    const isEvm = /^0x[0-9a-fA-F]{40}$/.test(walletAddress);
+    const isSolana = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddress);
+    if (!isEvm && !isSolana) {
+      return { success: false, error: "Invalid wallet address. Must be an EVM address (0x...) or Solana address (base58, 32-44 chars)." };
+    }
   }
 
   // Check if merchant exists

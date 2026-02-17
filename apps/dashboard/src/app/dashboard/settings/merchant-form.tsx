@@ -13,6 +13,8 @@ interface MerchantFormProps {
 }
 
 const AVAILABLE_CHAINS = [
+  { value: "solana", label: "Solana" },
+  { value: "solana-devnet", label: "Solana Devnet (Testnet)" },
   { value: "base", label: "Base" },
   { value: "base-sepolia", label: "Base Sepolia (Testnet)" },
   { value: "polygon", label: "Polygon" },
@@ -51,7 +53,7 @@ export function MerchantForm({ merchant }: MerchantFormProps) {
         <input
           name="walletAddress"
           defaultValue={merchant?.walletAddress}
-          placeholder="0x..."
+          placeholder="Solana or EVM wallet address"
           className="w-full px-3 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] focus:border-[var(--primary)] outline-none font-mono text-sm"
           required
         />

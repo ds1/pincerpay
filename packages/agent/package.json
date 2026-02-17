@@ -27,6 +27,7 @@
     "zod": "^3.24"
   },
   "devDependencies": {
+    "@scure/base": "^1.2.6",
     "typescript": "^5.7"
   }
 }

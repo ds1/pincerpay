@@ -62,7 +62,7 @@ export function PaywallForm() {
           <label className="block text-sm font-medium mb-1">Chains (optional)</label>
           <input
             name="chains"
-            placeholder="base, polygon"
+            placeholder="solana, base, polygon"
             className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-transparent text-sm"
           />
         </div>

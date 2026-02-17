@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { base58 } from "@scure/base";
 import { PincerPayAgent } from "../client.js";
 
 // Test private key (DO NOT use in production — this is a well-known test key)
@@ -92,5 +93,65 @@ describe("PincerPayAgent spending policies", () => {
 
     const result = noPolicyAgent.checkPolicy("999999999999");
     expect(result.allowed).toBe(true);
+  });
+});
+
+describe("PincerPayAgent Solana support", () => {
+  let testSolanaKey: string;
+
+  beforeAll(async () => {
+    // Generate Ed25519 keypair using Web Crypto API (Node 22+)
+    const { privateKey, publicKey } = await crypto.subtle.generateKey(
+      "Ed25519",
+      true,
+      ["sign", "verify"],
+    );
+    // Raw export not supported for Ed25519 private keys — use PKCS#8 and take last 32 bytes
+    const pkcs8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", privateKey));
+    const secretBytes = pkcs8.slice(-32);
+    const publicBytes = new Uint8Array(await crypto.subtle.exportKey("raw", publicKey));
+    const combined = new Uint8Array(64);
+    combined.set(secretBytes, 0);
+    combined.set(publicBytes, 32);
+    testSolanaKey = base58.encode(combined);
+  });
+
+  it("creates agent with Solana key via async factory", async () => {
+    const agent = await PincerPayAgent.create({
+      chains: ["solana-devnet"],
+      solanaPrivateKey: testSolanaKey,
+    });
+    expect(agent.chains).toEqual(["solana-devnet"]);
+    expect(agent.solanaAddress).toBeTruthy();
+    expect(agent.solanaAddress).toMatch(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
+  });
+
+  it("creates dual-chain agent with both EVM and Solana keys", async () => {
+    const agent = await PincerPayAgent.create({
+      chains: ["base-sepolia", "solana-devnet"],
+      evmPrivateKey: TEST_EVM_KEY,
+      solanaPrivateKey: testSolanaKey,
+    });
+    expect(agent.evmAddress).toBeTruthy();
+    expect(agent.solanaAddress).toBeTruthy();
+    expect(agent.chains).toEqual(["base-sepolia", "solana-devnet"]);
+  });
+
+  it("enforces spending policies with Solana agent", async () => {
+    const agent = await PincerPayAgent.create({
+      chains: ["solana-devnet"],
+      solanaPrivateKey: testSolanaKey,
+      policies: [{ maxPerTransaction: "1000000" }],
+    });
+    expect(agent.checkPolicy("500000").allowed).toBe(true);
+    expect(agent.checkPolicy("1500000").allowed).toBe(false);
+  });
+
+  it("returns undefined solanaAddress when only EVM key provided", () => {
+    const agent = new PincerPayAgent({
+      chains: ["base"],
+      evmPrivateKey: TEST_EVM_KEY,
+    });
+    expect(agent.solanaAddress).toBeUndefined();
   });
 });

@@ -23,6 +23,7 @@ export class PincerPayAgent {
   private x402Fetch: typeof globalThis.fetch;
   private dailySpend: Map<string, bigint> = new Map();
   private dailyResetAt: number = 0;
+  private _solanaAddress?: string;
 
   /**
    * Create a new PincerPayAgent. Use `PincerPayAgent.create()` for async initialization
@@ -64,13 +65,17 @@ export class PincerPayAgent {
     }
 
     // Register Solana scheme (async — needs key derivation)
+    let solanaAddress: string | undefined;
     if (config.solanaPrivateKey) {
       const keyBytes = base58Decode(config.solanaPrivateKey);
       const keypairSigner = await createKeyPairSignerFromBytes(keyBytes);
       registerExactSvmScheme(client, { signer: keypairSigner });
+      solanaAddress = keypairSigner.address;
     }
 
-    return new PincerPayAgent(config, client);
+    const agent = new PincerPayAgent(config, client);
+    agent._solanaAddress = solanaAddress;
+    return agent;
   }
 
   /**
@@ -139,6 +144,11 @@ export class PincerPayAgent {
   get evmAddress(): string | undefined {
     if (!this.config.evmPrivateKey) return undefined;
     return privateKeyToAccount(this.config.evmPrivateKey as `0x${string}`).address;
+  }
+
+  /** Get the agent's Solana address (only available via PincerPayAgent.create()) */
+  get solanaAddress(): string | undefined {
+    return this._solanaAddress;
   }
 
   /** Get configured chain shorthands */

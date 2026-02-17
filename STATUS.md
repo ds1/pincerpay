@@ -1,16 +1,17 @@
 # Project Status
 
-Last updated: 2026-02-16
+Last updated: 2026-02-17
 
 ## Phase 1 MVP — Deployed to Production
 
 All 6 workspace packages build clean. 112 tests pass (56 unique across src + dist). Facilitator on Railway, dashboard on Vercel.
 
 ### Infrastructure
-- **Facilitator**: `https://pincerpayfacilitator-production.up.railway.app` — healthy, Base Sepolia EVM registered
+- **Facilitator**: `https://pincerpayfacilitator-production.up.railway.app` — healthy, Solana devnet + Base Sepolia registered
 - **Dashboard**: `https://pincerpay.com` (Vercel)
 - **Database**: Supabase PostgreSQL with RLS enabled on all tables
-- **Facilitator wallet**: `0x960E470581d17BcCd272F5Bd76A094077Cd907FE` (Base Sepolia: ~19 USDC + 0.049 ETH)
+- **Solana facilitator wallet**: `53qkLfXNnLr9zy4utAvkgQz7DcuuPyQzNLyMj3TcR3zL` (devnet: 10 SOL) — primary
+- **EVM facilitator wallet**: `0x960E470581d17BcCd272F5Bd76A094077Cd907FE` (Base Sepolia: ~19 USDC + 0.049 ETH) — optional
 - **CI**: GitHub Actions (typecheck → test → build)
 
 ### Completed
@@ -70,9 +71,10 @@ Solana-first architecture pivot. Solana is now the primary chain; EVM is optiona
 - [ ] Set `CORS_ORIGINS` env var on Railway: `https://pincerpay.com,https://www.pincerpay.com`
 - [ ] Add CNAME record `facilitator` → `pincerpayfacilitator-production.up.railway.app` in Vercel DNS
 - [ ] Configure custom domain `facilitator.pincerpay.com` on Railway facilitator service
-- [ ] Generate Solana facilitator keypair and set `SOLANA_PRIVATE_KEY` on Railway
-- [ ] Push new schema to Supabase: `pnpm db:push` (adds gas_token, slot, priority_fee, compute_units columns)
-- [ ] Fund Solana facilitator wallet with devnet SOL + USDC
+- [x] Generate Solana facilitator keypair and set `SOLANA_PRIVATE_KEY` on Railway
+- [x] Push new schema to Supabase: `pnpm db:push` (adds gas_token, slot, priority_fee, compute_units columns)
+- [x] Fund Solana facilitator wallet with devnet SOL (10 SOL)
+- [x] Deploy facilitator to Railway with Solana support (fix: exclude tests from tsc build)
 
 ## Phase S2: Kora + Squads (Next)
 - [ ] `packages/solana/` — Kora gasless integration

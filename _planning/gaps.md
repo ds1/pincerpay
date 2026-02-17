@@ -44,15 +44,18 @@ Last updated: 2026-02-16
 - [ ] **26. No agent developer guide** — spending policies undocumented.
 - [ ] **27. Example apps default to localhost facilitator** and have no `.env.example`.
 
-## Phase 2+ (Tracked, Not Started)
+## Phase S2+ (Tracked, Not Started — Solana-First)
 
+- [ ] Kora gasless Solana txns (agents pay fees in USDC, not SOL)
+- [ ] Squads SPN session keys (Solana agent spending policies on-chain)
+- [ ] On-chain Facilitator (Anchor program for Solana settlement)
+- [ ] Transfer Hooks + OFAC compliance (Anchor compliance program)
+- [ ] Micropayment batching (ZK compression on Solana)
 - [ ] AP2 mandates
 - [ ] UCP manifest
 - [ ] Double-Lock (A2A x402 Extension)
-- [ ] ERC-7715 session keys
-- [ ] Squads SPN
-- [ ] Micropayment batching
-- [ ] ERC-8004 identity
-- [ ] OFAC screening
+- [ ] CCTP v2 EVM→Solana bridging
+- [ ] Agent identity (DIDs + trust scores)
+- [ ] ERC-7715 session keys (EVM optional)
 - [ ] Escrow
 - [ ] Fiat off-ramp

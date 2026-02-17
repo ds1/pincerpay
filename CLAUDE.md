@@ -5,10 +5,11 @@ On-chain payment gateway for the agentic economy.
 ## Tech Stack
 - **Monorepo:** pnpm workspaces + Turborepo
 - **Runtime:** Node.js 22+ (TypeScript)
-- **Facilitator:** Hono + @x402/core + @x402/evm + viem
+- **Facilitator:** Hono + @x402/core + @x402/svm + @solana/kit v5 (primary), @x402/evm + viem (optional)
 - **Dashboard:** Next.js 15 + Tailwind CSS v4 + Supabase Auth
 - **Database:** PostgreSQL (Supabase) + Drizzle ORM
 - **SDKs:** @pincerpay/merchant (Express/Hono), @pincerpay/agent (fetch wrapper)
+- **Primary chain:** Solana (devnet → mainnet). EVM (Base, Polygon) supported as optional compatibility layer.
 
 ## Commands
 ```bash
@@ -30,7 +31,7 @@ On-chain payment gateway for the agentic economy. No card rails — pure stablec
 
 ### Protocol Stack
 ```
-Discovery (UCP) → Trust (AP2) → Settlement (x402) → Chain Abstraction (Base | Solana | Polygon)
+Discovery (UCP) → Trust (AP2) → Settlement (x402) → Chain Abstraction (Solana | Base | Polygon)
 ```
 
 - **x402**: HTTP 402-based USDC payments. Agent gets 402 challenge → signs tx → Facilitator verifies + broadcasts → merchant delivers resource.
@@ -39,20 +40,23 @@ Discovery (UCP) → Trust (AP2) → Settlement (x402) → Chain Abstraction (Bas
 - **A2A x402 Extension**: "Double-Lock" — Facilitator only broadcasts x402 tx if accompanying AP2 mandate is valid.
 
 ### Key Standards
+- **Squads SPN**: Solana session keys — decentralized policy co-signer for agent sub-accounts (primary)
+- **Kora**: Solana token-fee txns — agents pay fees in USDC, not SOL (primary)
+- **ERC-7715**: EVM session keys — scoped permissions (contracts, limits, expiry) for agent wallets (optional/EVM)
 - **ERC-8004 (KYA)**: On-chain agent identity (NFT), reputation (Trust Score), validation (TEE/zkML proofs)
-- **ERC-7715**: EVM session keys — scoped permissions (contracts, limits, expiry) for agent wallets
-- **Squads SPN**: Solana session keys — decentralized policy co-signer for agent sub-accounts
-- **Kora**: Solana token-fee txns — agents pay fees in USDC, not SOL
 
 ### Key Mechanisms
-- **Gas Passthrough**: PincerPay never subsidizes gas. Gas costs are paid by agents (via EIP-2771/4337 meta-txns on EVM, Kora on Solana) using USDC — deducted from the payment amount or charged separately. PincerPay facilitates, never funds.
+- **Gas Passthrough**: PincerPay never subsidizes gas. Gas costs are paid by agents (via Kora on Solana, EIP-2771/4337 meta-txns on EVM) using USDC — deducted from the payment amount or charged separately. PincerPay facilitates, never funds.
 - **Optimistic Finality**: Sub-$1 txns release after mempool broadcast (~200ms)
 - **Compliance-as-a-Service**: OFAC screening + reputation gating at Facilitator layer
 
-### Phased Rollout
-1. **Phase 1 (MVP)**: x402 facilitator + multi-chain USDC (Base, Solana, Polygon) + merchant dashboard
-2. **Phase 2**: AP2 mandates + UCP handler + micropayment batching + ERC-7715/SPN session keys
-3. **Phase 3**: ERC-8004 agent identity + escrow + compliance layer + optional fiat off-ramp
+### Phased Rollout (Solana-First)
+1. **Phase 1 (MVP)** — Complete: x402 facilitator + multi-chain USDC (Solana primary, Base + Polygon optional) + merchant dashboard
+2. **Phase S1 (Solana Parity)** — Complete: Solana-first defaults, confirmation worker, gas tracking, dashboard Solana support
+3. **Phase S2 (Kora + Squads)**: Kora gasless txns + Squads SPN session keys + on-chain spending policies
+4. **Phase S3 (On-Chain Facilitator)**: Anchor program for Solana settlement, hybrid facilitator (on-chain Solana + viem EVM)
+5. **Phase S4 (Transfer Hooks + Compliance)**: Anchor compliance program, OFAC screening, Transfer Hook registration
+6. **Phase S5 (Advanced)**: Micropayment batching (ZK compression), CCTP v2 EVM→Solana bridging, agent identity (DIDs + trust scores)
 
 ## Current Status
 See `STATUS.md` for current work and `CHANGELOG.md` for completed milestones.
