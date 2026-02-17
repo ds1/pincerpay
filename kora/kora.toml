@@ -1,0 +1,23 @@
+# Kora Signer Node Configuration
+# See: https://github.com/nicholasgasior/kora
+
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[solana]
+# Devnet RPC — switch to mainnet for production
+rpc_url = "https://api.devnet.solana.com"
+commitment = "confirmed"
+
+[fees]
+# Allow USDC as gas payment token
+[fees.tokens]
+# USDC on Solana devnet
+"4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" = { symbol = "USDC", decimals = 6 }
+
+[fees.policy]
+# Max fee the signer will cover per transaction (in lamports)
+max_fee_lamports = 50000
+# Margin charged on top of actual fee (basis points)
+margin_bps = 100

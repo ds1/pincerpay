@@ -11,6 +11,14 @@ export default defineWorkspace([
   },
   {
     test: {
+      name: "solana",
+      root: "packages/solana",
+      include: ["src/**/*.test.ts"],
+      exclude: ["dist/**", "node_modules/**"],
+    },
+  },
+  {
+    test: {
       name: "agent",
       root: "packages/agent",
       include: ["src/**/*.test.ts"],

@@ -24,6 +24,8 @@ interface ConfirmationWorkerOptions {
   batchSize?: number;
   rpcUrls: Record<string, string>;
   logger: Logger;
+  /** Whether Kora gasless mode is active — sets gasToken to USDC for Solana txns */
+  koraEnabled?: boolean;
 }
 
 /**
@@ -42,6 +44,7 @@ export function startConfirmationWorker(
     batchSize = 50,
     rpcUrls,
     logger,
+    koraEnabled,
   } = options;
 
   let running = false;
@@ -130,7 +133,7 @@ export function startConfirmationWorker(
         .set({
           status: "failed",
           confirmedAt: new Date(),
-          gasToken: "SOL",
+          gasToken: koraEnabled ? "USDC" : "SOL",
           slot: String(status.slot),
         })
         .where(eq(transactions.id, tx.id));
@@ -157,7 +160,7 @@ export function startConfirmationWorker(
         .set({
           status: "confirmed",
           confirmedAt: new Date(),
-          gasToken: "SOL",
+          gasToken: koraEnabled ? "USDC" : "SOL",
           slot: String(status.slot),
         })
         .where(eq(transactions.id, tx.id));

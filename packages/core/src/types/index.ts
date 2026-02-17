@@ -106,6 +106,34 @@ export interface Transaction {
   confirmedAt?: Date;
 }
 
+// ─── Agent Types ───
+
+export type AgentStatus = "active" | "paused" | "revoked";
+
+export interface AgentProfile {
+  id: string;
+  merchantId: string;
+  name: string;
+  solanaAddress: string;
+  smartAccountPda?: string;
+  settingsPda?: string;
+  spendingLimitPda?: string;
+  maxPerTransaction?: string;
+  maxPerDay?: string;
+  status: AgentStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SolanaSmartAgentConfig extends AgentConfig {
+  /** Squads Settings PDA */
+  settingsPda?: string;
+  /** Smart Account index for PDA derivation */
+  smartAccountIndex?: number;
+  /** Spending Limit index for PDA derivation */
+  spendingLimitIndex?: number;
+}
+
 // ─── Spending Policy ───
 
 export interface SpendingPolicy {

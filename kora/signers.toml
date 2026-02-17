@@ -1,0 +1,13 @@
+# Kora Signer Key Configuration
+# IMPORTANT: Do not commit production keys. Use environment variables or secrets management.
+
+# The fee payer keypair — this wallet pays SOL for gas and gets reimbursed in USDC.
+# For development, generate a new keypair: solana-keygen new --outfile kora-fee-payer.json
+# Fund it: solana airdrop 10 --url devnet
+
+[fee_payer]
+# Path to the fee payer keypair JSON file
+# keypair_path = "/etc/kora/keys/fee-payer.json"
+
+# Or set via environment variable:
+# keypair_env = "KORA_FEE_PAYER_KEYPAIR"

@@ -7,6 +7,7 @@ import { useSupabase } from "@/lib/supabase/provider";
 const navItems = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/transactions", label: "Transactions" },
+  { href: "/dashboard/agents", label: "Agents" },
   { href: "/dashboard/paywalls", label: "Paywalls" },
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/dashboard/analytics", label: "Analytics" },

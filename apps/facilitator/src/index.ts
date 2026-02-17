@@ -7,9 +7,9 @@ import { createLogger, loggingMiddleware } from "./middleware/logging.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { rateLimitMiddleware } from "./middleware/ratelimit.js";
 import { setupEvmFacilitator } from "./chains/evm.js";
-import { setupSolanaFacilitator } from "./chains/solana.js";
+import { setupSolanaFacilitator, setupSolanaFacilitatorWithKora } from "./chains/solana.js";
 import { parseNetworks, groupByNamespace } from "./chains/registry.js";
-import { health } from "./routes/health.js";
+import { createHealthRoute } from "./routes/health.js";
 import { createSupportedRoute } from "./routes/supported.js";
 import { createVerifyRoute } from "./routes/verify.js";
 import { createSettleRoute } from "./routes/settle.js";
@@ -38,14 +38,32 @@ const allNetworks = [...solanaNetworks, ...evmNetworks];
 const grouped = groupByNamespace(allNetworks);
 const rpcUrls = parseRpcUrls(config.RPC_URLS);
 
+// Track whether Kora is active (affects gas token reporting)
+let koraEnabled = false;
+let koraFeePayer: string | undefined;
+
 // Register Solana chains (primary)
 if (grouped.solana.length > 0) {
-  await setupSolanaFacilitator(facilitator, {
-    privateKey: config.SOLANA_PRIVATE_KEY,
-    networks: grouped.solana,
-    rpcUrls,
-    logger,
-  });
+  if (config.KORA_RPC_URL) {
+    // Kora mode: agents pay USDC for gas
+    const result = await setupSolanaFacilitatorWithKora(facilitator, {
+      koraRpcUrl: config.KORA_RPC_URL,
+      koraApiKey: config.KORA_API_KEY,
+      networks: grouped.solana,
+      rpcUrls,
+      logger,
+    });
+    koraEnabled = true;
+    koraFeePayer = result.feePayer;
+  } else if (config.SOLANA_PRIVATE_KEY) {
+    // Local keypair mode: agents pay SOL for gas
+    await setupSolanaFacilitator(facilitator, {
+      privateKey: config.SOLANA_PRIVATE_KEY,
+      networks: grouped.solana,
+      rpcUrls,
+      logger,
+    });
+  }
 }
 
 // Register EVM chains (optional)
@@ -92,8 +110,8 @@ app.use(
 );
 app.use("*", loggingMiddleware(logger));
 
-// Health check (no auth)
-app.route("/", health);
+// Health check (no auth) — includes Kora status when configured
+app.route("/", createHealthRoute({ koraFeePayer }));
 
 // Public endpoint (no auth)
 app.route("/", createSupportedRoute(facilitator));
@@ -103,7 +121,7 @@ const authenticated = new Hono<AppEnv>();
 authenticated.use("*", authMiddleware(db));
 authenticated.use("*", rateLimitMiddleware(config.RATE_LIMIT_PER_MINUTE));
 authenticated.route("/", createVerifyRoute(facilitator));
-authenticated.route("/", createSettleRoute(facilitator, db));
+authenticated.route("/", createSettleRoute(facilitator, db, { koraEnabled }));
 authenticated.route("/", createStatusRoute(db));
 
 app.route("/", authenticated);
@@ -115,6 +133,7 @@ logger.info({
   msg: "facilitator_starting",
   port,
   networks: allNetworks,
+  koraEnabled,
   supported: facilitator.getSupported(),
 });
 
@@ -129,6 +148,7 @@ const server = serve({ fetch: app.fetch, port }, (info) => {
 const confirmationWorker = startConfirmationWorker(db, {
   rpcUrls,
   logger,
+  koraEnabled,
 });
 
 // Graceful shutdown

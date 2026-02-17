@@ -1,5 +1,6 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { merchants } from "./merchants.js";
+import { agents } from "./agents.js";
 
 export const transactions = pgTable(
   "transactions",
@@ -29,6 +30,8 @@ export const transactions = pgTable(
     priorityFee: text("priority_fee"),
     /** Solana compute units consumed (null for EVM) */
     computeUnits: text("compute_units"),
+    /** Agent that initiated this transaction (null if direct/unknown) */
+    agentId: uuid("agent_id").references(() => agents.id, { onDelete: "set null" }),
     /** Endpoint that was paid for */
     endpoint: text("endpoint"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

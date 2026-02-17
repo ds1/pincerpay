@@ -7,6 +7,7 @@ COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY apps/facilitator/package.json ./apps/facilitator/
 COPY packages/core/package.json ./packages/core/
 COPY packages/db/package.json ./packages/db/
+COPY packages/solana/package.json ./packages/solana/
 COPY packages/shared/package.json ./packages/shared/
 RUN pnpm install --frozen-lockfile
 
@@ -16,11 +17,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/facilitator/node_modules ./apps/facilitator/node_modules
 COPY --from=deps /app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
+COPY --from=deps /app/packages/solana/node_modules ./packages/solana/node_modules
 COPY . .
 RUN pnpm --filter @pincerpay/core build
 RUN pnpm --filter @pincerpay/db build \
     && grep -q 'schema/index.js' packages/db/dist/index.js \
     || (echo 'ASSERT FAILED: db/dist/index.js missing .js extensions' && cat packages/db/dist/index.js && exit 1)
+RUN pnpm --filter @pincerpay/solana build
 RUN pnpm --filter @pincerpay/facilitator build
 
 FROM base AS runner
@@ -37,6 +40,9 @@ COPY --from=builder /app/packages/core/package.json ./packages/core/
 COPY --from=builder /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
 COPY --from=builder /app/packages/db/package.json ./packages/db/
+COPY --from=builder /app/packages/solana/node_modules ./packages/solana/node_modules
+COPY --from=builder /app/packages/solana/dist ./packages/solana/dist
+COPY --from=builder /app/packages/solana/package.json ./packages/solana/
 
 EXPOSE 4402
 CMD ["node", "apps/facilitator/dist/index.js"]

@@ -1,13 +1,20 @@
 import { Hono } from "hono";
+import { eq } from "drizzle-orm";
 import type { x402Facilitator } from "@x402/core/facilitator";
 import type { Database } from "@pincerpay/db";
-import { transactions } from "@pincerpay/db";
+import { transactions, agents } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
 import { paymentRequestSchema } from "./schemas.js";
+
+interface SettleRouteOptions {
+  /** Whether Kora gasless mode is active for Solana transactions */
+  koraEnabled?: boolean;
+}
 
 export function createSettleRoute(
   facilitator: x402Facilitator,
   db: Database,
+  options?: SettleRouteOptions,
 ) {
   const app = new Hono<AppEnv>();
 
@@ -53,24 +60,40 @@ export function createSettleRoute(
         const txStatus = isOptimistic ? "optimistic" : "confirmed";
 
         // Determine gas token from chain namespace
+        // When Kora is active, Solana gas is paid in USDC instead of SOL
         const network = String(result.network);
-        const gasToken = network.startsWith("solana:") ? "SOL"
+        const gasToken = network.startsWith("solana:")
+          ? (options?.koraEnabled ? "USDC" : "SOL")
           : network.startsWith("eip155:137") || network.startsWith("eip155:80002") ? "MATIC"
           : "ETH";
 
-        db.insert(transactions)
-          .values({
-            merchantId,
-            chainId: result.network,
-            txHash: result.transaction,
-            fromAddress: result.payer ?? "unknown",
-            toAddress: paymentRequirements.payTo,
-            amount,
-            gasToken,
-            status: txStatus,
-            optimistic: isOptimistic,
-            endpoint: paymentPayload.resource?.url,
-          })
+        // Look up agent by fromAddress (fire-and-forget, don't block settlement)
+        const fromAddress = result.payer ?? "unknown";
+        const agentLookup = fromAddress !== "unknown"
+          ? db.select({ id: agents.id })
+              .from(agents)
+              .where(eq(agents.solanaAddress, fromAddress))
+              .limit(1)
+              .then((rows) => rows[0]?.id ?? null)
+              .catch(() => null)
+          : Promise.resolve(null);
+
+        agentLookup.then((agentId) => {
+          return db.insert(transactions)
+            .values({
+              merchantId,
+              chainId: result.network,
+              txHash: result.transaction,
+              fromAddress,
+              toAddress: paymentRequirements.payTo,
+              amount,
+              gasToken,
+              status: txStatus,
+              optimistic: isOptimistic,
+              agentId,
+              endpoint: paymentPayload.resource?.url,
+            });
+        })
           .then(() => {
             logger.info({
               msg: "transaction_recorded",

@@ -84,6 +84,9 @@ importers:
       '@pincerpay/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@pincerpay/solana':
+        specifier: workspace:*
+        version: link:../../packages/solana
       '@scure/base':
         specifier: ^1.2.6
         version: 1.2.6
@@ -142,6 +145,9 @@ importers:
       '@pincerpay/core':
         specifier: workspace:*
         version: link:../core
+      '@pincerpay/solana':
+        specifier: workspace:*
+        version: link:../solana
       '@solana/kit':
         specifier: ^5.5.1
         version: 5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -235,6 +241,28 @@ importers:
         version: 5.9.3
 
   packages/shared: {}
+
+  packages/solana:
+    dependencies:
+      '@pincerpay/core':
+        specifier: workspace:*
+        version: link:../core
+      '@solana/kit':
+        specifier: ^5.5.1
+        version: 5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@x402/svm':
+        specifier: ^2.3.0
+        version: 2.3.0(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      zod:
+        specifier: ^3.24
+        version: 3.25.76
+    devDependencies:
+      '@scure/base':
+        specifier: ^1.2.6
+        version: 1.2.6
+      typescript:
+        specifier: ^5.7
+        version: 5.9.3
 
 packages:
 

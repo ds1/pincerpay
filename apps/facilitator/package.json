@@ -15,6 +15,7 @@
     "@hono/node-server": "^1",
     "@pincerpay/core": "workspace:*",
     "@pincerpay/db": "workspace:*",
+    "@pincerpay/solana": "workspace:*",
     "@scure/base": "^1.2.6",
     "@solana/kit": "^5.5.1",
     "@x402/core": "^2.3",

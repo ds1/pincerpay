@@ -67,23 +67,38 @@ Solana-first architecture pivot. Solana is now the primary chain; EVM is optiona
 - [x] **Settle route gasToken** — records correct gas token (SOL/ETH/MATIC) based on chain namespace at settlement time
 - [x] **Tests updated** — default chain tests updated (solana instead of base), Solana CAIP-2 resolution tests added, Solana chain property tests added. 56 unique tests pass (112 total across src + dist).
 
-## Manual Steps Needed
+## Phase S2: Kora Gasless + Squads Smart Accounts — Code Complete
+
+Kora gasless integration + Squads Smart Account spending policies. 9 workspace packages, 127 tests pass.
+
+### Completed
+- [x] **`packages/solana/`** — new workspace package (`@pincerpay/solana`)
+  - `kora/` — `KoraFacilitatorSvmSigner` implementing `FacilitatorSvmSigner` type from @x402/svm, backed by Kora RPC JSON-RPC client
+  - `squads/` — PDA derivation (smart account, settings, spending limit), raw instruction builders (4 instructions), high-level spending limit management
+  - 11 tests (6 Kora signer unit tests, 5 Squads PDA derivation tests)
+- [x] **Facilitator Kora integration** — `setupSolanaFacilitatorWithKora()` swaps local keypair signer for Kora-backed signer. Zero changes to /verify or /settle routes — just a signer swap.
+  - Config: `KORA_RPC_URL` + `KORA_API_KEY` optional env vars. `SOLANA_PRIVATE_KEY` now optional (at least one of SOLANA_PRIVATE_KEY or KORA_RPC_URL required).
+  - Gas token: `USDC` when Kora active (settle route + confirmation worker)
+  - Health check: factory `createHealthRoute()` with optional Kora status (fee payer address)
+- [x] **Docker + Kora sidecar** — Dockerfile includes `packages/solana/` in build stages. `docker-compose.yml` has optional `kora` service (profile: kora). Kora config templates in `kora/`.
+- [x] **Core types** — `AgentStatus`, `AgentProfile`, `SolanaSmartAgentConfig` added to `@pincerpay/core`
+- [x] **SolanaSmartAgent** — extends `PincerPayAgent` with Squads Smart Account support, PDA derivation, on-chain spending limit pre-check
+- [x] **DB: `agents` table** — UUID PK, merchant_id FK, name, solana_address, smart_account_pda, settings_pda, spending_limit_pda, max_per_transaction, max_per_day, status. Indexed on merchant_id, solana_address, status.
+- [x] **DB: `transactions.agent_id`** — optional FK to agents table (`ON DELETE SET NULL`)
+- [x] **Facilitator agent identity** — settle route looks up `fromAddress` against agents table, sets `agentId` on transaction record
+- [x] **Dashboard: Agent management** — list, detail, create/edit/delete pages at `/dashboard/agents`. Sidebar nav updated.
+- [x] **2 facilitator e2e tests** — Kora signer registration + API key passing
+
+### Manual Steps Needed
+- [ ] Deploy Kora signer node on Railway as separate service
+- [ ] Fund Kora fee payer wallet with SOL + USDC on devnet
+- [ ] Set `KORA_RPC_URL` on facilitator Railway service
+- [ ] Push new DB schema to Supabase (`pnpm db:push`)
 - [ ] Set `CORS_ORIGINS` env var on Railway: `https://pincerpay.com,https://www.pincerpay.com`
 - [ ] Add CNAME record `facilitator` → `pincerpayfacilitator-production.up.railway.app` in Vercel DNS
 - [ ] Configure custom domain `facilitator.pincerpay.com` on Railway facilitator service
-- [x] Generate Solana facilitator keypair and set `SOLANA_PRIVATE_KEY` on Railway
-- [x] Push new schema to Supabase: `pnpm db:push` (adds gas_token, slot, priority_fee, compute_units columns)
-- [x] Fund Solana facilitator wallet with devnet SOL (10 SOL)
-- [x] Deploy facilitator to Railway with Solana support (fix: exclude tests from tsc build)
 
-## Phase S2: Kora + Squads (Next)
-- [ ] `packages/solana/` — Kora gasless integration
-- [ ] `packages/solana/` — Squads SPN session key management
-- [ ] Agent SDK: `SolanaAgent` class with Squads vault + session keys
-- [ ] On-chain spending policy enforcement (replaces in-memory tracking)
-- [ ] DB: `agents` table, Kora-specific fields
-
-## Phase S3: On-Chain Facilitator
+## Phase S3: On-Chain Facilitator (Next)
 - [ ] `packages/solana-program/` — Anchor program with core instructions
 - [ ] TypeScript program client
 - [ ] Hybrid facilitator: on-chain for Solana, viem for EVM

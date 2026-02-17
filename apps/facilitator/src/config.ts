@@ -5,8 +5,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   DATABASE_URL: z.string().min(1),
 
-  /** Facilitator wallet private key (Solana) — base58-encoded 64-byte keypair. Primary chain. */
-  SOLANA_PRIVATE_KEY: z.string().min(1),
+  /** Facilitator wallet private key (Solana) — base58-encoded 64-byte keypair. Optional if KORA_RPC_URL is set. */
+  SOLANA_PRIVATE_KEY: z.string().min(1).optional(),
 
   /** Facilitator wallet private key (EVM) — optional, for EVM chain support */
   FACILITATOR_PRIVATE_KEY: z.string().startsWith("0x").optional(),
@@ -20,6 +20,12 @@ const envSchema = z.object({
   /** RPC URLs (JSON: { "eip155:84532": "https://..." }) */
   RPC_URLS: z.string().optional(),
 
+  /** Kora signer node RPC URL — enables gasless Solana transactions (agents pay USDC for gas) */
+  KORA_RPC_URL: z.string().url().optional(),
+
+  /** Kora API key for authentication (optional, depends on Kora node config) */
+  KORA_API_KEY: z.string().optional(),
+
   /** Comma-separated allowed CORS origins (e.g., "https://dashboard.pincerpay.com,https://api.merchant.com") */
   CORS_ORIGINS: z.string().optional(),
 
@@ -28,7 +34,10 @@ const envSchema = z.object({
 
   /** Log level */
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-});
+}).refine(
+  (data) => data.SOLANA_PRIVATE_KEY || data.KORA_RPC_URL,
+  { message: "At least one of SOLANA_PRIVATE_KEY or KORA_RPC_URL is required", path: ["SOLANA_PRIVATE_KEY"] },
+);
 
 export type Config = z.infer<typeof envSchema>;
 
