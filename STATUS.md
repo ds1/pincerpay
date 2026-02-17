@@ -4,7 +4,7 @@ Last updated: 2026-02-16
 
 ## Phase 1 MVP — Deployed to Production
 
-All 6 workspace packages build clean. 102 tests pass (51 unique across src + dist). Facilitator on Railway, dashboard on Vercel.
+All 6 workspace packages build clean. 112 tests pass (56 unique across src + dist). Facilitator on Railway, dashboard on Vercel.
 
 ### Infrastructure
 - **Facilitator**: `https://pincerpayfacilitator-production.up.railway.app` — healthy, Base Sepolia EVM registered
@@ -20,16 +20,20 @@ All 6 workspace packages build clean. 102 tests pass (51 unique across src + dis
 - [x] `apps/facilitator` — Hono x402 facilitator with EVM + Solana support
   - Routes: /verify, /settle, /supported, /health, /status/:txHash
   - Middleware: API key auth, rate limiting, pino logging
-  - Hooks: transaction recording, settlement logging
+  - Hooks: transaction recording, settlement logging, webhook dispatch
   - Solana via @x402/svm + @solana/kit v5
-  - CORS restriction, Zod body validation, graceful shutdown
+  - CORS restriction (production warning if unset), Zod body validation, graceful shutdown
+  - Background confirmation worker (optimistic → confirmed/failed + gas tracking)
 - [x] `packages/merchant` — Express + Hono middleware wrapping @x402/express and @x402/hono
+  - EVM + Solana server scheme registration
+  - Uses `DEFAULT_FACILITATOR_URL` constant (not hardcoded)
 - [x] `packages/agent` — PincerPayAgent with x402 fetch wrapper + spending policies + Solana support
+  - Spending policies enforced via x402Client hooks (onBeforePaymentCreation / onAfterPaymentCreation)
 - [x] `apps/dashboard` — Next.js 15 merchant dashboard (Vercel)
   - Supabase Auth (login/signup/logout) via runtime SupabaseProvider
   - Dashboard overview with 30d stats
-  - Transaction history table with clickable detail view
-  - Paywall CRUD (create/toggle/delete)
+  - Transaction history table with pagination + clickable detail view
+  - Paywall CRUD (create/toggle/delete) with pagination
   - Settings: merchant profile + API key management (create/revoke)
   - Analytics: recharts bar + line charts (volume by chain, daily volume)
   - Error boundaries, nav active state, wallet address validation
@@ -48,21 +52,52 @@ All 6 workspace packages build clean. 102 tests pass (51 unique across src + dis
 - [x] RLS enabled on all database tables
 - [x] Agent test wallet funded: `0xDA335159D283F54005fE2b4cd0eB21F256f8B726` (1 USDC)
 
-### Recent
-- [x] Fix Vercel serverless crash: `serverExternalPackages`, SSL for pooler, `DATABASE_URL` validation
-- [x] E2E payment flow test: merchant paywall → agent 402 → sign → facilitator verify/settle → DB record → 200
-- [x] Fix merchant middleware: missing EVM server scheme + missing EIP-712 domain params
+## Phase S1: Solana Parity — Complete
 
-## In Progress
-- [ ] Set `CORS_ORIGINS` on facilitator to allow dashboard + merchant domains
+Solana-first architecture pivot. Solana is now the primary chain; EVM is optional.
 
-## Phase 2 — Trust & Discovery (Not Started)
-- [ ] AP2 mandate validation in facilitator
-- [ ] A2A x402 Extension: Double-Lock enforcement
-- [ ] UCP manifest generation in merchant SDK
-- [ ] ERC-7715 session key validation (EVM)
-- [ ] Squads SPN integration (Solana)
-- [ ] Micropayment batching
+### Completed
+- [x] **Confirmation worker rewrite** — now handles both EVM (viem `getTransactionReceipt`) and Solana (`rpc.getSignatureStatuses` via @solana/kit v5 branded `signature()` type). Solana uses "confirmed" (2/3 stake voted) as sufficient finality, with "finalized" for high-value. Tracks slot numbers.
+- [x] **Schema: gasToken + Solana fields** — transactions table now has `gas_token` (ETH/SOL/MATIC/USDC), `slot`, `priority_fee`, `compute_units` columns
+- [x] **Config flip** — `SOLANA_PRIVATE_KEY` is required, `FACILITATOR_PRIVATE_KEY` (EVM) is optional. `SOLANA_NETWORKS` defaults to devnet; `EVM_NETWORKS` is optional.
+- [x] **Default chain → Solana** — `resolveRouteChains` default changed from `["base"]` to `["solana"]` in merchant SDK (both Express + Hono middleware) and client
+- [x] **Dashboard Solana support** — explorer links use Solana explorer format with cluster params, gas cost formatted per-token (SOL=9 decimals, ETH=18, USDC=6), shows slot/computeUnits/priorityFee for Solana txns
+- [x] **Core types updated** — `Transaction` interface has `gasToken`, `slot`, `priorityFee`, `computeUnits`. Added `SolanaConfirmationLevel` type.
+- [x] **Settle route gasToken** — records correct gas token (SOL/ETH/MATIC) based on chain namespace at settlement time
+- [x] **Tests updated** — default chain tests updated (solana instead of base), Solana CAIP-2 resolution tests added, Solana chain property tests added. 56 unique tests pass (112 total across src + dist).
+
+## Manual Steps Needed
+- [ ] Set `CORS_ORIGINS` env var on Railway: `https://pincerpay.com,https://www.pincerpay.com`
+- [ ] Add CNAME record `facilitator` → `pincerpayfacilitator-production.up.railway.app` in Vercel DNS
+- [ ] Configure custom domain `facilitator.pincerpay.com` on Railway facilitator service
+- [ ] Generate Solana facilitator keypair and set `SOLANA_PRIVATE_KEY` on Railway
+- [ ] Push new schema to Supabase: `pnpm db:push` (adds gas_token, slot, priority_fee, compute_units columns)
+- [ ] Fund Solana facilitator wallet with devnet SOL + USDC
+
+## Phase S2: Kora + Squads (Next)
+- [ ] `packages/solana/` — Kora gasless integration
+- [ ] `packages/solana/` — Squads SPN session key management
+- [ ] Agent SDK: `SolanaAgent` class with Squads vault + session keys
+- [ ] On-chain spending policy enforcement (replaces in-memory tracking)
+- [ ] DB: `agents` table, Kora-specific fields
+
+## Phase S3: On-Chain Facilitator
+- [ ] `packages/solana-program/` — Anchor program with core instructions
+- [ ] TypeScript program client
+- [ ] Hybrid facilitator: on-chain for Solana, viem for EVM
+- [ ] Anchor integration tests + E2E suite update
+
+## Phase S4: Transfer Hooks + Compliance
+- [ ] Separate Anchor compliance program (Transfer Hook authority)
+- [ ] OFAC screening in compressed accounts
+- [ ] Dashboard compliance audit log
+- [ ] Merchant opt-in flow for Transfer Hook registration
+
+## Phase S5: Advanced
+- [ ] Micropayment batching with ZK compression
+- [ ] CCTP v2 EVM→Solana bridging
+- [ ] Solana Actions for human-approval flows
+- [ ] ACK agent identity (DIDs, trust scores)
 
 ## Blockers
 _None_

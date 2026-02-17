@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.5.0 — 2026-02-16
+
+### Phase S1: Solana-First Architecture
+
+Solana is now the primary settlement chain. EVM chains remain supported as an optional compatibility layer.
+
+- **Confirmation worker: Solana support** — rewrote `confirmation.ts` to handle both EVM (viem `getTransactionReceipt`) and Solana (`rpc.getSignatureStatuses` via @solana/kit v5). Uses branded `signature()` type, `rpc.method().send()` pattern. Solana "confirmed" (2/3 stake voted) treated as sufficient finality; tracks slot numbers per transaction.
+- **Schema: Solana-specific columns** — transactions table gains `gas_token` (ETH/SOL/MATIC/USDC with default "ETH" for backward compat), `slot`, `priority_fee`, `compute_units`
+- **Config: Solana-first defaults** — `SOLANA_PRIVATE_KEY` now required (was optional), `FACILITATOR_PRIVATE_KEY` (EVM) now optional (was required). `SOLANA_NETWORKS` defaults to devnet; `EVM_NETWORKS` is optional.
+- **Default chain: Solana** — `resolveRouteChains` fallback changed from `["base"]` to `["solana"]` across merchant SDK (Express, Hono, client)
+- **Settle route: gasToken tracking** — records correct gas token (SOL/ETH/MATIC) based on chain namespace
+- **Core types** — `Transaction` interface extended with `gasToken`, `slot`, `priorityFee`, `computeUnits`. New `SolanaConfirmationLevel` type.
+- **Dashboard: Solana display** — Solana explorer links with cluster params, gas cost formatted per-token decimals (SOL=9, ETH=18, USDC=6), slot/computeUnits/priorityFee shown for Solana transactions
+- **Tests** — 56 unique tests pass (112 across src + dist). Updated default chain assertions, added Solana CAIP-2 resolution tests, Solana chain property tests.
+
+## 0.4.0 — 2026-02-16
+
+### Critical & High Gap Fixes
+
+Addressed 9 of 10 critical/high gaps from `_planning/gaps.md`. Rate limiter deferred to Phase 2.
+
+- **CORS production warning** — facilitator logs warning on startup when `NODE_ENV=production` and `CORS_ORIGINS` is unset
+- **Facilitator URL constant** — merchant middleware (Express + Hono) now imports `DEFAULT_FACILITATOR_URL` from `@pincerpay/core` instead of hardcoding
+- **Solana in merchant SDK** — added `@x402/svm` dependency, registered `ExactSvmScheme` alongside `ExactEvmScheme` in both Express and Hono middleware
+- **Agent spending policies enforced** — `x402Client.onBeforePaymentCreation` hook checks `checkPolicy()` before signing; `onAfterPaymentCreation` calls `recordSpend()`. Policies actually block overspending now.
+- **Webhook dispatch** — after successful settlement, facilitator POSTs transaction details to merchant's `webhookUrl` (fire-and-forget). Auth middleware now fetches `webhookUrl` from merchants table.
+- **Dashboard pagination** — transactions and paywalls pages use `offset`/`limit` with Prev/Next controls. Count query for total pages.
+- **Transaction confirmation worker** — background loop polls chain every 15s for "optimistic" transaction receipts. Updates status to "confirmed" or "failed", sets `confirmedAt` timestamp.
+- **Gas cost tracking** — confirmation worker extracts `gasUsed * effectiveGasPrice` from EVM receipts, stores in `gasCost` column (native token wei). USDC conversion deferred to Phase 2.
+- **Schema update** — `gasCost` column comment updated to clarify units: native token base units (wei for EVM)
+
 ## 0.3.3 — 2026-02-16
 
 ### E2E Payment Flow Test + Merchant Middleware Fixes

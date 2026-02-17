@@ -10,6 +10,7 @@ import {
   BASE_SEPOLIA,
   POLYGON_MAINNET,
   SOLANA_MAINNET,
+  SOLANA_DEVNET,
 } from "../chains/index.js";
 
 describe("resolveChain", () => {
@@ -24,6 +25,8 @@ describe("resolveChain", () => {
     expect(resolveChain("eip155:8453")).toBe(BASE_MAINNET);
     expect(resolveChain("eip155:84532")).toBe(BASE_SEPOLIA);
     expect(resolveChain("eip155:137")).toBe(POLYGON_MAINNET);
+    expect(resolveChain("solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp")).toBe(SOLANA_MAINNET);
+    expect(resolveChain("solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1")).toBe(SOLANA_DEVNET);
   });
 
   it("returns undefined for unknown chains", () => {
@@ -38,6 +41,8 @@ describe("toCAIP2", () => {
     expect(toCAIP2("base")).toBe("eip155:8453");
     expect(toCAIP2("polygon")).toBe("eip155:137");
     expect(toCAIP2("base-sepolia")).toBe("eip155:84532");
+    expect(toCAIP2("solana")).toBe("solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp");
+    expect(toCAIP2("solana-devnet")).toBe("solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1");
   });
 
   it("passes through already-valid CAIP-2 IDs", () => {
@@ -92,6 +97,15 @@ describe("CHAINS registry", () => {
     for (const chain of Object.values(CHAINS)) {
       if (chain.namespace === "eip155") {
         expect(chain.chainId).toBeTypeOf("number");
+      }
+    }
+  });
+
+  it("Solana chains have 400ms block time", () => {
+    for (const chain of Object.values(CHAINS)) {
+      if (chain.namespace === "solana") {
+        expect(chain.blockTimeMs).toBe(400);
+        expect(chain.chainId).toBeUndefined();
       }
     }
   });

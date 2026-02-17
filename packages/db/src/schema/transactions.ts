@@ -15,12 +15,20 @@ export const transactions = pgTable(
     toAddress: text("to_address").notNull(),
     /** USDC amount in base units (e.g., "1000000" = 1 USDC) */
     amount: text("amount").notNull(),
-    /** Gas cost in USDC base units */
+    /** Gas/fee cost in base units of gasToken. Updated by confirmation worker. */
     gasCost: text("gas_cost").notNull().default("0"),
+    /** Token used for transaction fees (ETH, SOL, MATIC, USDC). Defaults to ETH for backwards compat. */
+    gasToken: text("gas_token").notNull().default("ETH"),
     /** pending | mempool | optimistic | confirmed | failed */
     status: text("status").notNull().default("pending"),
     /** Whether optimistic finality was used */
     optimistic: boolean("optimistic").notNull().default(false),
+    /** Solana slot number (null for EVM transactions) */
+    slot: text("slot"),
+    /** Solana priority fee in microlamports (null for EVM) */
+    priorityFee: text("priority_fee"),
+    /** Solana compute units consumed (null for EVM) */
+    computeUnits: text("compute_units"),
     /** Endpoint that was paid for */
     endpoint: text("endpoint"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

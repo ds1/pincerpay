@@ -43,9 +43,9 @@ describe("resolveRouteChains", () => {
     expect(result).toEqual(["eip155:8453", "eip155:137"]);
   });
 
-  it("defaults to base when no chain specified", () => {
+  it("defaults to solana when no chain specified", () => {
     const result = resolveRouteChains({ price: "0.01" });
-    expect(result).toEqual(["eip155:8453"]);
+    expect(result).toEqual(["solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"]);
   });
 
   it("prefers chains array over chain string", () => {
@@ -62,6 +62,7 @@ describe("getUsdcAsset", () => {
   it("returns USDC address for known chains", () => {
     expect(getUsdcAsset("base")).toBe("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
     expect(getUsdcAsset("polygon")).toBe("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359");
+    expect(getUsdcAsset("solana")).toBe("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
   });
 
   it("throws for unknown chains", () => {

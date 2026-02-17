@@ -50,6 +50,14 @@ export function createSettleRoute(
         const isOptimistic =
           BigInt(amount) < BigInt(1_000_000); // < 1 USDC
 
+        const txStatus = isOptimistic ? "optimistic" : "confirmed";
+
+        // Determine gas token from chain namespace
+        const network = String(result.network);
+        const gasToken = network.startsWith("solana:") ? "SOL"
+          : network.startsWith("eip155:137") || network.startsWith("eip155:80002") ? "MATIC"
+          : "ETH";
+
         db.insert(transactions)
           .values({
             merchantId,
@@ -58,7 +66,8 @@ export function createSettleRoute(
             fromAddress: result.payer ?? "unknown",
             toAddress: paymentRequirements.payTo,
             amount,
-            status: isOptimistic ? "optimistic" : "confirmed",
+            gasToken,
+            status: txStatus,
             optimistic: isOptimistic,
             endpoint: paymentPayload.resource?.url,
           })
@@ -68,6 +77,33 @@ export function createSettleRoute(
               requestId,
               txHash: result.transaction,
             });
+
+            // Dispatch webhook if merchant has one configured
+            const webhookUrl = c.get("webhookUrl");
+            if (webhookUrl) {
+              globalThis.fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  event: "transaction.settled",
+                  transaction: {
+                    txHash: result.transaction,
+                    chainId: result.network,
+                    amount,
+                    fromAddress: result.payer ?? "unknown",
+                    toAddress: paymentRequirements.payTo,
+                    status: txStatus,
+                    endpoint: paymentPayload.resource?.url,
+                  },
+                }),
+              }).catch((err: unknown) => {
+                logger.error({
+                  msg: "webhook_dispatch_failed",
+                  requestId,
+                  error: err instanceof Error ? err.message : String(err),
+                });
+              });
+            }
           })
           .catch((err: unknown) => {
             logger.error({

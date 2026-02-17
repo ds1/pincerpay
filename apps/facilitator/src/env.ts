@@ -7,5 +7,6 @@ export type AppEnv = {
     logger: Logger;
     merchantId: string;
     apiKeyId: string;
+    webhookUrl?: string;
   };
 };

@@ -27,6 +27,7 @@
   "dependencies": {
     "@x402/core": "^2.3",
     "@x402/evm": "^2.3",
+    "@x402/svm": "^2.3",
     "@pincerpay/core": "workspace:*",
     "zod": "^3.24"
   },

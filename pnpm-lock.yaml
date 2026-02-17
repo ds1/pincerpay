@@ -205,6 +205,9 @@ importers:
       '@x402/evm':
         specifier: ^2.3
         version: 2.3.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      '@x402/svm':
+        specifier: ^2.3
+        version: 2.3.0(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       zod:
         specifier: ^3.24
         version: 3.25.76

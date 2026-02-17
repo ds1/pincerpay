@@ -42,11 +42,24 @@ export default async function TransactionDetailPage({
   if (!tx) notFound();
 
   const chain = CHAINS_BY_CAIP2[tx.chainId];
-  const explorerUrl = chain?.explorerUrl
-    ? `${chain.explorerUrl}/tx/${tx.txHash}`
-    : null;
+  const isSolana = tx.chainId.startsWith("solana:");
+
+  // Solana explorer uses /tx/{sig}?cluster=devnet for devnet, no param for mainnet
+  let explorerUrl: string | null = null;
+  if (chain?.explorerUrl) {
+    if (isSolana) {
+      const clusterParam = chain.testnet ? "?cluster=devnet" : "";
+      explorerUrl = `${chain.explorerUrl}/tx/${tx.txHash}${clusterParam}`;
+    } else {
+      explorerUrl = `${chain.explorerUrl}/tx/${tx.txHash}`;
+    }
+  }
+
   const usdc = (Number(tx.amount) / 1_000_000).toFixed(6);
-  const gasCost = (Number(tx.gasCost) / 1_000_000).toFixed(6);
+  const gasToken = tx.gasToken ?? "ETH";
+  // Format gas cost based on token: SOL uses 9 decimals (lamports), ETH/MATIC uses 18 (wei)
+  const gasDecimals = gasToken === "SOL" ? 9 : gasToken === "USDC" ? 6 : 18;
+  const gasCost = (Number(tx.gasCost) / 10 ** gasDecimals).toFixed(gasDecimals > 9 ? 8 : 6);
 
   return (
     <div>
@@ -75,11 +88,14 @@ export default async function TransactionDetailPage({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Amount" value={`${usdc} USDC`} />
-          <Field label="Gas Cost" value={`${gasCost} USDC`} />
+          <Field label="Gas Cost" value={`${gasCost} ${gasToken}`} />
           <Field label="Chain" value={chain?.name ?? tx.chainId} />
           <Field label="CAIP-2 ID" value={tx.chainId} mono />
           <Field label="From" value={tx.fromAddress} mono />
           <Field label="To" value={tx.toAddress} mono />
+          {tx.slot && <Field label="Slot" value={tx.slot} mono />}
+          {tx.computeUnits && <Field label="Compute Units" value={tx.computeUnits} />}
+          {tx.priorityFee && <Field label="Priority Fee" value={`${tx.priorityFee} microlamports`} />}
           {tx.endpoint && <Field label="Endpoint" value={tx.endpoint} mono />}
           <Field label="Created" value={tx.createdAt.toISOString()} />
           {tx.confirmedAt && <Field label="Confirmed" value={tx.confirmedAt.toISOString()} />}

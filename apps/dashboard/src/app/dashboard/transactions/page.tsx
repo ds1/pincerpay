@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { merchants, transactions } from "@pincerpay/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import Link from "next/link";
 
 async function getMerchantId(authUserId: string): Promise<string | null> {
@@ -14,14 +14,24 @@ async function getMerchantId(authUserId: string): Promise<string | null> {
   return merchant?.id ?? null;
 }
 
-async function getTransactions(merchantId: string) {
+async function getTransactions(merchantId: string, offset: number, limit: number) {
   const db = getDb();
   return db
     .select()
     .from(transactions)
     .where(eq(transactions.merchantId, merchantId))
     .orderBy(desc(transactions.createdAt))
-    .limit(100);
+    .offset(offset)
+    .limit(limit);
+}
+
+async function getTransactionCount(merchantId: string): Promise<number> {
+  const db = getDb();
+  const [result] = await db
+    .select({ total: count() })
+    .from(transactions)
+    .where(eq(transactions.merchantId, merchantId));
+  return result?.total ?? 0;
 }
 
 function formatAmount(baseUnits: string): string {
@@ -39,7 +49,16 @@ function statusBadge(status: string) {
   return colors[status] ?? "text-[var(--muted-foreground)]";
 }
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; limit?: string }>;
+}) {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1", 10));
+  const limit = Math.min(100, Math.max(10, parseInt(params.limit ?? "50", 10)));
+  const offset = (page - 1) * limit;
+
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   const merchantId = user ? await getMerchantId(user.id) : null;
@@ -48,52 +67,96 @@ export default async function TransactionsPage() {
     return <p className="text-[var(--muted-foreground)]">Set up your merchant profile first.</p>;
   }
 
-  const txns = await getTransactions(merchantId);
+  const [txns, total] = await Promise.all([
+    getTransactions(merchantId, offset, limit),
+    getTransactionCount(merchantId),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Transactions</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Transactions</h1>
+        <span className="text-sm text-[var(--muted-foreground)]">{total} total</span>
+      </div>
 
       {txns.length === 0 ? (
         <p className="text-[var(--muted-foreground)]">No transactions yet.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-[var(--muted-foreground)] border-b border-[var(--border)]">
-                <th className="pb-3 font-medium">Time</th>
-                <th className="pb-3 font-medium">Chain</th>
-                <th className="pb-3 font-medium">Amount</th>
-                <th className="pb-3 font-medium">From</th>
-                <th className="pb-3 font-medium">Status</th>
-                <th className="pb-3 font-medium">Tx Hash</th>
-              </tr>
-            </thead>
-            <tbody>
-              {txns.map((tx) => (
-                <tr key={tx.id} className="border-b border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
-                  <td className="py-3">
-                    <Link href={`/dashboard/transactions/${tx.id}`} className="hover:underline">
-                      {tx.createdAt.toLocaleString()}
-                    </Link>
-                  </td>
-                  <td className="py-3 font-mono text-xs">{tx.chainId}</td>
-                  <td className="py-3">{formatAmount(tx.amount)} USDC</td>
-                  <td className="py-3 font-mono text-xs truncate max-w-[120px]">
-                    {tx.fromAddress}
-                  </td>
-                  <td className={`py-3 font-medium ${statusBadge(tx.status)}`}>
-                    {tx.status}
-                    {tx.optimistic && " (opt)"}
-                  </td>
-                  <td className="py-3 font-mono text-xs truncate max-w-[120px]">
-                    {tx.txHash}
-                  </td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[var(--muted-foreground)] border-b border-[var(--border)]">
+                  <th className="pb-3 font-medium">Time</th>
+                  <th className="pb-3 font-medium">Chain</th>
+                  <th className="pb-3 font-medium">Amount</th>
+                  <th className="pb-3 font-medium">From</th>
+                  <th className="pb-3 font-medium">Status</th>
+                  <th className="pb-3 font-medium">Tx Hash</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {txns.map((tx) => (
+                  <tr key={tx.id} className="border-b border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
+                    <td className="py-3">
+                      <Link href={`/dashboard/transactions/${tx.id}`} className="hover:underline">
+                        {tx.createdAt.toLocaleString()}
+                      </Link>
+                    </td>
+                    <td className="py-3 font-mono text-xs">{tx.chainId}</td>
+                    <td className="py-3">{formatAmount(tx.amount)} USDC</td>
+                    <td className="py-3 font-mono text-xs truncate max-w-[120px]">
+                      {tx.fromAddress}
+                    </td>
+                    <td className={`py-3 font-medium ${statusBadge(tx.status)}`}>
+                      {tx.status}
+                      {tx.optimistic && " (opt)"}
+                    </td>
+                    <td className="py-3 font-mono text-xs truncate max-w-[120px]">
+                      {tx.txHash}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              {page > 1 ? (
+                <Link
+                  href={`/dashboard/transactions?page=${page - 1}&limit=${limit}`}
+                  className="px-3 py-1 rounded bg-[var(--muted)] hover:bg-[var(--accent)] text-sm"
+                >
+                  Prev
+                </Link>
+              ) : (
+                <span className="px-3 py-1 rounded text-sm text-[var(--muted-foreground)] opacity-50">
+                  Prev
+                </span>
+              )}
+
+              <span className="text-sm text-[var(--muted-foreground)]">
+                Page {page} of {totalPages}
+              </span>
+
+              {page < totalPages ? (
+                <Link
+                  href={`/dashboard/transactions?page=${page + 1}&limit=${limit}`}
+                  className="px-3 py-1 rounded bg-[var(--muted)] hover:bg-[var(--accent)] text-sm"
+                >
+                  Next
+                </Link>
+              ) : (
+                <span className="px-3 py-1 rounded text-sm text-[var(--muted-foreground)] opacity-50">
+                  Next
+                </span>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

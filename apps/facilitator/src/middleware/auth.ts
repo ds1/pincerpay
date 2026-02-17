@@ -2,7 +2,7 @@ import { type MiddlewareHandler } from "hono";
 import { createHash } from "node:crypto";
 import { eq, and } from "drizzle-orm";
 import { API_KEY_HEADER } from "@pincerpay/core";
-import { apiKeys } from "@pincerpay/db";
+import { apiKeys, merchants } from "@pincerpay/db";
 import type { Database } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
 
@@ -52,6 +52,20 @@ export function authMiddleware(db: Database): MiddlewareHandler<AppEnv> {
 
     c.set("merchantId", key.merchantId);
     c.set("apiKeyId", key.id);
+
+    // Look up merchant webhookUrl for downstream webhook dispatch
+    try {
+      const [merchant] = await db
+        .select({ webhookUrl: merchants.webhookUrl })
+        .from(merchants)
+        .where(eq(merchants.id, key.merchantId))
+        .limit(1);
+      if (merchant?.webhookUrl) {
+        c.set("webhookUrl", merchant.webhookUrl);
+      }
+    } catch {
+      // Non-critical — webhook URL lookup failure shouldn't block requests
+    }
 
     await next();
   };

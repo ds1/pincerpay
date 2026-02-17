@@ -71,7 +71,7 @@ export class PincerPayClient {
  * "base" → "eip155:8453", etc.
  */
 export function resolveRouteChains(route: RoutePaywallConfig): string[] {
-  const shorthands = route.chains ?? (route.chain ? [route.chain] : ["base"]);
+  const shorthands = route.chains ?? (route.chain ? [route.chain] : ["solana"]);
   return shorthands.map(toCAIP2);
 }
 

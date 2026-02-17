@@ -5,17 +5,17 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   DATABASE_URL: z.string().min(1),
 
-  /** Facilitator wallet private key (EVM) — used to broadcast txns */
-  FACILITATOR_PRIVATE_KEY: z.string().startsWith("0x"),
+  /** Facilitator wallet private key (Solana) — base58-encoded 64-byte keypair. Primary chain. */
+  SOLANA_PRIVATE_KEY: z.string().min(1),
 
-  /** Facilitator wallet private key (Solana) — base58-encoded 64-byte keypair */
-  SOLANA_PRIVATE_KEY: z.string().optional(),
-
-  /** Comma-separated list of EVM networks (CAIP-2) to support */
-  EVM_NETWORKS: z.string().default("eip155:84532"),
+  /** Facilitator wallet private key (EVM) — optional, for EVM chain support */
+  FACILITATOR_PRIVATE_KEY: z.string().startsWith("0x").optional(),
 
   /** Comma-separated list of Solana networks (CAIP-2) to support */
-  SOLANA_NETWORKS: z.string().optional(),
+  SOLANA_NETWORKS: z.string().default("solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"),
+
+  /** Comma-separated list of EVM networks (CAIP-2) to support — optional */
+  EVM_NETWORKS: z.string().optional(),
 
   /** RPC URLs (JSON: { "eip155:84532": "https://..." }) */
   RPC_URLS: z.string().optional(),

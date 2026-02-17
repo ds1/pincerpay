@@ -15,10 +15,15 @@ import { createVerifyRoute } from "./routes/verify.js";
 import { createSettleRoute } from "./routes/settle.js";
 import { createStatusRoute } from "./routes/status.js";
 import { serve } from "@hono/node-server";
+import { startConfirmationWorker } from "./workers/confirmation.js";
 import type { AppEnv } from "./env.js";
 
 const config = loadConfig();
 const logger = createLogger(config.LOG_LEVEL);
+
+if (config.NODE_ENV === "production" && !config.CORS_ORIGINS) {
+  logger.warn({ msg: "CORS_ORIGINS not set — defaulting to wildcard (*). Set this in production." });
+}
 
 // ─── Database ───
 const { db, close: closeDb } = createDb(config.DATABASE_URL);
@@ -26,33 +31,33 @@ const { db, close: closeDb } = createDb(config.DATABASE_URL);
 // ─── x402 Facilitator ───
 const facilitator = new x402Facilitator();
 
-// Parse all configured networks
-const evmNetworks = parseNetworks(config.EVM_NETWORKS);
-const solanaNetworks = config.SOLANA_NETWORKS ? parseNetworks(config.SOLANA_NETWORKS) : [];
-const allNetworks = [...evmNetworks, ...solanaNetworks];
+// Parse all configured networks — Solana is primary, EVM is optional
+const solanaNetworks = parseNetworks(config.SOLANA_NETWORKS);
+const evmNetworks = config.EVM_NETWORKS ? parseNetworks(config.EVM_NETWORKS) : [];
+const allNetworks = [...solanaNetworks, ...evmNetworks];
 const grouped = groupByNamespace(allNetworks);
 const rpcUrls = parseRpcUrls(config.RPC_URLS);
 
-// Register EVM chains
-if (grouped.eip155.length > 0) {
-  setupEvmFacilitator(facilitator, {
-    privateKey: config.FACILITATOR_PRIVATE_KEY as `0x${string}`,
-    networks: grouped.eip155,
-    rpcUrls,
-    logger,
-  });
-}
-
-// Register Solana chains
-if (grouped.solana.length > 0 && config.SOLANA_PRIVATE_KEY) {
+// Register Solana chains (primary)
+if (grouped.solana.length > 0) {
   await setupSolanaFacilitator(facilitator, {
     privateKey: config.SOLANA_PRIVATE_KEY,
     networks: grouped.solana,
     rpcUrls,
     logger,
   });
-} else if (grouped.solana.length > 0) {
-  logger.warn({ msg: "solana_networks_configured_but_no_private_key", networks: grouped.solana });
+}
+
+// Register EVM chains (optional)
+if (grouped.eip155.length > 0 && config.FACILITATOR_PRIVATE_KEY) {
+  setupEvmFacilitator(facilitator, {
+    privateKey: config.FACILITATOR_PRIVATE_KEY as `0x${string}`,
+    networks: grouped.eip155,
+    rpcUrls,
+    logger,
+  });
+} else if (grouped.eip155.length > 0) {
+  logger.warn({ msg: "evm_networks_configured_but_no_private_key", networks: grouped.eip155 });
 }
 
 // ─── Facilitator Hooks ───
@@ -120,9 +125,16 @@ const server = serve({ fetch: app.fetch, port }, (info) => {
   });
 });
 
+// Start background confirmation worker for optimistic transactions
+const confirmationWorker = startConfirmationWorker(db, {
+  rpcUrls,
+  logger,
+});
+
 // Graceful shutdown
 function shutdown(signal: string) {
   logger.info({ msg: "shutting_down", signal });
+  confirmationWorker.stop();
   server.close(() => {
     closeDb().then(() => {
       logger.info({ msg: "shutdown_complete" });

@@ -43,6 +43,9 @@ export class PincerPayAgent {
       registerExactEvmScheme(x402, { signer: account });
     }
 
+    // Register spending policy hooks
+    this.registerPolicyHooks(x402);
+
     // Wrap global fetch with x402 payment handling
     this.x402Fetch = wrapFetchWithPayment(globalThis.fetch, x402);
   }
@@ -141,6 +144,29 @@ export class PincerPayAgent {
   /** Get configured chain shorthands */
   get chains(): string[] {
     return this.config.chains;
+  }
+
+  /**
+   * Register x402 hooks to enforce spending policies before payment
+   * and record spend after successful payment creation.
+   */
+  private registerPolicyHooks(client: x402Client): void {
+    if (!this.config.policies || this.config.policies.length === 0) return;
+
+    // Before payment: enforce spending limits
+    client.onBeforePaymentCreation(async (ctx: { selectedRequirements: { maxAmountRequired?: unknown; amount?: unknown } }) => {
+      const amount = String(ctx.selectedRequirements.maxAmountRequired ?? ctx.selectedRequirements.amount ?? "0");
+      const check = this.checkPolicy(amount);
+      if (!check.allowed) {
+        return { abort: true, reason: check.reason! };
+      }
+    });
+
+    // After payment: track spend for daily limits
+    client.onAfterPaymentCreation(async (ctx: { selectedRequirements: { maxAmountRequired?: unknown; amount?: unknown } }) => {
+      const amount = String(ctx.selectedRequirements.maxAmountRequired ?? ctx.selectedRequirements.amount ?? "0");
+      this.recordSpend(amount);
+    });
   }
 
   private resetDailyIfNeeded(): void {

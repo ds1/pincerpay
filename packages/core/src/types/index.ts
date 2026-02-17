@@ -76,6 +76,9 @@ export type TransactionStatus =
   | "confirmed"
   | "failed";
 
+/** Solana commitment levels for confirmation */
+export type SolanaConfirmationLevel = "processed" | "confirmed" | "finalized";
+
 export interface Transaction {
   id: string;
   merchantId: string;
@@ -86,11 +89,19 @@ export interface Transaction {
   toAddress: string;
   /** USDC amount in base units (e.g., "1000000" = 1 USDC) */
   amount: string;
-  /** Gas cost in USDC base units */
+  /** Gas/fee cost in base units of gasToken */
   gasCost: string;
+  /** Token used for transaction fees (e.g., "ETH", "SOL", "MATIC", "USDC") */
+  gasToken: string;
   status: TransactionStatus;
   /** Whether optimistic finality was used */
   optimistic: boolean;
+  /** Solana slot number (null for EVM) */
+  slot?: string;
+  /** Solana priority fee in microlamports (null for EVM) */
+  priorityFee?: string;
+  /** Solana compute units consumed (null for EVM) */
+  computeUnits?: string;
   createdAt: Date;
   confirmedAt?: Date;
 }
