@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { merchants, transactions } from "@pincerpay/db";
+import { merchants, apiKeys, paywalls, transactions } from "@pincerpay/db";
 import { eq, sql, and, gte } from "drizzle-orm";
+import { OnboardingChecklist } from "./onboarding-checklist";
 
 async function getMerchant(authUserId: string) {
   const db = getDb();
@@ -11,6 +12,31 @@ async function getMerchant(authUserId: string) {
     .where(eq(merchants.authUserId, authUserId))
     .limit(1);
   return merchant;
+}
+
+async function getOnboardingCounts(merchantId: string) {
+  const db = getDb();
+
+  const [[keyCount], [paywallCount], [txCount]] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(apiKeys)
+      .where(eq(apiKeys.merchantId, merchantId)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(paywalls)
+      .where(eq(paywalls.merchantId, merchantId)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(transactions)
+      .where(eq(transactions.merchantId, merchantId)),
+  ]);
+
+  return {
+    apiKeyCount: keyCount.count,
+    paywallCount: paywallCount.count,
+    transactionCount: txCount.count,
+  };
 }
 
 async function getStats(merchantId: string) {
@@ -43,21 +69,26 @@ export default async function DashboardPage() {
   if (!merchant) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">Welcome to PincerPay</h1>
-        <p className="text-[var(--muted-foreground)] mb-6">
-          Complete your merchant profile to start accepting payments.
-        </p>
-        <a
-          href="/dashboard/settings"
-          className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90"
-        >
-          Set Up Profile
-        </a>
+        <h1 className="text-2xl font-bold mb-6">Welcome to PincerPay</h1>
+        <OnboardingChecklist
+          hasMerchant={false}
+          hasApiKey={false}
+          hasPaywall={false}
+          hasTransaction={false}
+        />
       </div>
     );
   }
 
-  const stats = await getStats(merchant.id);
+  const [counts, stats] = await Promise.all([
+    getOnboardingCounts(merchant.id),
+    getStats(merchant.id),
+  ]);
+
+  const allComplete =
+    counts.apiKeyCount > 0 &&
+    counts.paywallCount > 0 &&
+    counts.transactionCount > 0;
 
   // Convert volume from base units to USDC
   const volumeUsdc = stats
@@ -67,6 +98,15 @@ export default async function DashboardPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+
+      {!allComplete && (
+        <OnboardingChecklist
+          hasMerchant={true}
+          hasApiKey={counts.apiKeyCount > 0}
+          hasPaywall={counts.paywallCount > 0}
+          hasTransaction={counts.transactionCount > 0}
+        />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="p-6 rounded-xl bg-[var(--card)] border border-[var(--border)]">
