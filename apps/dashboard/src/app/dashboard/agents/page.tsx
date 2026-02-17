@@ -3,7 +3,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { merchants, agents } from "@pincerpay/db";
 import { eq, desc, count } from "drizzle-orm";
 import Link from "next/link";
-import { AgentForm, AgentList } from "./agent-form";
+import { AgentList } from "./agent-form";
 
 async function getMerchantId(authUserId: string): Promise<string | null> {
   const db = getDb();
@@ -62,18 +62,20 @@ export default async function AgentsPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Agents</h1>
-        <AgentForm />
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-1">Agents</h1>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Agents appear here automatically when they first pay your API. Click an agent&apos;s name to rename it. Any agent can pay your endpoints &mdash; no registration required.
+        </p>
       </div>
 
       {agentList.length === 0 && page === 1 ? (
         <div className="p-8 rounded-xl bg-[var(--card)] border border-[var(--border)] text-center">
           <p className="text-[var(--muted-foreground)] mb-2">
-            No agents registered yet.
+            No agents have paid your API yet.
           </p>
           <p className="text-[var(--muted-foreground)] text-sm">
-            Register an AI agent to track its transactions and enforce spending limits.
+            Once an agent makes its first payment through any of your paywalls, it will appear here automatically.
           </p>
         </div>
       ) : (

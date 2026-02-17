@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { Database } from "@pincerpay/db";
 import { transactions, merchants, agents } from "@pincerpay/db";
 import type { PincerPayProgram } from "@pincerpay/program";
@@ -110,14 +110,29 @@ export function createSettleDirectRoute(
       const txStatus = isOptimistic ? "optimistic" : "pending";
       const gasToken = koraEnabled ? "USDC" : "SOL";
 
-      // Look up agent by address
-      const agentLookup = await db
-        .select({ id: agents.id })
-        .from(agents)
-        .where(eq(agents.solanaAddress, agentAddress))
-        .limit(1)
-        .then((rows) => rows[0]?.id ?? null)
-        .catch(() => null);
+      // Upsert agent: auto-register unknown agents on first payment
+      let agentId: string | null = null;
+      try {
+        const existing = await db
+          .select({ id: agents.id })
+          .from(agents)
+          .where(and(eq(agents.solanaAddress, agentAddress), eq(agents.merchantId, merchantId!)))
+          .limit(1);
+        if (existing[0]) {
+          agentId = existing[0].id;
+        } else {
+          const abbrev = agentAddress.slice(0, 4) + "..." + agentAddress.slice(-4);
+          const [inserted] = await db.insert(agents).values({
+            merchantId: merchantId!,
+            name: `Agent ${abbrev}`,
+            solanaAddress: agentAddress,
+            status: "active",
+          }).returning({ id: agents.id });
+          agentId = inserted.id;
+        }
+      } catch {
+        agentId = null;
+      }
 
       const [inserted] = await db.insert(transactions)
         .values({
@@ -131,7 +146,7 @@ export function createSettleDirectRoute(
           status: txStatus,
           optimistic: isOptimistic,
           settlementType: "direct",
-          agentId: agentLookup,
+          agentId,
         })
         .returning({ id: transactions.id });
 

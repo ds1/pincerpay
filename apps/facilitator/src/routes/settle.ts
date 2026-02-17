@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { x402Facilitator } from "@x402/core/facilitator";
 import type { Database } from "@pincerpay/db";
 import { transactions, agents } from "@pincerpay/db";
@@ -67,18 +67,29 @@ export function createSettleRoute(
           : network.startsWith("eip155:137") || network.startsWith("eip155:80002") ? "MATIC"
           : "ETH";
 
-        // Look up agent by fromAddress (fire-and-forget, don't block settlement)
+        // Upsert agent: auto-register unknown agents on first payment
         const fromAddress = result.payer ?? "unknown";
-        const agentLookup = fromAddress !== "unknown"
+        const agentUpsert = fromAddress !== "unknown"
           ? db.select({ id: agents.id })
               .from(agents)
-              .where(eq(agents.solanaAddress, fromAddress))
+              .where(and(eq(agents.solanaAddress, fromAddress), eq(agents.merchantId, merchantId)))
               .limit(1)
-              .then((rows) => rows[0]?.id ?? null)
+              .then(async (rows) => {
+                if (rows[0]) return rows[0].id;
+                // Auto-register: create agent with abbreviated address as name
+                const abbrev = fromAddress.slice(0, 4) + "..." + fromAddress.slice(-4);
+                const [inserted] = await db.insert(agents).values({
+                  merchantId,
+                  name: `Agent ${abbrev}`,
+                  solanaAddress: fromAddress,
+                  status: "active",
+                }).returning({ id: agents.id });
+                return inserted.id;
+              })
               .catch(() => null)
           : Promise.resolve(null);
 
-        agentLookup.then((agentId) => {
+        agentUpsert.then((agentId) => {
           return db.insert(transactions)
             .values({
               merchantId,

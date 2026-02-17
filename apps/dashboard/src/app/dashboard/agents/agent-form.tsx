@@ -1,84 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { createAgent, deleteAgent, updateAgent } from "./actions";
-
-export function AgentForm() {
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  async function handleSubmit(formData: FormData) {
-    setError(null);
-    const result = await createAgent(formData);
-    if (result.success) {
-      setOpen(false);
-      formRef.current?.reset();
-    } else {
-      setError(result.error ?? "Failed to create agent");
-    }
-  }
-
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] text-sm font-medium hover:opacity-90"
-      >
-        Add Agent
-      </button>
-    );
-  }
-
-  return (
-    <form
-      ref={formRef}
-      action={handleSubmit}
-      className="p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] mb-4"
-    >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <input
-          name="name"
-          placeholder="Agent name"
-          required
-          className="px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-sm"
-        />
-        <input
-          name="solanaAddress"
-          placeholder="Solana address (base58)"
-          required
-          className="px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-sm font-mono"
-        />
-        <input
-          name="maxPerTransaction"
-          placeholder="Max per transaction (USDC base units)"
-          className="px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-sm"
-        />
-        <input
-          name="maxPerDay"
-          placeholder="Max per day (USDC base units)"
-          className="px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-sm"
-        />
-      </div>
-      {error && <p className="text-sm text-[var(--destructive)] mt-2">{error}</p>}
-      <div className="flex gap-2 mt-3">
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] text-sm font-medium"
-        >
-          Create
-        </button>
-        <button
-          type="button"
-          onClick={() => { setOpen(false); setError(null); }}
-          className="px-4 py-2 rounded-lg bg-[var(--muted)] text-sm"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-}
+import { useState } from "react";
+import { deleteAgent, updateAgent } from "./actions";
 
 export function AgentList({ agents }: { agents: Array<{
   id: string;
@@ -115,7 +38,7 @@ export function AgentList({ agents }: { agents: Array<{
 }
 
 function formatUsdc(baseUnits: string | null): string {
-  if (!baseUnits) return "—";
+  if (!baseUnits) return "\u2014";
   return `${(Number(baseUnits) / 1_000_000).toFixed(2)} USDC`;
 }
 
@@ -136,6 +59,8 @@ function AgentRow({ agent }: { agent: {
   createdAt: Date;
 } }) {
   const [pending, setPending] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(agent.name);
 
   async function handleStatusToggle() {
     setPending(true);
@@ -143,6 +68,21 @@ function AgentRow({ agent }: { agent: {
     const formData = new FormData();
     formData.set("status", newStatus);
     await updateAgent(agent.id, formData);
+    setPending(false);
+  }
+
+  async function handleRename() {
+    const trimmed = editName.trim();
+    if (!trimmed || trimmed === agent.name) {
+      setEditing(false);
+      setEditName(agent.name);
+      return;
+    }
+    setPending(true);
+    const formData = new FormData();
+    formData.set("name", trimmed);
+    await updateAgent(agent.id, formData);
+    setEditing(false);
     setPending(false);
   }
 
@@ -156,12 +96,30 @@ function AgentRow({ agent }: { agent: {
   return (
     <tr className="border-b border-[var(--border)] hover:bg-[var(--muted)] transition-colors">
       <td className="py-3">
-        <a href={`/dashboard/agents/${agent.id}`} className="hover:underline font-medium">
-          {agent.name}
-        </a>
+        {editing ? (
+          <input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={handleRename}
+            onKeyDown={(e) => { if (e.key === "Enter") handleRename(); if (e.key === "Escape") { setEditing(false); setEditName(agent.name); } }}
+            autoFocus
+            disabled={pending}
+            className="px-2 py-1 rounded bg-[var(--input)] border border-[var(--border)] text-sm font-medium w-full max-w-[200px]"
+          />
+        ) : (
+          <button
+            onClick={() => setEditing(true)}
+            className="hover:underline font-medium text-left"
+            title="Click to rename"
+          >
+            {agent.name}
+          </button>
+        )}
       </td>
       <td className="py-3 font-mono text-xs truncate max-w-[140px]">
-        {agent.solanaAddress}
+        <a href={`/dashboard/agents/${agent.id}`} className="hover:underline">
+          {agent.solanaAddress}
+        </a>
       </td>
       <td className={`py-3 font-medium ${statusColor(agent.status)}`}>
         {agent.status}
@@ -169,7 +127,7 @@ function AgentRow({ agent }: { agent: {
       <td className="py-3">{formatUsdc(agent.maxPerTransaction)}</td>
       <td className="py-3">{formatUsdc(agent.maxPerDay)}</td>
       <td className="py-3 font-mono text-xs truncate max-w-[100px]">
-        {agent.smartAccountPda ?? "—"}
+        {agent.smartAccountPda ?? "\u2014"}
       </td>
       <td className="py-3">
         <div className="flex gap-2">

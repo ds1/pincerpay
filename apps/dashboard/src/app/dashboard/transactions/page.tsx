@@ -3,6 +3,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { merchants, transactions } from "@pincerpay/db";
 import { eq, desc, count } from "drizzle-orm";
 import Link from "next/link";
+import { CHAINS_BY_CAIP2 } from "@pincerpay/core/chains";
 
 async function getMerchantId(authUserId: string): Promise<string | null> {
   const db = getDb();
@@ -106,7 +107,7 @@ export default async function TransactionsPage({
                         {tx.createdAt.toLocaleString()}
                       </Link>
                     </td>
-                    <td className="py-3 font-mono text-xs">{tx.chainId}</td>
+                    <td className="py-3 text-xs">{CHAINS_BY_CAIP2[tx.chainId]?.name ?? tx.chainId}</td>
                     <td className="py-3">{formatAmount(tx.amount)} USDC</td>
                     <td className="py-3">
                       <span className={`text-xs px-1.5 py-0.5 rounded ${

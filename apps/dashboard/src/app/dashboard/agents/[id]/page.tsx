@@ -4,6 +4,7 @@ import { merchants, agents, transactions } from "@pincerpay/db";
 import { eq, and, desc } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CHAINS_BY_CAIP2 } from "@pincerpay/core/chains";
 
 async function getMerchantId(authUserId: string): Promise<string | null> {
   const db = getDb();
@@ -120,6 +121,10 @@ export default async function AgentDetailPage({
         </div>
       </div>
 
+      <p className="text-xs text-[var(--muted-foreground)] mb-8">
+        Spending limits are for your reference only and are not enforced by PincerPay. Agents manage their own spending policies.
+      </p>
+
       <h2 className="text-lg font-bold mb-4">Recent Transactions</h2>
       {recentTxns.length === 0 ? (
         <p className="text-[var(--muted-foreground)]">No transactions from this agent yet.</p>
@@ -144,7 +149,7 @@ export default async function AgentDetailPage({
                       {tx.createdAt.toLocaleString()}
                     </Link>
                   </td>
-                  <td className="py-3 font-mono text-xs">{tx.chainId}</td>
+                  <td className="py-3 text-xs">{CHAINS_BY_CAIP2[tx.chainId]?.name ?? tx.chainId}</td>
                   <td className="py-3">{formatAmount(tx.amount)} USDC</td>
                   <td className={`py-3 font-medium ${txStatusColor(tx.status)}`}>{tx.status}</td>
                   <td className="py-3">{tx.gasToken}</td>
