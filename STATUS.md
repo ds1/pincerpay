@@ -1,10 +1,10 @@
 # Project Status
 
-Last updated: 2026-02-17
+Last updated: 2026-02-17 (deployed 2026-02-17T22:15Z)
 
 ## Phase 1 MVP — Deployed to Production
 
-All 6 workspace packages build clean. 112 tests pass (56 unique across src + dist). Facilitator on Railway, dashboard on Vercel.
+10 workspace packages build clean. 133 tests pass. Facilitator on Railway, dashboard on Vercel.
 
 ### Infrastructure
 - **Facilitator**: `https://pincerpayfacilitator-production.up.railway.app` — healthy, Solana devnet + Base Sepolia registered
@@ -52,6 +52,10 @@ All 6 workspace packages build clean. 112 tests pass (56 unique across src + dis
 - [x] Fund facilitator wallet with testnet ETH + USDC on Base Sepolia
 - [x] RLS enabled on all database tables
 - [x] Agent test wallet funded: `0xDA335159D283F54005fE2b4cd0eB21F256f8B726` (1 USDC)
+- [x] Merchant onboarding wizard (`/dashboard/setup`) — 4-step guided flow
+- [x] In-app documentation (`/dashboard/docs`) — 7 sections with collapsible UI
+- [x] Dynamic SDK snippets in onboarding checklist (uses actual wallet/chain)
+- [x] Signup → setup wizard redirect, dashboard → setup redirect for new merchants
 
 ## Phase S1: Solana Parity — Complete
 
@@ -150,6 +154,20 @@ Anchor program + TypeScript client + hybrid facilitator. 10 workspace packages, 
 - [ ] CCTP v2 EVM→Solana bridging
 - [ ] Solana Actions for human-approval flows
 - [ ] ACK agent identity (DIDs, trust scores)
+
+## Agent Demo — Complete
+
+Standalone demo project at [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo) showing the agent developer experience.
+
+### Completed
+- [x] Next.js 15 web app with dark-themed landing page + interactive 3-panel playground
+- [x] Simulation engine — realistic x402 flow steps with timing, fake Solana addresses/tx hashes
+- [x] Spending policy enforcement — per-request caps + daily budgets, error flow on limit exceeded
+- [x] 4 mock merchant endpoints spanning 0.001–0.10 USDC price range
+- [x] CLI demo with chalk/ora — interactive menu + `--all` flag for sequential walkthrough
+- [x] Live mode support (optional `@pincerpay/agent` + Express merchant server)
+- [x] README with talking points for demos and pitches
+- [x] Pushed to GitHub: https://github.com/ds1/pincerpay-agent-demo
 
 ## Blockers
 _None_

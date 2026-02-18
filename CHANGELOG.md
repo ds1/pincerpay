@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.7.0 — 2026-02-17
+
+### Agent Demo
+
+Standalone demo project ([pincerpay-agent-demo](https://github.com/ds1/pincerpay-agent-demo)) showing the agent developer experience — what it looks like to interact with a PincerPay-enabled merchant API.
+
+- **Web playground** — Next.js 15 dark-themed app with 3-panel layout: agent config (wallet + spending policies), endpoint picker + response panel, and animated x402 flow visualizer showing each step (request → 402 → sign → verify → settle → response)
+- **Simulation engine** — generates realistic payment flow steps with timing, Solana-style addresses, and transaction hashes. Works fully offline with no wallet or facilitator.
+- **Spending policies** — per-request limits and daily budgets enforced before signing. Demo shows error flow when limits are exceeded.
+- **4 mock endpoints** — weather (0.001 USDC), market data (0.01), research (0.05), analytics (0.10) spanning 2 orders of magnitude
+- **CLI demo** — chalk + ora terminal walkthrough with interactive endpoint menu or `--all` flag
+- **Live mode** — optional `DEMO_MODE=live` with real `@pincerpay/agent` SDK + Express merchant server for actual devnet settlement
+- **README** — setup guide, architecture overview, and talking points for demos/pitches (problem, x402 solution, why PincerPay, why not cards, spending policies, bigger picture)
+- **Tailwind v4 fix** — webpack css-loader `import.filter` to prevent resolving `@import "tailwindcss"` before PostCSS
+
+## 0.6.0 — 2026-02-17
+
+### Merchant Onboarding Experience
+
+Guided setup wizard, in-app docs, and personalized code snippets for a seamless signup-to-first-payment journey.
+
+- **Setup wizard** (`/dashboard/setup`) — 4-step guided flow: merchant profile → API key generation → personalized integration guide with tabbed code snippets → summary with next steps. Automatically resumes at the correct step if the merchant returns later.
+- **In-app documentation** (`/dashboard/docs`) — 7 collapsible sections: Quickstart, Merchant SDK, Agent SDK, Supported Chains (table built from `@pincerpay/core` chain registry), Testnet Guide, API Reference, FAQ. No external dependencies.
+- **Dynamic code snippets** — onboarding checklist and wizard inject the merchant's actual wallet address, API key, and selected chain into all code examples (was hardcoded `YOUR_WALLET_ADDRESS`).
+- **Signup → wizard redirect** — new signups land on `/dashboard/setup` instead of a bare dashboard.
+- **Dashboard → wizard redirect** — merchants without a profile are redirected to the setup wizard.
+- **Docs sidebar link** — added "Docs" nav item to dashboard sidebar.
+- **Fixed broken docs link** — onboarding checklist link changed from `/docs/getting-started` (404) to `/dashboard/docs`.
+- **Facilitator test fix** — added `.returning()` to mock DB in e2e tests (agent auto-registration code path).
+- **Tests**: 133 tests pass across 10 packages.
+
 ## 0.5.0 — 2026-02-16
 
 ### Phase S1: Solana-First Architecture
