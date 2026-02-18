@@ -5,6 +5,7 @@ import type { Database } from "@pincerpay/db";
 import { transactions, agents } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
 import { paymentRequestSchema } from "./schemas.js";
+import { dispatchWebhook } from "../webhooks/dispatcher.js";
 
 interface SettleRouteOptions {
   /** Whether Kora gasless mode is active for Solana transactions */
@@ -112,14 +113,15 @@ export function createSettleRoute(
               txHash: result.transaction,
             });
 
-            // Dispatch webhook if merchant has one configured
+            // Dispatch webhook with retry tracking
             const webhookUrl = c.get("webhookUrl");
             if (webhookUrl) {
-              globalThis.fetch(webhookUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  event: "transaction.settled",
+              dispatchWebhook(db, {
+                merchantId,
+                transactionId: undefined, // transaction ID not returned by insert
+                webhookUrl,
+                payload: {
+                  event: "payment.settled",
                   transaction: {
                     txHash: result.transaction,
                     chainId: result.network,
@@ -129,7 +131,8 @@ export function createSettleRoute(
                     status: txStatus,
                     endpoint: paymentPayload.resource?.url,
                   },
-                }),
+                },
+                logger,
               }).catch((err: unknown) => {
                 logger.error({
                   msg: "webhook_dispatch_failed",

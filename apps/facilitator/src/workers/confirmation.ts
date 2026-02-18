@@ -6,6 +6,7 @@ import type { Database } from "@pincerpay/db";
 import { transactions } from "@pincerpay/db";
 import { CHAINS_BY_CAIP2 } from "@pincerpay/core/chains";
 import type { Logger } from "../middleware/logging.js";
+import { dispatchWebhook, getWebhookUrl } from "../webhooks/dispatcher.js";
 
 /** Map CAIP-2 network IDs to viem chain definitions */
 const EVM_CHAIN_MAP: Record<string, Chain> = {
@@ -106,6 +107,9 @@ export function startConfirmationWorker(
         gasCostWei,
         gasToken,
       });
+
+      // Dispatch webhook for status transition
+      await dispatchConfirmationWebhook(db, tx, newStatus, logger);
     }
   }
 
@@ -145,6 +149,8 @@ export function startConfirmationWorker(
         status: "failed",
         slot: String(status.slot),
       });
+
+      await dispatchConfirmationWebhook(db, tx, "failed", logger);
       return;
     }
 
@@ -173,6 +179,8 @@ export function startConfirmationWorker(
         confirmationStatus,
         slot: String(status.slot),
       });
+
+      await dispatchConfirmationWebhook(db, tx, "confirmed", logger);
     } else {
       // "processed" — not yet confirmed by supermajority, will retry
       logger.debug({
@@ -257,4 +265,44 @@ export function startConfirmationWorker(
       logger.info({ msg: "confirmation_worker_stopped" });
     },
   };
+}
+
+/** Dispatch a webhook when a transaction transitions to confirmed or failed. */
+async function dispatchConfirmationWebhook(
+  db: Database,
+  tx: TransactionRow,
+  newStatus: string,
+  logger: Logger,
+): Promise<void> {
+  try {
+    const webhookUrl = await getWebhookUrl(db, tx.merchantId);
+    if (!webhookUrl) return;
+
+    const event = newStatus === "confirmed" ? "payment.confirmed" : "payment.failed";
+
+    await dispatchWebhook(db, {
+      merchantId: tx.merchantId,
+      transactionId: tx.id,
+      webhookUrl,
+      payload: {
+        event,
+        transaction: {
+          txHash: tx.txHash,
+          chainId: tx.chainId,
+          amount: tx.amount,
+          fromAddress: tx.fromAddress,
+          toAddress: tx.toAddress,
+          status: newStatus,
+          endpoint: tx.endpoint ?? undefined,
+        },
+      },
+      logger,
+    });
+  } catch (err) {
+    logger.error({
+      msg: "confirmation_webhook_dispatch_error",
+      txHash: tx.txHash,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }

@@ -5,7 +5,7 @@ import { createDb } from "@pincerpay/db";
 import { loadConfig, parseRpcUrls } from "./config.js";
 import { createLogger, loggingMiddleware } from "./middleware/logging.js";
 import { authMiddleware } from "./middleware/auth.js";
-import { rateLimitMiddleware } from "./middleware/ratelimit.js";
+import { rateLimitMiddleware, routeRateLimitMiddleware } from "./middleware/ratelimit.js";
 import { setupEvmFacilitator } from "./chains/evm.js";
 import { setupSolanaFacilitator, setupSolanaFacilitatorWithKora } from "./chains/solana.js";
 import { parseNetworks, groupByNamespace } from "./chains/registry.js";
@@ -19,6 +19,7 @@ import { serve } from "@hono/node-server";
 import { startConfirmationWorker } from "./workers/confirmation.js";
 import { setupAnchorIntegration } from "./chains/solana-anchor.js";
 import { startOnChainRecorderWorker } from "./workers/on-chain-recorder.js";
+import { startWebhookRetryWorker } from "./webhooks/dispatcher.js";
 import type { AppEnv } from "./env.js";
 
 const config = loadConfig();
@@ -135,6 +136,12 @@ app.route("/", createSupportedRoute(facilitator));
 const authenticated = new Hono<AppEnv>();
 authenticated.use("*", authMiddleware(db));
 authenticated.use("*", rateLimitMiddleware(config.RATE_LIMIT_PER_MINUTE));
+
+// Route-specific rate limits (stricter than global)
+authenticated.use("/v1/settle", routeRateLimitMiddleware("settle", 50));
+authenticated.use("/v1/settle-direct", routeRateLimitMiddleware("settle", 50));
+authenticated.use("/v1/verify", routeRateLimitMiddleware("verify", 100));
+
 authenticated.route("/", createVerifyRoute(facilitator));
 authenticated.route("/", createSettleRoute(facilitator, db, { koraEnabled }));
 if (anchorIntegration) {
@@ -172,6 +179,9 @@ const confirmationWorker = startConfirmationWorker(db, {
   koraEnabled,
 });
 
+// Start webhook retry worker (retries failed webhook deliveries)
+const webhookRetryWorker = startWebhookRetryWorker(db, { logger });
+
 // Start on-chain recorder worker (records x402 settlements on-chain for audit)
 let onChainRecorderWorker: ReturnType<typeof startOnChainRecorderWorker> | undefined;
 if (anchorIntegration) {
@@ -185,6 +195,7 @@ if (anchorIntegration) {
 function shutdown(signal: string) {
   logger.info({ msg: "shutting_down", signal });
   confirmationWorker.stop();
+  webhookRetryWorker.stop();
   onChainRecorderWorker?.stop();
   server.close(() => {
     closeDb().then(() => {
