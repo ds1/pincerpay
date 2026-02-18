@@ -20,9 +20,9 @@ Last updated: 2026-02-18
 - [ ] #1 Deploy Kora signer node on Railway
 - [ ] #2 Fund Kora fee payer wallet on devnet
 - [ ] #3 Set Kora env vars on Railway facilitator
-- [ ] #4 Push S2 DB schema to Supabase + re-enable RLS
-- [ ] #5 Set CORS_ORIGINS on Railway facilitator
-- [ ] #6 Configure facilitator.pincerpay.com custom domain
+- [x] #4 Push S2 DB schema to Supabase + re-enable RLS
+- [x] #5 Set CORS_ORIGINS on Railway facilitator
+- [x] #6 Configure facilitator.pincerpay.com custom domain
 
 ### S3 Infrastructure Deployment
 - [ ] #7 Build Anchor program (IDL + .so binary)
@@ -30,14 +30,14 @@ Last updated: 2026-02-18
 - [ ] #9 Update PINCERPAY_PROGRAM_ID with deployed address
 - [ ] #10 Set ANCHOR_PROGRAM_ID on Railway facilitator
 - [ ] #11 Register test merchant on-chain via Anchor
-- [ ] #12 Push S3 DB schema changes + re-enable RLS
+- [x] #12 Push S3 DB schema changes + re-enable RLS
 
 ### Production Hardening
 - [ ] #13 End-to-end payment test on devnet
 - [ ] #14 Monitoring + alerting for facilitator
-- [ ] #15 Rate limiting tuning for production
+- [x] #15 Rate limiting tuning for production
 - [ ] #16 Graceful shutdown validation under load
-- [ ] #17 Webhook delivery retry logic
+- [x] #17 Webhook delivery retry logic
 
 ---
 
