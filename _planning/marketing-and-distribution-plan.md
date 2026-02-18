@@ -169,6 +169,8 @@ The agentic economy is transitioning from prototype to production. AI agents are
 | Publish OpenAPI spec for facilitator at `facilitator.pincerpay.com/openapi.json` | Engineering | 3rd-party client generation |
 | Apply to Solana Foundation grants / ecosystem fund | Founders | Grant approval |
 | Apply to Superteam bounties for PincerPay integrations | DevRel | Bounty completions |
+| Publish n8n workflow templates (x402 paywall, agent payment, workflow monetization) | Engineering + DevRel | Template installs, community forks |
+| Build + publish `n8n-nodes-pincerpay` community node, submit for verification | Engineering | npm downloads, n8n Cloud verification |
 | Run first "Build with PincerPay" hackathon (online, 48hr) | Community | 20+ submissions |
 
 ### Phase G3: Scale (Months 4–8)
@@ -234,6 +236,74 @@ The agentic economy is transitioning from prototype to production. AI agents are
 | **Solana Actions** | Solana's blink/action framework for human + agent flows | Build PincerPay Actions adapter |
 | **MCP (Model Context Protocol)** | Anthropic's tool-use standard. PincerPay as MCP server = agents can pay natively | Build MCP server for PincerPay |
 | **OpenRouter / LiteLLM** | AI gateway aggregators — payment at the proxy layer | Integration proposal |
+| **n8n** | 150K+ GitHub stars, 230K+ active users, 75% using AI features. Workflow automation platform with native AI agent + MCP support | Community node + workflow templates + AI agent tool (see §5.4) |
+
+### 5.4 Deep Dive: n8n Integration Strategy
+
+n8n is the fastest-growing open-source workflow automation platform (~150K GitHub stars, 230K+ active users, $2.5B valuation). It occupies a unique position between no-code platforms (Zapier, Make) and enterprise iPaaS. Crucially, **75% of n8n customers use its AI agent features**, making it one of the largest concentrations of developers building autonomous agent workflows.
+
+**Why n8n is high-priority for PincerPay:**
+
+- **Audience alignment**: n8n's users are technical teams building AI agent workflows — exactly the segment that needs agent payment capabilities.
+- **AI-native architecture**: n8n's AI Agent node (built on LangChain JS) supports custom tool nodes, meaning PincerPay can be exposed as a tool that AI agents invoke autonomously.
+- **MCP support**: n8n has native MCP Client/Server nodes. A PincerPay MCP server gives n8n agents payment capabilities with zero custom node work.
+- **Human-in-the-loop**: n8n supports gating agent tools behind human approval — a direct mapping to AP2 Cart Mandates for high-value purchases.
+- **Existing x402 presence**: x402 workflow templates already exist on n8n (via 1Shot API), proving demand. PincerPay would be the purpose-built, Solana-native alternative.
+
+#### Competitive Landscape within n8n
+
+| Existing Integration | Focus | Limitation |
+|---------------------|-------|------------|
+| Stripe node | Card payments (fiat) | No agent autonomy, no crypto, high fees for micropayments |
+| 1Shot API + x402 templates | x402 facilitator via webhooks | Template hack (not a proper node), EVM only, no Solana |
+| Crossmint node | Wallet management, USDC transfers | NFT/wallet focus, not x402 protocol |
+| n8n-nodes-web3 | Raw EVM blockchain interactions | Low-level, no payment protocol abstraction |
+| **PincerPay (proposed)** | **x402 + AP2 stablecoin settlement** | **Purpose-built: Solana-first, gasless via Kora, mandate auth, UCP discovery** |
+
+#### Phased n8n Rollout
+
+**Phase n1 — Workflow Templates (Weeks 1–2, zero custom code)**
+
+Publish 3–4 workflow templates on n8n.io/workflows using n8n's built-in HTTP Request nodes pointed at the PincerPay facilitator API:
+
+| Template | Description | Target User |
+|----------|-------------|-------------|
+| "Accept USDC for any API with PincerPay" | x402 paywall setup via webhook nodes | Merchants |
+| "AI Agent with autonomous USDC payments" | Agent tool using HTTP Request to PincerPay facilitator | Agent builders |
+| "Paywall any n8n workflow with micropayments" | Monetize workflows via x402 | Workflow creators |
+| "Multi-agent crew with payment budgets" | Agent-to-agent payments via PincerPay | Advanced builders |
+
+**Strategic value**: Templates are n8n's primary discovery mechanism (8,300+ in library). Zero engineering cost — validates demand before building a custom node.
+
+**Phase n2 — Community Node (Weeks 3–6)**
+
+Build and publish `n8n-nodes-pincerpay` npm package:
+
+- **PincerPay Action Node** — Resources: Payment (Create/Verify/Settle/Get), Merchant (Register/Get), Transaction (Get/GetMany), Mandate (Create/Validate/Revoke)
+- **PincerPay Trigger Node** — Events: payment.received, payment.settled, mandate.created, transaction.confirmed (via webhook dispatch)
+- **PincerPay Credential Type** — API key auth against PincerPay facilitator
+- Set `usableAsTool: true` so n8n AI agents can invoke PincerPay autonomously
+- Submit to n8n Creator Portal for verification (verified nodes appear in n8n Cloud, reaching enterprise customers)
+
+**Phase n3 — AI Agent Tool + MCP (Weeks 7–10)**
+
+- Publish dedicated AI agent workflow templates showcasing the PincerPay node as an agent tool
+- Build PincerPay MCP server (benefits n8n via MCP Client Tool node AND the broader AI agent ecosystem — Claude Desktop, Cursor, VS Code Copilot)
+- Demonstrate AP2 Cart Mandate → n8n human-in-the-loop approval mapping
+
+**Phase n4 — Core Inclusion (Ongoing)**
+
+- Pursue inclusion in `n8n-nodes-base` (ships with every n8n installation)
+- Engage n8n's enterprise/partnerships team — PincerPay's "payment rail for the agentic economy" aligns with n8n's AI-agent positioning and Nvidia-backed growth strategy
+
+#### Expected Impact
+
+| Metric | Target |
+|--------|--------|
+| Template installs (Phase n1) | 500+ in first 3 months |
+| Community node npm downloads (Phase n2) | 200+/week within 6 months |
+| n8n Cloud verification (Phase n2) | Verified status within 8 weeks of submission |
+| AI agent workflows using PincerPay tool (Phase n3) | 50+ community-built workflows |
 
 ---
 
@@ -362,6 +432,7 @@ The agentic economy is transitioning from prototype to production. AI agents are
 | **Vercel** | Template in Vercel marketplace | Millions of Next.js developers |
 | **Anthropic (MCP)** | PincerPay MCP server | Claude + MCP ecosystem |
 | **OpenAI (function calling)** | PincerPay function definitions | GPT ecosystem |
+| **n8n** | Community node + AI agent tool + workflow templates | 230K+ active automation users, 75% using AI agents |
 
 ### Tier 3: Ecosystem (Long-term network effects)
 
