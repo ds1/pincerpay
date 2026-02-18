@@ -60,3 +60,14 @@ Discovery (UCP) → Trust (AP2) → Settlement (x402) → Chain Abstraction (Sol
 
 ## Current Status
 See `STATUS.md` for current work and `CHANGELOG.md` for completed milestones.
+
+## Backlog Tracking
+
+**Source of truth: [GitHub Issues](https://github.com/ds1/pincerpay/issues).** Local snapshot at `_planning/backlog.md`.
+
+### Auto-sync rules
+- When completing work that corresponds to a GitHub Issue, close the issue: `gh issue close <number>`
+- When closing an issue, also check off the corresponding line in `_planning/backlog.md`
+- When creating new backlog items, create a GitHub Issue first, then add to `_planning/backlog.md` with the issue number
+- Reference issue numbers in commit messages where relevant (e.g., `feat: webhook retry logic, closes #17`)
+- On session start, if asked to review backlog, check for stale items: `gh issue list --state open --limit 50`
