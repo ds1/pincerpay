@@ -14,6 +14,11 @@
     "db:push": "pnpm --filter @pincerpay/db push",
     "db:seed": "pnpm --filter @pincerpay/db build && node packages/db/dist/seed.js"
   },
+  "pnpm": {
+    "overrides": {
+      "bn.js@>=5 <5.2.3": "5.2.3"
+    }
+  },
   "devDependencies": {
     "turbo": "^2",
     "typescript": "^5.7",

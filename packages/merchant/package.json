@@ -25,10 +25,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@pincerpay/core": "workspace:*",
     "@x402/core": "^2.3",
     "@x402/evm": "^2.3",
     "@x402/svm": "^2.3",
-    "@pincerpay/core": "workspace:*",
     "zod": "^3.24"
   },
   "peerDependencies": {
@@ -38,17 +38,25 @@
     "hono": "^4"
   },
   "peerDependenciesMeta": {
-    "@x402/express": { "optional": true },
-    "@x402/hono": { "optional": true },
-    "express": { "optional": true },
-    "hono": { "optional": true }
+    "@x402/express": {
+      "optional": true
+    },
+    "@x402/hono": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "hono": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/express": "^5",
     "@x402/express": "^2.3",
     "@x402/hono": "^2.3",
     "express": "^5",
-    "hono": "^4",
+    "hono": "^4.12.0",
     "typescript": "^5.7"
   }
 }
