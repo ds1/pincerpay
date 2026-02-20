@@ -11,6 +11,7 @@ on:
           - "@pincerpay/core"
           - "@pincerpay/agent"
           - "@pincerpay/merchant"
+          - "@pincerpay/mcp"
           - "@pincerpay/program"
           - all
       bump:
@@ -59,7 +60,7 @@ jobs:
 
           PACKAGES=""
           if [ "${{ inputs.package }}" = "all" ]; then
-            PACKAGES="core agent merchant program"
+            PACKAGES="core agent merchant mcp program"
           else
             # Extract short name from scoped package
             PACKAGES=$(echo "${{ inputs.package }}" | sed 's/@pincerpay\///')

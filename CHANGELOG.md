@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.9.0 — 2026-02-19
+
+### MCP Server (`@pincerpay/mcp`)
+
+New package: Model Context Protocol server that exposes PincerPay to every MCP-compatible AI client — Claude, Cursor, Windsurf, GitHub Copilot, Replit, and any future MCP client. Single highest-leverage distribution artifact.
+
+- **7 tools**:
+  - `list-supported-chains` — return chain configs from local registry or live facilitator
+  - `check-transaction-status` — query facilitator for tx status by hash/signature (auth required)
+  - `estimate-gas-cost` — static gas estimates per chain with optimistic finality info
+  - `validate-payment-config` — validate merchant `PincerPayConfig` JSON against Zod schema with semantic warnings
+  - `scaffold-x402-middleware` — generate copy-paste Express or Hono middleware with route configs
+  - `scaffold-agent-client` — generate agent fetch wrapper with spending policies
+  - `generate-ucp-manifest` — create `/.well-known/ucp` JSON for agent-readable commerce discovery
+- **3 resources**: `chain://{shorthand}` (6 chains), `pincerpay://openapi` (live spec), `docs://pincerpay/{topic}` (getting-started, merchant, agent)
+- **3 prompts**: `integrate-merchant`, `integrate-agent`, `debug-transaction` — guided workflows that chain multiple tools together
+- **Dual transport**: stdio (default, for npx/Claude Desktop/Cursor) + Streamable HTTP (`--transport=http` for remote deployment)
+- **Lightweight**: only 2 runtime deps (`@modelcontextprotocol/sdk` + `@pincerpay/core`) — no viem, no @solana/kit, no @x402 packages
+- **Auth model**: developer tools work without API key; operations tools return helpful `isError` response when no key is configured
+- **`FacilitatorClient`**: lightweight HTTP wrapper following same pattern as `PincerPayClient` in merchant SDK
+- **22 tests** (client, tools, resources)
+- **npm bin entry**: `npx @pincerpay/mcp` for instant setup
+- **Publish workflow**: added `@pincerpay/mcp` to GitHub Actions publish options
+- **Vitest workspace**: added `mcp` test project
+
+## 0.8.0 — 2026-02-20
+
+### Cost Optimization & Settlement Fee Update
+
+Reduced idle infrastructure costs ~18x and improved RPC efficiency ~50x. Settlement fee target raised to 1%.
+
+- **Batched Solana `getSignatureStatuses`** — confirmation worker now sends all pending signatures in a single RPC call per chain (was one call per transaction). 50 pending txns = 1 RPC call instead of 50.
+- **Cached EVM viem clients** — confirmation worker reuses `createPublicClient` instances via a `Map<chainId, PublicClient>` cache (was creating a new client per transaction per cycle).
+- **Adaptive idle backoff on all workers** — replaced fixed `setInterval` with dynamic `setTimeout` scheduling. When a cycle finds no work, the interval doubles (up to 5 min cap). When work arrives, interval resets to base. Idle DB queries reduced from ~26K/day to ~1.4K/day.
+  - Confirmation worker: 60s base (was 15s), 5 min max
+  - Webhook retry worker: 30s base (was 5s), 5 min max
+  - On-chain recorder: 60s base (was 30s), 5 min max
+- **Worker `nudge()` API** — all workers expose a `nudge()` method to reset polling to base interval immediately. The `/v1/settle` route calls `nudge()` on all workers after a successful settlement, so workers wake up fast when there's actual traffic.
+- **Consolidated dashboard webhook stats** — replaced 4 sequential `COUNT WHERE status=X` queries with a single `GROUP BY status` query (4 DB round-trips → 1).
+- **Settlement fee raised to 1%** — init script updated to `fee_bps=100` (was 50). Currently deployed devnet program remains at 50 bps until redeployment. Anchor program lacks an `update_config` instruction — will need one added to change fees without redeploying.
+
 ## 0.7.0 — 2026-02-17
 
 ### Agent Demo

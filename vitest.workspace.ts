@@ -43,6 +43,14 @@ export default defineWorkspace([
   },
   {
     test: {
+      name: "mcp",
+      root: "packages/mcp",
+      include: ["src/**/*.test.ts"],
+      exclude: ["dist/**", "node_modules/**"],
+    },
+  },
+  {
+    test: {
       name: "facilitator",
       root: "apps/facilitator",
       include: ["src/**/*.test.ts"],
