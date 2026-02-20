@@ -9,6 +9,7 @@ const navItems = [
   { href: "/dashboard/transactions", label: "Transactions" },
   { href: "/dashboard/agents", label: "Agents" },
   { href: "/dashboard/paywalls", label: "Paywalls" },
+  { href: "/dashboard/webhooks", label: "Webhooks" },
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/docs", label: "Docs" },

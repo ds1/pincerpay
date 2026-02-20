@@ -15,6 +15,7 @@ import { createVerifyRoute } from "./routes/verify.js";
 import { createSettleRoute } from "./routes/settle.js";
 import { createSettleDirectRoute } from "./routes/settle-direct.js";
 import { createStatusRoute } from "./routes/status.js";
+import { createOpenApiRoute } from "./routes/openapi.js";
 import { serve } from "@hono/node-server";
 import { startConfirmationWorker } from "./workers/confirmation.js";
 import { setupAnchorIntegration } from "./chains/solana-anchor.js";
@@ -156,8 +157,9 @@ app.route("/", createHealthRoute({
   },
 }));
 
-// Public endpoint (no auth)
+// Public endpoints (no auth)
 app.route("/", createSupportedRoute(facilitator));
+app.route("/", createOpenApiRoute());
 
 // Authenticated endpoints
 const authenticated = new Hono<AppEnv>();

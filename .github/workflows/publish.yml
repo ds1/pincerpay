@@ -1,0 +1,81 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package to publish"
+        required: true
+        type: choice
+        options:
+          - "@pincerpay/core"
+          - "@pincerpay/agent"
+          - "@pincerpay/merchant"
+          - "@pincerpay/program"
+          - all
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test
+
+      - name: Bump version and publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          PACKAGES=""
+          if [ "${{ inputs.package }}" = "all" ]; then
+            PACKAGES="core agent merchant program"
+          else
+            # Extract short name from scoped package
+            PACKAGES=$(echo "${{ inputs.package }}" | sed 's/@pincerpay\///')
+          fi
+
+          for pkg in $PACKAGES; do
+            echo "Publishing @pincerpay/$pkg..."
+            cd packages/$pkg
+            npm version ${{ inputs.bump }} --no-git-tag-version
+            VERSION=$(node -p "require('./package.json').version")
+            pnpm publish --access public --no-git-checks
+            cd ../..
+            echo "Published @pincerpay/$pkg@$VERSION"
+          done
+
+          # Commit version bumps
+          git add -A
+          git commit -m "chore: release @pincerpay packages (${{ inputs.bump }})" || echo "No changes to commit"
+          git push

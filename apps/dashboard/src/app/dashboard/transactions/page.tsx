@@ -79,7 +79,25 @@ export default async function TransactionsPage({
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Transactions</h1>
-        <span className="text-sm text-[var(--muted-foreground)]">{total} total</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-[var(--muted-foreground)]">{total} total</span>
+          {total > 0 && (
+            <div className="flex gap-1">
+              <a
+                href="/dashboard/transactions/export?format=csv"
+                className="px-2 py-1 text-xs rounded bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+              >
+                CSV
+              </a>
+              <a
+                href="/dashboard/transactions/export?format=json"
+                className="px-2 py-1 text-xs rounded bg-[var(--muted)] hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+              >
+                JSON
+              </a>
+            </div>
+          )}
+        </div>
       </div>
 
       {txns.length === 0 ? (
