@@ -4,6 +4,8 @@ Last updated: 2026-02-20
 
 ## Last Deploy
 - **Facilitator**: Railway — 2026-02-20T07:09Z (adaptive workers, batched RPC, cached viem clients, worker nudge API)
+- **Dashboard**: Vercel — 2026-02-20 (rebrand: Nunito Sans, orange #F97316, logo)
+- **Agent Demo**: Vercel — 2026-02-20 `demo.pincerpay.com` (rebrand: matching orange identity)
 
 ## Phase 1 MVP — Deployed to Production
 
@@ -123,7 +125,15 @@ Anchor program + TypeScript client + hybrid facilitator.
 
 ## Agent Demo — Complete
 
-Standalone demo project at [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo).
+Standalone demo project at [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo). Live at `demo.pincerpay.com`.
+
+## Branding — Complete
+
+Nunito Sans font, `#F97316` orange primary, `#070300` warm black background, pincer claw logo. Applied to dashboard + agent demo.
+
+## Distribution Strategy — 40 Issues Created
+
+40 GitHub Issues (#49-#88) across 4 tiers from distribution strategy. See `_planning/backlog.md` for full list.
 
 ## Blockers
 _None_

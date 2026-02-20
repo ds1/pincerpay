@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.10.0 — 2026-02-20
+
+### Rebrand — Orange Identity
+
+New visual identity across dashboard and agent demo with PincerPay pincer claw logo.
+
+- **Font**: Nunito Sans via `next/font/google` (was system-ui on dashboard, Inter on demo)
+- **Primary color**: `#F97316` orange (was `#3b82f6` blue on dashboard, `#6366f1` indigo on demo)
+- **Background**: `#070300` warm black (was `#09090b` / `#0a0a0f` cool dark)
+- **Logo**: Pincer claw mark added to dashboard sidebar + homepage, demo header
+- **Card/muted/border colors** warm-shifted across both projects to complement orange palette
+- **Agent demo**: Hero gradient orange-to-yellow, glow/tour effects updated, CLI branding via `chalk.hex("#F97316")`
+- **Dashboard deployed** to Vercel, **demo deployed** to `demo.pincerpay.com`
+
+### Distribution Strategy — 40 GitHub Issues
+
+Created 40 GitHub Issues (#49-#88) from the distribution strategy across 4 tiers:
+- **Tier 1** (10 issues): npm publish, Cursor Rules, llms.txt, README optimization, AGENTS.md, Replit Template, LangChain tool, n8n nodes, npm SEO, MCP directory listings
+- **Tier 2** (8 issues): Cursor Plugin, Copilot Extension, Vercel/QuickNode/Railway Marketplaces, CrewAI, ChatGPT App, Reddit marketing
+- **Tier 3** (9 issues): Vercel/Cloudflare/Bolt.new partnerships, AP2 compatibility, Stripe/Shopify/AWS/Supabase, OpenAI ACP
+- **Tier 4** (13 issues): Windsurf, Zapier, Pipedream, Make, RapidAPI, Postman, Kong, GitHub Action, Netlify, Fly.io, GCP, Azure, VS Code
+
 ## 0.9.0 — 2026-02-19
 
 ### MCP Server (`@pincerpay/mcp`)
