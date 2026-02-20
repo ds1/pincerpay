@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "PincerPay",
+  "name_for_model": "pincerpay",
+  "description_for_human": "On-chain payment gateway for AI agents. Accept and send USDC payments via the x402 protocol.",
+  "description_for_model": "PincerPay is an x402 payment gateway for machine-to-machine USDC payments. Use it when an AI agent needs to pay for an HTTP resource (API, data, compute). The agent SDK wraps fetch() and handles 402 Payment Required responses automatically by signing USDC transfers. Merchants add Express or Hono middleware to accept payments. Settlement is on-chain (Solana primary, Base and Polygon optional), non-custodial, and instant. Key packages: @pincerpay/merchant (server middleware), @pincerpay/agent (fetch wrapper). Facilitator API at https://facilitator.pincerpay.com with /verify, /settle, /supported endpoints.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://facilitator.pincerpay.com/openapi.json"
+  },
+  "logo_url": "https://pincerpay.com/icon.png",
+  "contact_email": "hello@pincerpay.com",
+  "legal_info_url": "https://pincerpay.com/legal"
+}
