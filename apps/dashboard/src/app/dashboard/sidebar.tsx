@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSupabase } from "@/lib/supabase/provider";
@@ -33,8 +34,9 @@ export function Sidebar({ email }: { email: string }) {
 
   return (
     <aside className="w-64 border-r border-[var(--border)] p-6 flex flex-col">
-      <Link href="/dashboard" className="text-xl font-bold mb-8">
-        Pincer<span className="text-[var(--primary)]">Pay</span>
+      <Link href="/dashboard" className="flex items-center gap-2 text-xl font-bold mb-8">
+        <Image src="/logo.png" alt="PincerPay" width={32} height={32} />
+        <span>Pincer<span className="text-[var(--primary)]">Pay</span></span>
       </Link>
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map((item) => (
