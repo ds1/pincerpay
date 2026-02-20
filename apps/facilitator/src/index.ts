@@ -172,7 +172,14 @@ authenticated.use("/v1/settle-direct", routeRateLimitMiddleware("settle", 50));
 authenticated.use("/v1/verify", routeRateLimitMiddleware("verify", 100));
 
 authenticated.route("/", createVerifyRoute(facilitator));
-authenticated.route("/", createSettleRoute(facilitator, db, { koraEnabled }));
+authenticated.route("/", createSettleRoute(facilitator, db, {
+  koraEnabled,
+  onSettle: () => {
+    confirmationWorker.nudge();
+    webhookRetryWorker.nudge();
+    onChainRecorderWorker?.nudge();
+  },
+}));
 if (anchorIntegration) {
   authenticated.route("/", createSettleDirectRoute(db, {
     program: anchorIntegration.program,

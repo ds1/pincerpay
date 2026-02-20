@@ -7,6 +7,7 @@ import type { WorkerStatus } from "./confirmation.js";
 
 interface OnChainRecorderOptions {
   intervalMs?: number;
+  maxIntervalMs?: number;
   batchSize?: number;
   program: PincerPayProgram;
   logger: Logger;
@@ -27,19 +28,23 @@ interface OnChainRecorderOptions {
  *
  * Failures are logged and retried on the next cycle — the x402 settlement
  * is already confirmed, so no data loss occurs.
+ *
+ * Uses adaptive polling: backs off when idle, resets when work is found.
  */
 export function startOnChainRecorderWorker(
   db: Database,
   options: OnChainRecorderOptions,
 ) {
   const {
-    intervalMs = 30_000,
+    intervalMs = 60_000,
+    maxIntervalMs = 300_000,
     batchSize = 10,
     program,
     logger,
   } = options;
 
   let running = false;
+  let currentInterval = intervalMs;
   const status: WorkerStatus = {
     running: false,
     lastCycleAt: null,
@@ -78,13 +83,19 @@ export function startOnChainRecorderWorker(
       const solanaTxns = pending.filter((tx) => tx.chainId.startsWith("solana:"));
 
       if (solanaTxns.length === 0) {
+        // No work — back off
+        currentInterval = Math.min(currentInterval * 2, maxIntervalMs);
         status.consecutiveErrors = 0;
         status.cycleCount++;
         status.lastCycleAt = new Date().toISOString();
         running = false;
         status.running = false;
+        scheduleNext();
         return;
       }
+
+      // Work found — reset to base interval
+      currentInterval = intervalMs;
 
       logger.debug({
         msg: "on_chain_recorder_checking",
@@ -164,11 +175,20 @@ export function startOnChainRecorderWorker(
     } finally {
       running = false;
       status.running = false;
+      scheduleNext();
     }
   }
 
   let currentCycle: Promise<void> | null = null;
   let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  function scheduleNext() {
+    if (stopped) return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(wrappedCheck, currentInterval);
+    timer.unref();
+  }
 
   function wrappedCheck() {
     if (stopped) return;
@@ -177,12 +197,13 @@ export function startOnChainRecorderWorker(
     });
   }
 
-  const interval = setInterval(wrappedCheck, intervalMs);
-  interval.unref();
+  // Start first cycle
+  scheduleNext();
 
   logger.info({
     msg: "on_chain_recorder_started",
     intervalMs,
+    maxIntervalMs,
     batchSize,
     programId: program.programId,
   });
@@ -190,7 +211,7 @@ export function startOnChainRecorderWorker(
   return {
     stop: async () => {
       stopped = true;
-      clearInterval(interval);
+      if (timer) clearTimeout(timer);
       if (currentCycle) {
         logger.info({ msg: "on_chain_recorder_draining" });
         await currentCycle;
@@ -198,5 +219,13 @@ export function startOnChainRecorderWorker(
       logger.info({ msg: "on_chain_recorder_stopped" });
     },
     getStatus: (): WorkerStatus => ({ ...status }),
+    /** Reset polling interval to base rate. */
+    nudge: () => {
+      currentInterval = intervalMs;
+      if (!running) {
+        if (timer) clearTimeout(timer);
+        scheduleNext();
+      }
+    },
   };
 }

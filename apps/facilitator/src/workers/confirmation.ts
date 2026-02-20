@@ -1,5 +1,5 @@
 import { eq, and, lt } from "drizzle-orm";
-import { createPublicClient, http, type Chain } from "viem";
+import { createPublicClient, http, type Chain, type PublicClient } from "viem";
 import { base, baseSepolia, polygon, polygonAmoy } from "viem/chains";
 import { createSolanaRpc, signature } from "@solana/kit";
 import type { Database } from "@pincerpay/db";
@@ -29,6 +29,7 @@ export interface WorkerStatus {
 
 interface ConfirmationWorkerOptions {
   intervalMs?: number;
+  maxIntervalMs?: number;
   maxAge?: number;
   batchSize?: number;
   rpcUrls: Record<string, string>;
@@ -42,13 +43,18 @@ interface ConfirmationWorkerOptions {
  * and updates their status to "confirmed" or "failed".
  *
  * Supports both EVM (viem getTransactionReceipt) and Solana (getSignatureStatuses).
+ *
+ * Uses adaptive polling: starts at `intervalMs`, backs off to `maxIntervalMs`
+ * when idle, resets to `intervalMs` when work is found. Call `nudge()` to
+ * reset the interval immediately (e.g. after a new settlement).
  */
 export function startConfirmationWorker(
   db: Database,
   options: ConfirmationWorkerOptions,
 ) {
   const {
-    intervalMs = 15_000,
+    intervalMs = 60_000,
+    maxIntervalMs = 300_000,
     maxAge = 30_000,
     batchSize = 50,
     rpcUrls,
@@ -57,6 +63,7 @@ export function startConfirmationWorker(
   } = options;
 
   let running = false;
+  let currentInterval = intervalMs;
   const status: WorkerStatus = {
     running: false,
     lastCycleAt: null,
@@ -79,17 +86,29 @@ export function startConfirmationWorker(
     return rpc;
   }
 
+  // Cache EVM public clients
+  const evmClientCache = new Map<string, PublicClient>();
+
+  function getEvmClient(chainId: string): PublicClient | null {
+    let client = evmClientCache.get(chainId);
+    if (!client) {
+      const chain = EVM_CHAIN_MAP[chainId];
+      if (!chain) return null;
+      client = createPublicClient({
+        chain,
+        transport: http(rpcUrls[chainId] ?? undefined),
+      });
+      evmClientCache.set(chainId, client);
+    }
+    return client;
+  }
+
   async function confirmEvmTransaction(tx: TransactionRow): Promise<void> {
-    const chain = EVM_CHAIN_MAP[tx.chainId];
-    if (!chain) {
+    const client = getEvmClient(tx.chainId);
+    if (!client) {
       logger.warn({ msg: "confirmation_unknown_evm_chain", chainId: tx.chainId, txHash: tx.txHash });
       return;
     }
-
-    const client = createPublicClient({
-      chain,
-      transport: http(rpcUrls[tx.chainId] ?? undefined),
-    });
 
     const receipt = await client.getTransactionReceipt({
       hash: tx.txHash as `0x${string}`,
@@ -128,82 +147,97 @@ export function startConfirmationWorker(
     }
   }
 
-  async function confirmSolanaTransaction(tx: TransactionRow): Promise<void> {
-    const rpc = getSolanaRpc(tx.chainId);
-
-    // Use branded Signature type required by @solana/kit v5
-    const sig = signature(tx.txHash);
-
-    // @solana/kit v5: rpc.method(...).send() pattern
-    const statuses = await rpc
-      .getSignatureStatuses([sig], { searchTransactionHistory: true })
-      .send();
-
-    const status = statuses.value[0];
-    if (!status) {
-      // Transaction not found yet — will retry next cycle
-      return;
+  async function confirmSolanaTransactionsBatch(txns: TransactionRow[]): Promise<void> {
+    // Group by chainId so we can batch per RPC endpoint
+    const byChain = new Map<string, TransactionRow[]>();
+    for (const tx of txns) {
+      const group = byChain.get(tx.chainId) ?? [];
+      group.push(tx);
+      byChain.set(tx.chainId, group);
     }
 
-    if (status.err) {
-      // Transaction failed on-chain
-      await db
-        .update(transactions)
-        .set({
-          status: "failed",
-          confirmedAt: new Date(),
-          gasToken: koraEnabled ? "USDC" : "SOL",
-          slot: String(status.slot),
-        })
-        .where(eq(transactions.id, tx.id));
+    for (const [chainId, chainTxns] of byChain) {
+      const rpc = getSolanaRpc(chainId);
+      const sigs = chainTxns.map((tx) => signature(tx.txHash));
 
-      logger.info({
-        msg: "tx_confirmed",
-        txHash: tx.txHash,
-        chain: "solana",
-        status: "failed",
-        slot: String(status.slot),
-      });
+      // Single batched RPC call for all signatures on this chain
+      const statuses = await rpc
+        .getSignatureStatuses(sigs, { searchTransactionHistory: true })
+        .send();
 
-      await dispatchConfirmationWebhook(db, tx, "failed", logger);
-      return;
-    }
+      for (let i = 0; i < chainTxns.length; i++) {
+        const tx = chainTxns[i];
+        const txStatus = statuses.value[i];
 
-    // Determine confirmation level
-    // confirmationStatus: "processed" | "confirmed" | "finalized"
-    const confirmationStatus = status.confirmationStatus;
+        if (!txStatus) {
+          // Transaction not found yet — will retry next cycle
+          continue;
+        }
 
-    // We consider "confirmed" (2/3 stake voted) as sufficient for standard txns
-    // "finalized" (31 slots, ~6.4s) for high-value
-    if (confirmationStatus === "confirmed" || confirmationStatus === "finalized") {
-      await db
-        .update(transactions)
-        .set({
-          status: "confirmed",
-          confirmedAt: new Date(),
-          gasToken: koraEnabled ? "USDC" : "SOL",
-          slot: String(status.slot),
-        })
-        .where(eq(transactions.id, tx.id));
+        try {
+          if (txStatus.err) {
+            // Transaction failed on-chain
+            await db
+              .update(transactions)
+              .set({
+                status: "failed",
+                confirmedAt: new Date(),
+                gasToken: koraEnabled ? "USDC" : "SOL",
+                slot: String(txStatus.slot),
+              })
+              .where(eq(transactions.id, tx.id));
 
-      logger.info({
-        msg: "tx_confirmed",
-        txHash: tx.txHash,
-        chain: "solana",
-        status: "confirmed",
-        confirmationStatus,
-        slot: String(status.slot),
-      });
+            logger.info({
+              msg: "tx_confirmed",
+              txHash: tx.txHash,
+              chain: "solana",
+              status: "failed",
+              slot: String(txStatus.slot),
+            });
 
-      await dispatchConfirmationWebhook(db, tx, "confirmed", logger);
-    } else {
-      // "processed" — not yet confirmed by supermajority, will retry
-      logger.debug({
-        msg: "solana_tx_processed_not_confirmed",
-        txHash: tx.txHash,
-        confirmationStatus,
-        slot: String(status.slot),
-      });
+            await dispatchConfirmationWebhook(db, tx, "failed", logger);
+            continue;
+          }
+
+          const confirmationStatus = txStatus.confirmationStatus;
+
+          if (confirmationStatus === "confirmed" || confirmationStatus === "finalized") {
+            await db
+              .update(transactions)
+              .set({
+                status: "confirmed",
+                confirmedAt: new Date(),
+                gasToken: koraEnabled ? "USDC" : "SOL",
+                slot: String(txStatus.slot),
+              })
+              .where(eq(transactions.id, tx.id));
+
+            logger.info({
+              msg: "tx_confirmed",
+              txHash: tx.txHash,
+              chain: "solana",
+              status: "confirmed",
+              confirmationStatus,
+              slot: String(txStatus.slot),
+            });
+
+            await dispatchConfirmationWebhook(db, tx, "confirmed", logger);
+          } else {
+            logger.debug({
+              msg: "solana_tx_processed_not_confirmed",
+              txHash: tx.txHash,
+              confirmationStatus,
+              slot: String(txStatus.slot),
+            });
+          }
+        } catch (err) {
+          logger.debug({
+            msg: "confirmation_check_skipped",
+            txHash: tx.txHash,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
     }
   }
 
@@ -227,6 +261,9 @@ export function startConfirmationWorker(
         .limit(batchSize);
 
       if (pending.length === 0) {
+        // No work — back off
+        currentInterval = Math.min(currentInterval * 2, maxIntervalMs);
+        scheduleNext();
         status.consecutiveErrors = 0;
         status.cycleCount++;
         status.lastCycleAt = new Date().toISOString();
@@ -235,25 +272,46 @@ export function startConfirmationWorker(
         return;
       }
 
+      // Work found — reset to base interval
+      currentInterval = intervalMs;
+
       logger.debug({
         msg: "confirmation_worker_checking",
         count: pending.length,
       });
 
-      for (const tx of pending) {
+      // Split into EVM and Solana
+      const evmTxns = pending.filter((tx) => tx.chainId.startsWith("eip155:"));
+      const solanaTxns = pending.filter((tx) => tx.chainId.startsWith("solana:"));
+      const unknownTxns = pending.filter(
+        (tx) => !tx.chainId.startsWith("eip155:") && !tx.chainId.startsWith("solana:"),
+      );
+
+      for (const tx of unknownTxns) {
+        logger.warn({ msg: "confirmation_unknown_namespace", chainId: tx.chainId, txHash: tx.txHash });
+      }
+
+      // EVM: still per-transaction (getTransactionReceipt doesn't support batching)
+      for (const tx of evmTxns) {
         try {
-          if (tx.chainId.startsWith("eip155:")) {
-            await confirmEvmTransaction(tx);
-          } else if (tx.chainId.startsWith("solana:")) {
-            await confirmSolanaTransaction(tx);
-          } else {
-            logger.warn({ msg: "confirmation_unknown_namespace", chainId: tx.chainId, txHash: tx.txHash });
-          }
+          await confirmEvmTransaction(tx);
         } catch (err) {
-          // Transaction not yet mined or RPC error — skip, will retry next cycle
           logger.debug({
             msg: "confirmation_check_skipped",
             txHash: tx.txHash,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      // Solana: batched getSignatureStatuses
+      if (solanaTxns.length > 0) {
+        try {
+          await confirmSolanaTransactionsBatch(solanaTxns);
+        } catch (err) {
+          logger.debug({
+            msg: "solana_batch_confirmation_error",
+            count: solanaTxns.length,
             error: err instanceof Error ? err.message : String(err),
           });
         }
@@ -270,6 +328,7 @@ export function startConfirmationWorker(
         error: err instanceof Error ? err.message : String(err),
       });
     } finally {
+      scheduleNext();
       running = false;
       status.running = false;
     }
@@ -277,6 +336,14 @@ export function startConfirmationWorker(
 
   let currentCycle: Promise<void> | null = null;
   let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  function scheduleNext() {
+    if (stopped) return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(wrappedCheck, currentInterval);
+    timer.unref();
+  }
 
   function wrappedCheck() {
     if (stopped) return;
@@ -285,12 +352,13 @@ export function startConfirmationWorker(
     });
   }
 
-  const interval = setInterval(wrappedCheck, intervalMs);
-  interval.unref();
+  // Start first cycle
+  scheduleNext();
 
   logger.info({
     msg: "confirmation_worker_started",
     intervalMs,
+    maxIntervalMs,
     maxAge,
     batchSize,
     chains: ["evm", "solana"],
@@ -299,7 +367,7 @@ export function startConfirmationWorker(
   return {
     stop: async () => {
       stopped = true;
-      clearInterval(interval);
+      if (timer) clearTimeout(timer);
       if (currentCycle) {
         logger.info({ msg: "confirmation_worker_draining" });
         await currentCycle;
@@ -307,6 +375,14 @@ export function startConfirmationWorker(
       logger.info({ msg: "confirmation_worker_stopped" });
     },
     getStatus: (): WorkerStatus => ({ ...status }),
+    /** Reset polling interval to base rate — call after a new settlement. */
+    nudge: () => {
+      currentInterval = intervalMs;
+      if (!running) {
+        if (timer) clearTimeout(timer);
+        scheduleNext();
+      }
+    },
   };
 }
 

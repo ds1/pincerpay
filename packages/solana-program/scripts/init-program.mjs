@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Initialize the PincerPay Anchor program on devnet:
- * 1. Call `initialize(fee_bps=50)` — 0.5% fee
+ * 1. Call `initialize(fee_bps=100)` — 1% fee
  * 2. Call `register_merchant` for a test merchant
  *
  * Uses @solana/web3.js v1 from /tmp/anchor-init/node_modules
@@ -44,7 +44,7 @@ console.log("Config PDA:", configPda.toBase58());
 
 // ─── Step 1: Initialize ───
 const initDiscriminator = Buffer.from([175, 175, 109, 31, 13, 152, 155, 237]);
-const feeBps = 50; // 0.5%
+const feeBps = 100; // 1%
 const feeBpsBuffer = Buffer.alloc(2);
 feeBpsBuffer.writeUInt16LE(feeBps);
 
@@ -60,7 +60,7 @@ const initIx = new TransactionInstruction({
   data: initData,
 });
 
-console.log("\nInitializing program (fee_bps=50)...");
+console.log("\nInitializing program (fee_bps=100)...");
 try {
   const initTx = new Transaction().add(initIx);
   const initSig = await sendAndConfirmTransaction(connection, initTx, [authority]);

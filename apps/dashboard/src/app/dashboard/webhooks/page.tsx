@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { merchants, webhookDeliveries } from "@pincerpay/db";
-import { eq, desc, count, and } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 import Link from "next/link";
 import { RetryButton } from "./retry-button";
 
@@ -30,17 +30,16 @@ async function getDeliveries(merchantId: string, offset: number, limit: number) 
 
 async function getDeliveryStats(merchantId: string) {
   const db = getDb();
-  const statuses = ["delivered", "failed", "retrying", "pending"] as const;
+  const rows = await db
+    .select({ status: webhookDeliveries.status, total: count() })
+    .from(webhookDeliveries)
+    .where(eq(webhookDeliveries.merchantId, merchantId))
+    .groupBy(webhookDeliveries.status);
+
   const results: Record<string, number> = {};
-
-  for (const status of statuses) {
-    const [result] = await db
-      .select({ total: count() })
-      .from(webhookDeliveries)
-      .where(and(eq(webhookDeliveries.merchantId, merchantId), eq(webhookDeliveries.status, status)));
-    results[status] = result?.total ?? 0;
+  for (const row of rows) {
+    results[row.status] = row.total;
   }
-
   return results;
 }
 

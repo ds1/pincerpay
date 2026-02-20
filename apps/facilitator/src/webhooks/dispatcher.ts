@@ -23,8 +23,10 @@ export interface WebhookPayload {
 }
 
 interface WebhookDispatcherOptions {
-  /** How often to check for pending retries (default: 5000ms) */
+  /** Base polling interval in ms (default: 30000) */
   pollIntervalMs?: number;
+  /** Maximum polling interval when idle (default: 300000 = 5 min) */
+  maxPollIntervalMs?: number;
   logger: Logger;
 }
 
@@ -165,14 +167,21 @@ async function scheduleRetryOrFail(
 /**
  * Background worker that retries failed webhook deliveries.
  * Polls the database for deliveries with status "retrying" and nextRetryAt <= now.
+ *
+ * Uses adaptive polling: backs off when idle, resets when work is found.
  */
 export function startWebhookRetryWorker(
   db: Database,
   options: WebhookDispatcherOptions,
 ) {
-  const { pollIntervalMs = 5_000, logger } = options;
+  const {
+    pollIntervalMs = 30_000,
+    maxPollIntervalMs = 300_000,
+    logger,
+  } = options;
 
   let running = false;
+  let currentInterval = pollIntervalMs;
   const status: WorkerStatus = {
     running: false,
     lastCycleAt: null,
@@ -200,15 +209,23 @@ export function startWebhookRetryWorker(
         )
         .limit(20);
 
-      for (const delivery of pending) {
-        await attemptDelivery(
-          db,
-          delivery.id,
-          delivery.url,
-          delivery.payload,
-          delivery.attempts,
-          logger,
-        );
+      if (pending.length === 0) {
+        // No work — back off
+        currentInterval = Math.min(currentInterval * 2, maxPollIntervalMs);
+      } else {
+        // Work found — reset to base interval
+        currentInterval = pollIntervalMs;
+
+        for (const delivery of pending) {
+          await attemptDelivery(
+            db,
+            delivery.id,
+            delivery.url,
+            delivery.payload,
+            delivery.attempts,
+            logger,
+          );
+        }
       }
 
       status.consecutiveErrors = 0;
@@ -224,11 +241,20 @@ export function startWebhookRetryWorker(
     } finally {
       running = false;
       status.running = false;
+      scheduleNext();
     }
   }
 
   let currentCycle: Promise<void> | null = null;
   let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  function scheduleNext() {
+    if (stopped) return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(wrappedCheck, currentInterval);
+    timer.unref();
+  }
 
   function wrappedCheck() {
     if (stopped) return;
@@ -237,15 +263,15 @@ export function startWebhookRetryWorker(
     });
   }
 
-  const interval = setInterval(wrappedCheck, pollIntervalMs);
-  interval.unref();
+  // Start first cycle
+  scheduleNext();
 
-  logger.info({ msg: "webhook_retry_worker_started", pollIntervalMs });
+  logger.info({ msg: "webhook_retry_worker_started", pollIntervalMs, maxPollIntervalMs });
 
   return {
     stop: async () => {
       stopped = true;
-      clearInterval(interval);
+      if (timer) clearTimeout(timer);
       if (currentCycle) {
         logger.info({ msg: "webhook_retry_worker_draining" });
         await currentCycle;
@@ -253,6 +279,14 @@ export function startWebhookRetryWorker(
       logger.info({ msg: "webhook_retry_worker_stopped" });
     },
     getStatus: (): WorkerStatus => ({ ...status }),
+    /** Reset polling interval to base rate — call when new retries are expected. */
+    nudge: () => {
+      currentInterval = pollIntervalMs;
+      if (!running) {
+        if (timer) clearTimeout(timer);
+        scheduleNext();
+      }
+    },
   };
 }
 

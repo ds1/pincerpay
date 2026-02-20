@@ -10,6 +10,8 @@ import { dispatchWebhook } from "../webhooks/dispatcher.js";
 interface SettleRouteOptions {
   /** Whether Kora gasless mode is active for Solana transactions */
   koraEnabled?: boolean;
+  /** Nudge background workers to poll sooner after a new settlement */
+  onSettle?: () => void;
 }
 
 export function createSettleRoute(
@@ -150,6 +152,9 @@ export function createSettleRoute(
             });
           });
       }
+
+      // Nudge workers to pick up the new transaction sooner
+      options?.onSettle?.();
 
       logger.info({
         msg: "settle_result",
