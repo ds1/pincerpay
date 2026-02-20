@@ -1,0 +1,34 @@
+# PincerPay
+
+> On-chain payment gateway for the agentic economy.
+
+PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC stablecoins via the x402 protocol. Merchants add middleware; agents wrap fetch calls. Settlement is instant, non-custodial, and on-chain.
+
+## Docs
+
+- [Getting Started](https://pincerpay.com/docs/getting-started): 5-minute quickstart — sign up, create paywall, install SDK, test payment
+- [Merchant SDK](https://pincerpay.com/docs/merchant-sdk): Express and Hono middleware for accepting USDC payments from agents
+- [Agent SDK](https://pincerpay.com/docs/agent-sdk): Drop-in fetch wrapper that handles 402 payment flows automatically
+- [Core Concepts](https://pincerpay.com/docs/concepts): How x402, AP2 mandates, and UCP discovery work together
+- [API Reference](https://pincerpay.com/docs/api-reference): Facilitator REST API — /verify, /settle, /supported endpoints
+- [Testing](https://pincerpay.com/docs/testing): Devnet/testnet setup, faucets, end-to-end test scripts
+
+## Blog
+
+- [Why We Built PincerPay](https://pincerpay.com/blog/why-we-built-pincerpay): Card rails weren't designed for machines — we built infrastructure that was
+
+## Key Concepts
+
+- **x402 Protocol**: HTTP 402 Payment Required with structured payment requirements. Agent signs USDC transfer, facilitator verifies and broadcasts, merchant delivers resource.
+- **Non-custodial**: Agents hold their own keys. PincerPay verifies transactions but never controls funds.
+- **Solana-first**: Sub-second finality, sub-cent fees. Kora integration for gasless transactions (agents pay gas in USDC).
+- **Spending Policies**: Per-transaction limits, daily budgets, merchant allowlists enforced client-side and optionally on-chain via Squads SPN.
+- **AP2 Mandates**: Intent Mandates (autonomous limits), Cart Mandates (human approval), Payment Mandates (execution-level authorization).
+- **UCP Discovery**: /.well-known/ucp manifest for agent-readable commerce discovery.
+
+## Integration
+
+- npm: @pincerpay/merchant (Express/Hono middleware)
+- npm: @pincerpay/agent (fetch wrapper with auto-payment)
+- Supported chains: Solana (primary), Base, Polygon
+- Token: USDC
