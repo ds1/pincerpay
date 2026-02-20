@@ -1,12 +1,11 @@
 import { getAllDocs, getAllBlogPosts } from "@/lib/content";
+import { BASE_URL } from "@/lib/constants";
 import type { MetadataRoute } from "next";
-
-const BASE_URL = "https://pincerpay.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const docs = getAllDocs().map((doc) => ({
     url: `${BASE_URL}/docs/${doc.meta.slug}`,
-    lastModified: new Date(),
+    lastModified: new Date(doc.lastModified),
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));

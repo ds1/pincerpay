@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import { getAllDocs, getDoc } from "@/lib/content";
+import { BASE_URL, safeJsonLd } from "@/lib/constants";
 import { Markdown } from "@/components/markdown";
 import Link from "next/link";
 import type { Metadata } from "next";
-
-const BASE_URL = "https://pincerpay.com";
 
 export function generateStaticParams() {
   return getAllDocs().map((doc) => ({ slug: doc.meta.slug }));
@@ -77,7 +76,7 @@ export default async function DocPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <article className="max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight mb-2">
@@ -88,7 +87,7 @@ export default async function DocPage({
             {doc.meta.description}
           </p>
         )}
-        <Markdown content={doc.content} />
+        <Markdown html={doc.html} />
         <nav className="mt-12 flex items-center justify-between border-t border-[var(--border)] pt-6">
           {prev ? (
             <Link

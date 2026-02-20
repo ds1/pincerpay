@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import { getAllBlogPosts, getBlogPost } from "@/lib/content";
+import { BASE_URL, safeJsonLd } from "@/lib/constants";
 import { Markdown } from "@/components/markdown";
 import Link from "next/link";
 import type { Metadata } from "next";
-
-const BASE_URL = "https://pincerpay.com";
 
 export function generateStaticParams() {
   return getAllBlogPosts().map((post) => ({ slug: post.meta.slug }));
@@ -82,7 +81,7 @@ export default async function BlogPostPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <article>
         <Link
@@ -117,7 +116,7 @@ export default async function BlogPostPage({
           </div>
         )}
         <div className="mt-8">
-          <Markdown content={post.content} />
+          <Markdown html={post.html} />
         </div>
       </article>
     </>

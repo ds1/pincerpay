@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { SupabaseProvider } from "@/lib/supabase/provider";
+import { BASE_URL } from "@/lib/constants";
 import "./globals.css";
-
-const BASE_URL = "https://pincerpay.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

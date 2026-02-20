@@ -7,10 +7,6 @@
   "auth": {
     "type": "none"
   },
-  "api": {
-    "type": "openapi",
-    "url": "https://facilitator.pincerpay.com/openapi.json"
-  },
   "logo_url": "https://pincerpay.com/icon.png",
   "contact_email": "hello@pincerpay.com",
   "legal_info_url": "https://pincerpay.com/legal"

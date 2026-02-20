@@ -1,9 +1,8 @@
 import { getAllDocs } from "@/lib/content";
 import { SiteHeader } from "@/components/site-header";
+import { BASE_URL } from "@/lib/constants";
 import { DocsSidebar } from "./sidebar";
 import type { Metadata } from "next";
-
-const BASE_URL = "https://pincerpay.com";
 
 export const metadata: Metadata = {
   title: "Docs",

@@ -1,6 +1,12 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+import remarkRehype from "remark-rehype";
+import rehypeHighlight from "rehype-highlight";
+import rehypeStringify from "rehype-stringify";
 
 const contentDir = path.join(process.cwd(), "content");
 
@@ -23,7 +29,21 @@ export interface BlogMeta {
 
 export interface ContentItem<T> {
   meta: T;
-  content: string;
+  /** Pre-compiled HTML from markdown */
+  html: string;
+  /** File modification time (ISO string) */
+  lastModified: string;
+}
+
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkRehype)
+  .use(rehypeHighlight)
+  .use(rehypeStringify);
+
+function compileMarkdown(md: string): string {
+  return processor.processSync(md).toString();
 }
 
 function readMarkdownDir<T>(
@@ -38,11 +58,14 @@ function readMarkdownDir<T>(
     .filter((f) => f.endsWith(".md"))
     .map((filename) => {
       const slug = filename.replace(/\.md$/, "");
-      const raw = fs.readFileSync(path.join(dir, filename), "utf-8");
+      const filePath = path.join(dir, filename);
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const stat = fs.statSync(filePath);
       const { data, content } = matter(raw);
       return {
         meta: { slug, ...defaults, ...data } as T,
-        content,
+        html: compileMarkdown(content),
+        lastModified: stat.mtime.toISOString(),
       };
     });
 }

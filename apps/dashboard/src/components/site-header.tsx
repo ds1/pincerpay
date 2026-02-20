@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { GITHUB_URL } from "@/lib/constants";
 
 const navLinks = [
   { href: "/docs", label: "Docs" },
@@ -10,6 +12,7 @@ const navLinks = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur">
@@ -18,7 +21,7 @@ export function SiteHeader() {
           <Link href="/" className="text-lg font-bold">
             Pincer<span className="text-[var(--primary)]">Pay</span>
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -34,9 +37,9 @@ export function SiteHeader() {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-3">
           <a
-            href="https://github.com/pincerpay/pincerpay"
+            href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
@@ -56,7 +59,80 @@ export function SiteHeader() {
             Get Started
           </Link>
         </div>
+        {/* Mobile menu button */}
+        <button
+          type="button"
+          className="sm:hidden p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
+        >
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            {mobileOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+              />
+            )}
+          </svg>
+        </button>
       </div>
+      {/* Mobile nav dropdown */}
+      {mobileOpen && (
+        <nav className="sm:hidden border-t border-[var(--border)] px-6 py-4 flex flex-col gap-3">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className={`text-sm transition-colors ${
+                pathname.startsWith(link.href)
+                  ? "text-[var(--foreground)] font-medium"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+          >
+            GitHub
+          </a>
+          <div className="flex gap-3 pt-2 border-t border-[var(--border)]">
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/signup"
+              onClick={() => setMobileOpen(false)}
+              className="px-4 py-1.5 bg-[var(--primary)] text-white text-sm rounded-md font-medium hover:opacity-90 transition-opacity"
+            >
+              Get Started
+            </Link>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

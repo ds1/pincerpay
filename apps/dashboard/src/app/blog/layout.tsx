@@ -1,7 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
+import { BASE_URL } from "@/lib/constants";
 import type { Metadata } from "next";
-
-const BASE_URL = "https://pincerpay.com";
 
 export const metadata: Metadata = {
   title: "Blog",
