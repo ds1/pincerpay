@@ -13,14 +13,18 @@
   "dependencies": {
     "@pincerpay/core": "workspace:*",
     "@pincerpay/db": "workspace:*",
-    "@supabase/supabase-js": "^2",
     "@supabase/ssr": "^0.5",
+    "@supabase/supabase-js": "^2",
+    "drizzle-orm": "^0.38",
+    "gray-matter": "^4.0.3",
     "next": "^15",
+    "postgres": "^3.4",
     "react": "^19",
     "react-dom": "^19",
-    "drizzle-orm": "^0.38",
-    "postgres": "^3.4",
+    "react-markdown": "^10.1.0",
     "recharts": "^2",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "zod": "^3.24"
   },
   "devDependencies": {
