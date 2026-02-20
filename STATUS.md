@@ -1,6 +1,9 @@
 # Project Status
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
+
+## Last Deploy
+- **Facilitator**: Railway — 2026-02-20T07:09Z (adaptive workers, batched RPC, cached viem clients, worker nudge API)
 
 ## Phase 1 MVP — Deployed to Production
 
