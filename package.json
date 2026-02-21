@@ -15,6 +15,7 @@
     "status": "tsx src/cli/index.ts status",
     "validate": "tsx scripts/validate-config.ts",
     "test": "vitest",
+    "dashboard": "tsx src/web/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "bin": {

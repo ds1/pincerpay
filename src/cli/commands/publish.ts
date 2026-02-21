@@ -2,7 +2,8 @@ import type { Command } from "commander";
 import fs from "node:fs";
 import path from "node:path";
 import dayjs from "dayjs";
-import { confirm } from "@inquirer/prompts";
+import chalk from "chalk";
+import { confirm, input } from "@inquirer/prompts";
 import { listContent, moveContent } from "../../lib/content-store.js";
 import { getEnv, isChannelConfigured } from "../../lib/env.js";
 import { log } from "../../lib/logger.js";
@@ -18,6 +19,7 @@ export function registerPublishCommand(program: Command): void {
     .option("--dry-run", "Show what would be published without calling APIs")
     .option("-y, --yes", "Skip confirmation prompt")
     .option("-v, --verbose", "Verbose output")
+    .option("--manual", "Manual publish: copy-paste content, then record platform URL")
     .action(async (opts) => {
       try {
         const channel = opts.channel as Channel | undefined;
@@ -51,6 +53,17 @@ export function registerPublishCommand(program: Command): void {
 
         if (opts.dryRun) {
           log.info("[dry-run] Would publish the items listed above.");
+          return;
+        }
+
+        if (opts.manual) {
+          let published = 0;
+          for (const item of items) {
+            const done = await manualPublishItem(item);
+            if (done) published++;
+          }
+          console.log();
+          log.info(`Manually published: ${published} / ${items.length}`);
           return;
         }
 
@@ -90,6 +103,51 @@ export function registerPublishCommand(program: Command): void {
         process.exit(1);
       }
     });
+}
+
+const COMPOSE_URLS: Partial<Record<Channel, string>> = {
+  twitter: "https://x.com/compose/tweet",
+  reddit: "https://www.reddit.com/submit",
+  discord: "https://discord.com/channels/@me",
+};
+
+async function manualPublishItem(item: ContentFile): Promise<boolean> {
+  const { channel, title, type } = item.frontmatter;
+
+  log.header(`${channel} / ${type}: ${title}`);
+
+  // Display content for copy-paste
+  console.log();
+  console.log(chalk.dim("─── content ───────────────────────────────────────"));
+  console.log(item.body);
+  console.log(chalk.dim("──────────────────────────────────────────────────"));
+  console.log();
+
+  const composeUrl = COMPOSE_URLS[channel];
+  if (composeUrl) {
+    log.info(`Compose URL: ${chalk.underline(composeUrl)}`);
+  }
+
+  const shouldPublish = await confirm({
+    message: "Did you publish this content?",
+  });
+
+  if (!shouldPublish) {
+    log.dim("  Skipped.");
+    return false;
+  }
+
+  const platformUrl = await input({
+    message: "Platform URL (paste link, or leave blank):",
+  });
+
+  moveContent(item.filepath, "published", {
+    platform_url: platformUrl || "manual",
+    published_at: dayjs().toISOString(),
+  });
+
+  log.success(`Marked published: ${item.frontmatter.id}`);
+  return true;
 }
 
 async function publishItem(item: ContentFile, verbose: boolean): Promise<PlatformPublishResult> {

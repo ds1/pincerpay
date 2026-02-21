@@ -7,6 +7,7 @@ import { registerStatusCommand } from "./commands/status.js";
 import { registerCalendarCommand } from "./commands/calendar.js";
 import { registerAnalyticsCommand } from "./commands/analytics.js";
 import { registerReportCommand } from "./commands/report.js";
+import { registerDashboardCommand } from "./commands/dashboard.js";
 
 const program = new Command();
 
@@ -22,5 +23,6 @@ registerStatusCommand(program);
 registerCalendarCommand(program);
 registerAnalyticsCommand(program);
 registerReportCommand(program);
+registerDashboardCommand(program);
 
 program.parse();
