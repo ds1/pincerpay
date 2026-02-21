@@ -1,5 +1,6 @@
 import Snoowrap from "snoowrap";
 import { getEnv } from "./env.js";
+import { withRetry } from "./retry.js";
 
 let client: Snoowrap | null = null;
 
@@ -26,11 +27,14 @@ export async function submitPost(
   body: string
 ): Promise<{ id: string; url: string }> {
   const r = getRedditClient();
-  const submission = await (r.submitSelfpost({
-    subredditName: subreddit,
-    title,
-    text: body,
-  }) as unknown as Promise<{ name: string; permalink: string }>);
+  const submission = await withRetry(
+    () => r.submitSelfpost({
+      subredditName: subreddit,
+      title,
+      text: body,
+    }) as unknown as Promise<{ name: string; permalink: string }>,
+    { label: "Reddit submitPost" },
+  );
   return {
     id: submission.name,
     url: `https://reddit.com${submission.permalink}`,
@@ -43,11 +47,14 @@ export async function getPostMetrics(postId: string): Promise<{
   upvote_ratio: number;
 }> {
   const r = getRedditClient();
-  const submission = await (r.getSubmission(postId).fetch() as unknown as Promise<{
-    score: number;
-    num_comments: number;
-    upvote_ratio: number;
-  }>);
+  const submission = await withRetry(
+    () => r.getSubmission(postId).fetch() as unknown as Promise<{
+      score: number;
+      num_comments: number;
+      upvote_ratio: number;
+    }>,
+    { label: "Reddit getPostMetrics" },
+  );
   return {
     upvotes: submission.score,
     comments: submission.num_comments,

@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { getEnv } from "./env.js";
+import { withRetry } from "./retry.js";
 
 function getYouTubeClient() {
   const env = getEnv();
@@ -26,18 +27,21 @@ export async function updateVideoDescription(
 ): Promise<{ id: string; url: string }> {
   const youtube = getYouTubeClient();
 
-  await youtube.videos.update({
-    part: ["snippet"],
-    requestBody: {
-      id: videoId,
-      snippet: {
-        title,
-        description,
-        tags,
-        categoryId: "28", // Science & Technology
+  await withRetry(
+    () => youtube.videos.update({
+      part: ["snippet"],
+      requestBody: {
+        id: videoId,
+        snippet: {
+          title,
+          description,
+          tags,
+          categoryId: "28", // Science & Technology
+        },
       },
-    },
-  });
+    }),
+    { label: "YouTube updateVideoDescription" },
+  );
 
   return {
     id: videoId,
@@ -52,10 +56,13 @@ export async function getVideoMetrics(videoId: string): Promise<{
 }> {
   const youtube = getYouTubeClient();
 
-  const response = await youtube.videos.list({
-    part: ["statistics"],
-    id: [videoId],
-  });
+  const response = await withRetry(
+    () => youtube.videos.list({
+      part: ["statistics"],
+      id: [videoId],
+    }),
+    { label: "YouTube getVideoMetrics" },
+  );
 
   const stats = response.data.items?.[0]?.statistics;
   return {

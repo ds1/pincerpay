@@ -37,11 +37,25 @@ async function generateFromCalendar(): Promise<void> {
 
   log.info(`Found ${dueEntries.length} content items to generate`);
 
+  let generated = 0;
+  let failed = 0;
+
   for (const entry of dueEntries) {
-    await generateFromEntry(entry);
+    try {
+      await generateFromEntry(entry);
+      generated++;
+    } catch (error) {
+      failed++;
+      const msg = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to generate ${entry.type} for ${entry.channel} ("${entry.topic.slice(0, 50)}..."): ${msg}`);
+    }
   }
 
-  log.success(`Generation complete. ${dueEntries.length} drafts created in content/drafts/`);
+  if (failed > 0) {
+    log.warn(`Generation complete. Generated: ${generated} | Failed: ${failed}`);
+  } else {
+    log.success(`Generation complete. ${generated} drafts created in content/drafts/`);
+  }
 }
 
 async function generateFromTopic(): Promise<void> {

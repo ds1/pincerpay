@@ -1,5 +1,6 @@
 import { Client, GatewayIntentBits, TextChannel } from "discord.js";
 import { getEnv } from "./env.js";
+import { withRetry } from "./retry.js";
 
 let client: Client | null = null;
 let ready = false;
@@ -44,12 +45,18 @@ export async function sendAnnouncement(message: string): Promise<{ id: string; u
     throw new Error("DISCORD_ANNOUNCEMENT_CHANNEL_ID not set in .env");
   }
 
-  const channel = await bot.channels.fetch(channelId);
+  const channel = await withRetry(
+    () => bot.channels.fetch(channelId),
+    { label: "Discord fetchChannel" },
+  );
   if (!channel || !(channel instanceof TextChannel)) {
     throw new Error(`Channel ${channelId} not found or not a text channel`);
   }
 
-  const sent = await channel.send(message);
+  const sent = await withRetry(
+    () => channel.send(message),
+    { label: "Discord sendAnnouncement" },
+  );
 
   return {
     id: sent.id,
@@ -59,13 +66,19 @@ export async function sendAnnouncement(message: string): Promise<{ id: string; u
 
 export async function sendToChannel(channelId: string, message: string): Promise<{ id: string; url: string }> {
   const bot = await getDiscordClient();
-  const channel = await bot.channels.fetch(channelId);
+  const channel = await withRetry(
+    () => bot.channels.fetch(channelId),
+    { label: "Discord fetchChannel" },
+  );
 
   if (!channel || !(channel instanceof TextChannel)) {
     throw new Error(`Channel ${channelId} not found or not a text channel`);
   }
 
-  const sent = await channel.send(message);
+  const sent = await withRetry(
+    () => channel.send(message),
+    { label: "Discord sendToChannel" },
+  );
   return { id: sent.id, url: sent.url };
 }
 

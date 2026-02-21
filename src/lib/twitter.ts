@@ -1,5 +1,6 @@
 import { TwitterApi } from "twitter-api-v2";
 import { getEnv } from "./env.js";
+import { withRetry } from "./retry.js";
 
 let client: TwitterApi | null = null;
 
@@ -21,7 +22,10 @@ function getTwitterClient(): TwitterApi {
 
 export async function postTweet(text: string): Promise<{ id: string; url: string }> {
   const api = getTwitterClient();
-  const result = await api.v2.tweet(text);
+  const result = await withRetry(
+    () => api.v2.tweet(text),
+    { label: "X/Twitter postTweet" },
+  );
   return {
     id: result.data.id,
     url: `https://x.com/i/status/${result.data.id}`,
@@ -30,7 +34,10 @@ export async function postTweet(text: string): Promise<{ id: string; url: string
 
 export async function postThread(tweets: string[]): Promise<{ ids: string[]; url: string }> {
   const api = getTwitterClient();
-  const results = await api.v2.tweetThread(tweets);
+  const results = await withRetry(
+    () => api.v2.tweetThread(tweets),
+    { label: "X/Twitter postThread" },
+  );
   const ids = results.map((r) => r.data.id);
   return {
     ids,
@@ -45,9 +52,12 @@ export async function getTweetMetrics(tweetId: string): Promise<{
   replies: number;
 }> {
   const api = getTwitterClient();
-  const tweet = await api.v2.singleTweet(tweetId, {
-    "tweet.fields": ["public_metrics"],
-  });
+  const tweet = await withRetry(
+    () => api.v2.singleTweet(tweetId, {
+      "tweet.fields": ["public_metrics"],
+    }),
+    { label: "X/Twitter getTweetMetrics" },
+  );
 
   const metrics = tweet.data.public_metrics;
   return {

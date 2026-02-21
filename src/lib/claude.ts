@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getEnv } from "./env.js";
+import { withRetry } from "./retry.js";
 
 let client: Anthropic | null = null;
 
@@ -19,12 +20,15 @@ export interface GenerateContentParams {
 
 export async function generateContent(params: GenerateContentParams): Promise<string> {
   const env = getEnv();
-  const response = await getClaudeClient().messages.create({
-    model: params.model ?? env.DEFAULT_MODEL,
-    max_tokens: params.maxTokens ?? 4096,
-    system: params.systemPrompt,
-    messages: [{ role: "user", content: params.userMessage }],
-  });
+  const response = await withRetry(
+    () => getClaudeClient().messages.create({
+      model: params.model ?? env.DEFAULT_MODEL,
+      max_tokens: params.maxTokens ?? 4096,
+      system: params.systemPrompt,
+      messages: [{ role: "user", content: params.userMessage }],
+    }),
+    { label: "Claude API" },
+  );
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
