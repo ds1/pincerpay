@@ -146,16 +146,35 @@ export function createKoraFacilitatorSvmSigner(
 
     async sendTransaction(transaction: string, network: string): Promise<string> {
       // Transaction is already fully signed by signTransaction() — submit directly
-      // to Solana RPC instead of Kora's signAndSendTransaction (which would re-sign)
-      const rpc = getSolanaRpc(network);
-      const sig = await rpc
-        .sendTransaction(transaction as Parameters<typeof rpc.sendTransaction>[0], {
-          encoding: "base64",
-          skipPreflight: false,
-          preflightCommitment: "confirmed",
-        })
-        .send();
-      return sig;
+      // to Solana RPC instead of Kora's signAndSendTransaction (which would re-sign).
+      // Use raw fetch to avoid @solana/kit type/encoding issues.
+      const url = rpcUrls?.[network] ?? "https://api.devnet.solana.com";
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "sendTransaction",
+          params: [transaction, {
+            encoding: "base64",
+            skipPreflight: false,
+            preflightCommitment: "confirmed",
+          }],
+        }),
+      });
+
+      const json = (await res.json()) as {
+        result?: string;
+        error?: { message: string; code: number; data?: unknown };
+      };
+      if (json.error) {
+        throw new Error(
+          `Solana sendTransaction failed [${json.error.code}]: ${json.error.message}` +
+          (json.error.data ? ` (${JSON.stringify(json.error.data)})` : ""),
+        );
+      }
+      return json.result as string;
     },
 
     async confirmTransaction(sig: string, network: string): Promise<void> {
