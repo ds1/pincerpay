@@ -2,30 +2,21 @@
 
 Last updated: 2026-02-22
 
-## In Progress — Kora E2E Payment Test
+## Completed — Kora E2E Payment Test (2026-02-22)
 
-**Status**: Awaiting facilitator redeploy on Railway (auto-deploy triggered by push).
+E2E Kora gasless payment test PASSING on Solana devnet.
+- TX: `3SFTEnHnAbfvNUm4UyBWuUXSBkWxkDkGTERvzcJaeTgAbnZd5wdX8y1H4Pmn3TPjGCaiZ42Mgs9Dhn51DWYSJvbC`
+- Agent paid 0.001 USDC, Kora paid SOL gas
+- Verify + Settle both pass against live facilitator
 
-Two bugs were found and fixed during the e2e Kora payment test:
-1. **`accepted` field missing** — x402 V2 scheme requires `paymentPayload.accepted` (mirrors `paymentRequirements`). Without it, `payload.accepted.scheme` throws TypeError → 500. Fixed in test script.
-2. **Wrong Kora response field** — `signTransaction` reads `result.transaction` but Kora returns `result.signed_transaction`. Caused `null` to be passed to `simulateTransaction`. Fixed in `packages/solana/src/kora/signer.ts`.
-
-**Commits pushed (not yet deployed):**
-- `3cc7984` — `fix: correct Kora RPC response field names (signed_transaction)`
-- `574dc3c` — `test: fix Kora payment script x402 SVM exact format`
-
-**Next steps after redeploy:**
-1. Run `node apps/facilitator/scripts/test-kora-payment.mjs` to complete the e2e test
-2. If simulation still fails, check Kora signer logs on Railway for signing errors
-3. On success, verify the tx on Solana devnet explorer
-4. Update STATUS.md to mark Kora e2e test complete
-
-**Test script**: `apps/facilitator/scripts/test-kora-payment.mjs`
-- Requires env: `KORA_SIGNER_PRIVATE_KEY`, `DATABASE_URL` (from `apps/facilitator/.env`)
-- Creates temp test merchant + API key in DB, generates agent wallet, funds with USDC, builds x402-compliant transaction, calls facilitator /v1/settle, cleans up
+### Bugs fixed (all deployed):
+1. **`accepted` field missing** in paymentPayload (x402 V2 scheme requires it)
+2. **Wrong Kora response field** (`result.transaction` -> `result.signed_transaction`)
+3. **Double-signing** (`sendTransaction` called Kora `signAndSendTransaction` on already-signed tx)
+4. **Raw fetch for sendTransaction** (replaced `@solana/kit` `rpc.sendTransaction()` with raw JSON-RPC fetch)
 
 ## Last Deploy
-- **Facilitator**: Railway — 2026-02-22T07:30Z (Kora gasless integration live) — **PENDING REDEPLOY** with `signed_transaction` fix
+- **Facilitator**: Railway — 2026-02-22T15:39Z (Kora gasless e2e passing)
 - **Kora Signer**: Railway — 2026-02-22T07:15Z (new service, `resplendent-freedom`)
 - **Dashboard**: Vercel — 2026-02-20T22:46Z (docs, blog, SEO, llms.txt, SiteHeader, server-side markdown, dependabot patches)
 - **Agent Demo**: Vercel — 2026-02-20 `demo.pincerpay.com` (rebrand: matching orange identity)
@@ -97,7 +88,7 @@ Kora gasless integration deployed to devnet. Squads SPN session keys still pendi
 - [x] Facilitator graceful fallback to local keypair if Kora unavailable
 - [x] Fix Kora RPC method name: `getPayerSigner` (not `getFeePayer`)
 - [x] Fix Kora signTransaction response field: `signed_transaction` (not `transaction`)
-- [ ] **E2E payment test** — script ready, awaiting redeploy (`apps/facilitator/scripts/test-kora-payment.mjs`)
+- [x] **E2E payment test** — PASSING (2026-02-22, TX `3SFTEnH...JvbC`)
 
 ### Remaining
 - [ ] Squads SPN session key integration

@@ -218,7 +218,7 @@ async function fundAgent(agentAddress) {
 
   // SPL Token Transfer instruction (Transfer = instruction 3)
   const amountBytes = new Uint8Array(8);
-  new DataView(amountBytes.buffer).setBigUint64(0, 2_000_000n, true); // 2 USDC
+  new DataView(amountBytes.buffer).setBigUint64(0, 2_000n, true); // 0.002 USDC (enough for 0.001 payment)
   const transferIx = {
     programAddress: TOKEN_PROGRAM,
     accounts: [
@@ -429,6 +429,50 @@ async function settlePayment(agentKeypairBase58, agentAddress, merchantPayTo, ap
 
   if (!verifyResult.isValid) {
     return { status: verifyRes.status, body: { success: false, ...verifyResult } };
+  }
+
+  // Direct diagnostic: sign via Kora then send to Solana RPC ourselves
+  log("Diagnostic: signing via Kora directly...");
+  const koraSignRes = await fetch("https://facilitator.pincerpay.com/health");
+  const healthData = await koraSignRes.json();
+  const koraUrl = "http://resplendent-freedom.railway.internal:8080"; // won't work externally
+  // Instead, sign via Kora and send via Solana RPC from our script
+  // Use the KORA_FEE_PAYER_KEY to sign locally as a diagnostic
+  try {
+    const { createKeyPairSignerFromBytes: ckps, getBase64EncodedWireTransaction: encode,
+      compileTransactionMessage, getCompiledTransactionMessageEncoder } = await import("@solana/kit");
+    const koraKeyBytes2 = base58Decode(KORA_FEE_PAYER_KEY);
+    const koraLocalSigner = await ckps(koraKeyBytes2);
+    log("Diagnostic: re-signing tx locally with Kora keypair...");
+
+    // Rebuild the SAME transaction but with both signers present locally
+    const { signTransactionMessageWithSigners } = await import("@solana/kit");
+    const diagTxMessage = pipe(
+      createTransactionMessage({ version: 0 }),
+      (msg) => setTransactionMessageFeePayer(koraLocalSigner.address, msg),
+      (msg) => setTransactionMessageLifetimeUsingBlockhash(
+        { blockhash: blockhash.blockhash, lastValidBlockHeight: BigInt(blockhash.lastValidBlockHeight) },
+        msg,
+      ),
+      (msg) => appendTransactionMessageInstructions(
+        [computeUnitLimitIx, computeUnitPriceIx, transferCheckedIx, memoIx],
+        msg,
+      ),
+    );
+    // Use Kora signer directly in the fee payer slot
+    const fullySigned = await signTransactionMessageWithSigners(diagTxMessage);
+    const diagBase64 = encode(fullySigned);
+    log("Diagnostic: sending fully-signed tx directly to Solana RPC...");
+    const sendResult = await solanaRpc("sendTransaction", [diagBase64, {
+      encoding: "base64",
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    }]);
+    log("Diagnostic: TX SENT SUCCESSFULLY!", { signature: sendResult });
+    log("Explorer", { url: `https://explorer.solana.com/tx/${sendResult}?cluster=devnet` });
+    return { status: 200, body: { success: true, transaction: sendResult, diagnostic: true } };
+  } catch (diagErr) {
+    log("Diagnostic send failed", { error: diagErr.message });
   }
 
   const res = await fetch(`${FACILITATOR_URL}/settle`, {
