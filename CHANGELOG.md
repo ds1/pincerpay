@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.12.0 — 2026-02-22
+
+### Kora Gasless Integration — Deployed to Devnet
+
+Kora signer node deployed on Railway, enabling agents to pay Solana gas fees in USDC instead of SOL.
+
+- **Kora signer node** deployed on Railway (`resplendent-freedom`), connected via private networking
+- **Fee payer wallet**: `Fh8gDkM2aaEhX29LAMg7u48NPtCVjjB1ykFqjUhATJkB` (devnet, 10 SOL + 20 USDC)
+- **Facilitator health** now reports `kora.feePayer` + `kora.status`; `/v1/supported` shows Kora signer address
+- **Graceful fallback**: facilitator falls back to local `SOLANA_PRIVATE_KEY` if Kora is unreachable
+- **Fix: Kora RPC method name** — changed `getFeePayer` → `getPayerSigner`, response from `string` → `{ signer_address, payment_address }` to match Kora API
+- **Fix: Kora signTransaction response** — read `signed_transaction` field (not `transaction`) from Kora JSON-RPC response; previous bug passed `null` to `simulateTransaction`
+- **E2E test script** (`apps/facilitator/scripts/test-kora-payment.mjs`) — creates test merchant, generates agent wallet, funds with USDC, builds x402-compliant transaction (ComputeUnitLimit + ComputeUnitPrice + TransferChecked + Memo), calls `/v1/settle`
+- Updated `KoraSignResult` type with correct Kora response fields: `{ signature, signed_transaction, signer_pubkey }`
+- 168 tests pass across 13 packages
+- Relates to #1, #2, #3
+
 ## 0.11.0 — 2026-02-20
 
 ### Kora Signer Node — Deployment Infrastructure
