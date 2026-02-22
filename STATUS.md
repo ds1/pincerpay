@@ -1,9 +1,10 @@
 # Project Status
 
-Last updated: 2026-02-21
+Last updated: 2026-02-22
 
 ## Last Deploy
-- **Facilitator**: Railway — 2026-02-20T22:48Z (hono 4.12.0 security patch, bn.js 5.2.3 override)
+- **Facilitator**: Railway — 2026-02-22T07:30Z (Kora gasless integration live)
+- **Kora Signer**: Railway — 2026-02-22T07:15Z (new service, `resplendent-freedom`)
 - **Dashboard**: Vercel — 2026-02-20T22:46Z (docs, blog, SEO, llms.txt, SiteHeader, server-side markdown, dependabot patches)
 - **Agent Demo**: Vercel — 2026-02-20 `demo.pincerpay.com` (rebrand: matching orange identity)
 
@@ -12,10 +13,12 @@ Last updated: 2026-02-21
 11 workspace packages build clean. 168 tests pass. Facilitator on Railway, dashboard on Vercel.
 
 ### Infrastructure
-- **Facilitator**: `https://facilitator.pincerpay.com` — healthy, Solana devnet + Base Sepolia + Anchor program
+- **Facilitator**: `https://facilitator.pincerpay.com` — healthy, Solana devnet + Base Sepolia + Anchor program + Kora gasless
+- **Kora Signer Node**: Railway internal (`resplendent-freedom.railway.internal:8080`)
 - **Dashboard**: `https://pincerpay.com` (Vercel)
 - **Database**: Supabase PostgreSQL with RLS enabled on all tables
-- **Solana facilitator wallet**: `53qkLfXNnLr9zy4utAvkgQz7DcuuPyQzNLyMj3TcR3zL` (devnet) — primary
+- **Kora fee payer wallet**: `Fh8gDkM2aaEhX29LAMg7u48NPtCVjjB1ykFqjUhATJkB` (devnet, 10 SOL + 20 USDC) — gasless signer
+- **Solana facilitator wallet**: `53qkLfXNnLr9zy4utAvkgQz7DcuuPyQzNLyMj3TcR3zL` (devnet) — fallback only
 - **EVM facilitator wallet**: `0x960E470581d17BcCd272F5Bd76A094077Cd907FE` (Base Sepolia) — optional
 - **Anchor program**: `E53zfNo9DYxAUCu37bA2NakJMMbzPFszjgB5kPaTMvF3` (Solana devnet)
   - Authority: `GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm`
@@ -59,19 +62,21 @@ Last updated: 2026-02-21
 
 Solana-first architecture pivot. Solana is now the primary chain; EVM is optional.
 
-## Phase S2: Kora Gasless + Squads Smart Accounts — Code Complete
+## Phase S2: Kora Gasless + Squads Smart Accounts — Kora Deployed
 
-Kora gasless integration + Squads Smart Account spending policies.
+Kora gasless integration deployed to devnet. Squads SPN session keys still pending.
 
-### Manual Steps Remaining
-- [ ] Deploy Kora signer node on Railway as separate service (#1)
-  - Create service from `infra/kora/` directory, set `KORA_SIGNER_PRIVATE_KEY` + `RPC_URL`
-- [ ] Fund Kora fee payer wallet with SOL + USDC on devnet (#2)
-  - Run `node scripts/setup-kora-devnet.mjs` to generate keypair
-  - Airdrop 5 SOL + get devnet USDC from Circle faucet
-- [ ] Set `KORA_RPC_URL` + `KORA_API_KEY` on facilitator Railway service (#3)
-  - Remove `SOLANA_PRIVATE_KEY` (Kora replaces it)
-  - Redeploy facilitator → verify `koraFeePayer` in health endpoint
+### Kora Deployment — Complete (2026-02-22)
+- [x] Generate Kora fee payer keypair (`Fh8gDkM2aaEhX29LAMg7u48NPtCVjjB1ykFqjUhATJkB`)
+- [x] Fund fee payer wallet: 10 SOL + 20 USDC (devnet)
+- [x] Deploy Kora signer node on Railway (`infra/kora/`, Dockerfile, rust:1.87)
+- [x] Set `KORA_RPC_URL` on facilitator (Railway private networking)
+- [x] Verify: `/health` shows `kora.feePayer`, `/v1/supported` shows Kora signer address
+- [x] Facilitator graceful fallback to local keypair if Kora unavailable
+
+### Remaining
+- [ ] Squads SPN session key integration
+- [ ] On-chain spending policies
 
 ## Phase S3: On-Chain Anchor Facilitator — Deployed to Devnet
 
