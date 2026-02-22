@@ -7,9 +7,14 @@ import type { KoraConfig } from "./config.js";
  * Kora RPC client interface — minimal subset of JSON-RPC methods we use.
  * Kora exposes standard Solana RPC + custom methods for gasless transactions.
  */
+interface KoraPayerSignerResult {
+  signer_address: string;
+  payment_address: string;
+}
+
 interface KoraRpcClient {
-  /** Fetch the Kora signer node's fee payer public key */
-  getFeePayer(): Promise<string>;
+  /** Fetch the Kora signer node's payer signer info (address + payment destination) */
+  getPayerSigner(): Promise<KoraPayerSignerResult>;
   /** Sign a base64-encoded transaction with the Kora fee payer */
   signTransaction(params: { transaction: string }): Promise<{ transaction: string }>;
   /** Sign and send a base64-encoded transaction via the Kora signer node */
@@ -51,7 +56,7 @@ function createKoraClient(config: KoraConfig): KoraRpcClient {
   }
 
   return {
-    getFeePayer: () => rpcCall<string>("getFeePayer"),
+    getPayerSigner: () => rpcCall<KoraPayerSignerResult>("getPayerSigner"),
     signTransaction: (params) => rpcCall<{ transaction: string }>("signTransaction", params),
     signAndSendTransaction: (params) => rpcCall<{ signature: string }>("signAndSendTransaction", params),
   };
@@ -101,8 +106,8 @@ export function createKoraFacilitatorSvmSigner(
      * Fetch the Kora fee payer address. Must be called before getAddresses().
      */
     async init() {
-      const address = await kora.getFeePayer();
-      feePayerAddress = address as Address;
+      const result = await kora.getPayerSigner();
+      feePayerAddress = result.signer_address as Address;
     },
 
     getAddresses(): readonly Address[] {
