@@ -52,7 +52,7 @@ describe("KoraFacilitatorSvmSigner", () => {
   it("sends signTransaction RPC call", async () => {
     const fetchMock = mockKoraFetch({
       getPayerSigner: { signer_address: MOCK_FEE_PAYER, payment_address: MOCK_FEE_PAYER },
-      signTransaction: { transaction: "signed-base64-tx" },
+      signTransaction: { signature: "sig123", signed_transaction: "signed-base64-tx", signer_pubkey: MOCK_FEE_PAYER },
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -70,7 +70,7 @@ describe("KoraFacilitatorSvmSigner", () => {
   it("sends signAndSendTransaction RPC call", async () => {
     const fetchMock = mockKoraFetch({
       getPayerSigner: { signer_address: MOCK_FEE_PAYER, payment_address: MOCK_FEE_PAYER },
-      signAndSendTransaction: { signature: "5abc123signature" },
+      signAndSendTransaction: { signature: "5abc123signature", signed_transaction: "signed-base64-tx", signer_pubkey: MOCK_FEE_PAYER },
     });
     vi.stubGlobal("fetch", fetchMock);
 

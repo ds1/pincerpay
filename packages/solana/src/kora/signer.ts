@@ -12,13 +12,19 @@ interface KoraPayerSignerResult {
   payment_address: string;
 }
 
+interface KoraSignResult {
+  signature: string;
+  signed_transaction: string;
+  signer_pubkey: string;
+}
+
 interface KoraRpcClient {
   /** Fetch the Kora signer node's payer signer info (address + payment destination) */
   getPayerSigner(): Promise<KoraPayerSignerResult>;
   /** Sign a base64-encoded transaction with the Kora fee payer */
-  signTransaction(params: { transaction: string }): Promise<{ transaction: string }>;
+  signTransaction(params: { transaction: string }): Promise<KoraSignResult>;
   /** Sign and send a base64-encoded transaction via the Kora signer node */
-  signAndSendTransaction(params: { transaction: string }): Promise<{ signature: string }>;
+  signAndSendTransaction(params: { transaction: string }): Promise<KoraSignResult>;
 }
 
 /**
@@ -57,8 +63,8 @@ function createKoraClient(config: KoraConfig): KoraRpcClient {
 
   return {
     getPayerSigner: () => rpcCall<KoraPayerSignerResult>("getPayerSigner"),
-    signTransaction: (params) => rpcCall<{ transaction: string }>("signTransaction", params),
-    signAndSendTransaction: (params) => rpcCall<{ signature: string }>("signAndSendTransaction", params),
+    signTransaction: (params) => rpcCall<KoraSignResult>("signTransaction", params),
+    signAndSendTransaction: (params) => rpcCall<KoraSignResult>("signAndSendTransaction", params),
   };
 }
 
@@ -119,7 +125,7 @@ export function createKoraFacilitatorSvmSigner(
 
     async signTransaction(transaction: string, _feePayer: Address, _network: string): Promise<string> {
       const result = await kora.signTransaction({ transaction });
-      return result.transaction;
+      return result.signed_transaction;
     },
 
     async simulateTransaction(transaction: string, network: string): Promise<void> {
