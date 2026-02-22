@@ -27,6 +27,9 @@ get_payer_signer = true
 
 [kora.usage_limit]
 enabled = false
+cache_url = "redis://localhost:6379"
+max_transactions = 100
+fallback_if_unavailable = true
 
 [validation]
 max_allowed_lamports = 1000000
