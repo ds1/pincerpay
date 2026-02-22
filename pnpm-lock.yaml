@@ -6,6 +6,7 @@ settings:
 
 overrides:
   bn.js@>=5 <5.2.3: 5.2.3
+  minimatch@<10.2.1: 10.2.1
 
 importers:
 
@@ -3210,9 +3211,9 @@ packages:
     resolution: {integrity: sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A==}
     engines: {node: '>=18'}
 
-  minimatch@9.0.6:
-    resolution: {integrity: sha512-kQAVowdR33euIqeA0+VZTDqU+qo1IeVY+hrKYtZMio3Pg0P0vuh/kwRylLUddJhB6pf3q/botcOvRtx4IN1wqQ==}
-    engines: {node: '>=16 || 14 >=14.17'}
+  minimatch@10.2.1:
+    resolution: {integrity: sha512-MClCe8IL5nRRmawL6ib/eT4oLyeKMGCghibcDWK+J0hh0Q8kqSdia6BvbRMVk6mPa6WqUa5uR2oxt6C5jd533A==}
+    engines: {node: 20 || >=22}
 
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
@@ -4411,7 +4412,7 @@ snapshots:
       '@logtail/types': 0.5.6
       '@msgpack/msgpack': 2.8.0
       '@types/stack-trace': 0.0.33
-      minimatch: 9.0.6
+      minimatch: 10.2.1
       stack-trace: 0.0.10
 
   '@logtail/pino@0.5.7(pino@9.14.0)':
@@ -6963,7 +6964,7 @@ snapshots:
     dependencies:
       mime-db: 1.54.0
 
-  minimatch@9.0.6:
+  minimatch@10.2.1:
     dependencies:
       brace-expansion: 5.0.2
 
