@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.14.0 — 2026-02-22
+
+### Squads SPN Spending Limits: Dashboard UI + Facilitator Enforcement
+
+Agent operators can now set and manage spending limits through PincerPay without configuring Squads separately.
+
+#### Phase A: App-Level Spending Limits
+- **Facilitator enforcement for all agents** — `maxPerTransaction` and `maxPerDay` checks moved before the Smart Account guard, so limits apply to every registered agent (not just those with on-chain Squads accounts)
+- **Daily spend enforcement** — new DB query sums today's transactions per agent, rejects payments that would exceed the daily cap (returns 403 `DAILY_LIMIT_EXCEEDED`)
+- **Dashboard: editable limits on agent detail page** — new `SpendingLimitsForm` client component with USDC-denominated inputs, auto-converts to/from base units, Save/Clear buttons with feedback
+- **Dashboard: inline limit editing on agent list** — Tx Limit and Daily Limit cells are now click-to-edit (same pattern as inline name editing)
+- **Server action validation** — limit values validated as non-negative integers; supports `"clear"` sentinel to remove limits; only updates fields that were provided
+- **SDK convenience methods** — `setPolicy(policy)` replaces policies and resets daily tracking, `getPolicy()` returns first active policy, `getDailySpend()` returns today's date and tracked spend total
+
+#### Phase B: On-Chain Squads Smart Account via Dashboard
+- **Solana wallet adapter** — installed `@solana/wallet-adapter-base`, `@solana/wallet-adapter-react`, `@solana/wallet-adapter-react-ui`, `@solana/wallet-adapter-wallets`, `@solana/web3.js`; `SolanaWalletProvider` (Phantom + Solflare) added to root layout
+- **Wallet connect button** — `WalletConnectButton` component (dynamic import, SSR-safe) styled to match PincerPay theme
+- **Smart Account creation UI** — `SmartAccountSection` component: connect wallet, configure threshold/index, sign transaction, persist PDAs to DB on confirmation
+- **On-chain spending limit management** — `OnChainLimits` component: add limit (amount, period, destinations), view remaining amount with auto-polling, revoke limit; all via wallet adapter signing
+- **Server actions** — `buildCreateSmartAccount`, `confirmSmartAccountCreation`, `buildAddSpendingLimit`, `confirmSpendingLimitCreation`, `fetchSpendingLimitState`
+- **Transaction bridge** — `squads-tx.ts` converts kit v5 `Instruction` objects to web3.js v1 `Transaction` for wallet adapter compatibility
+- **Multi-index support** — `spendingLimitIndex` column added to agents schema; facilitator middleware uses `agent.spendingLimitIndex ?? 0` (was hardcoded 0)
+- **SpendingLimitPeriod export** — enum now exported as a value (not just type) from `@pincerpay/solana/squads` barrel
+- **SDK instruction builders** — `SolanaSmartAgent` gains `buildCreateSmartAccountInstruction()`, `buildAddSpendingLimitInstruction()`, `buildRevokeSpendingLimitInstruction()`
+- **Network config** — `network.ts` with USDC mints (devnet/mainnet) and helper functions
+
+#### Validation
+- `pnpm typecheck` — 15/15 tasks pass
+- `pnpm build` — 9/9 tasks pass
+- `pnpm test` — 78 tests passed, 10 skipped
+
 ## 0.13.0 — 2026-02-22
 
 ### Pre-Mainnet Preparation

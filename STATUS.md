@@ -125,23 +125,25 @@ Kora gasless integration deployed to devnet. Squads SPN session keys still pendi
 - [x] Fix Kora signTransaction response field: `signed_transaction` (not `transaction`)
 - [x] **E2E payment test** — PASSING (2026-02-22, TX `3SFTEnH...JvbC`)
 
-### Squads SPN — Validation Complete, Management Missing
+### Squads SPN — Complete (2026-02-22)
 
-**What works:**
-- [x] Squads spending limit validation middleware (extracts payer from tx, checks agent status + on-chain limits)
-- [x] Auto-discovery of Smart Account PDAs on first agent payment (fire-and-forget)
-- [x] Agent SDK `SolanaSmartAgent.checkOnChainPolicy()` for pre-payment limit checks
-- [x] `maxPerTransaction` / `maxPerDay` DB fields + middleware enforcement
-- [x] Instruction builders: `createSmartAccountInstruction`, `addSpendingLimitInstruction`, `useSpendingLimitInstruction`
+**Phase A: App-Level Spending Limits**
+- [x] Facilitator middleware enforces `maxPerTransaction` and `maxPerDay` for ALL agents (previously only Smart Account agents)
+- [x] Daily spend enforcement via DB query (SUM of today's transactions)
+- [x] Dashboard: editable spending limits form on agent detail page
+- [x] Dashboard: inline limit editing on agent list table (click-to-edit)
+- [x] Server action validation (non-negative integers, "clear" to remove)
+- [x] SDK: `setPolicy()`, `getPolicy()`, `getDailySpend()` convenience methods
 
-**What's missing (users can't set limits through PincerPay):**
-- [ ] Dashboard form to edit `maxPerTransaction` / `maxPerDay` per agent (`updateAgent()` action exists but no UI form)
-- [ ] Dashboard "Create Smart Account" flow (requires wallet adapter in dashboard)
-- [ ] Dashboard "Set On-Chain Spending Limit" flow (requires wallet adapter)
-- [ ] Wallet adapter integration in dashboard (`@solana/wallet-adapter`)
-- [ ] Multi-index spending limit support (hardcoded to index 0 everywhere)
-
-**Current workaround:** Users create Smart Accounts and spending limits externally (e.g., Squads app), then PincerPay auto-discovers and validates against them.
+**Phase B: On-Chain Squads Smart Account via Dashboard**
+- [x] Solana wallet adapter installed (Phantom + Solflare) with provider in root layout
+- [x] Dashboard: "Create Smart Account" flow (derive PDAs, sign with wallet, persist to DB)
+- [x] Dashboard: on-chain spending limit management (add with amount/period/destinations, view remaining, revoke)
+- [x] Server actions for Squads operations (build, confirm, fetch state)
+- [x] Kit v5 to web3.js v1 transaction bridge utilities
+- [x] Multi-index spending limit support (`spendingLimitIndex` column, configurable per agent)
+- [x] `SpendingLimitPeriod` enum exported from `@pincerpay/solana/squads`
+- [x] SDK: `buildCreateSmartAccountInstruction()`, `buildAddSpendingLimitInstruction()`, `buildRevokeSpendingLimitInstruction()`
 
 ## Phase S3: On-Chain Anchor Facilitator — Deployed to Devnet
 
