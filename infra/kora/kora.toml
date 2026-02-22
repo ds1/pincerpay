@@ -10,7 +10,9 @@ rate_limit = 100
 
 [kora.cache]
 enabled = false
-default_ttl = 60
+url = "redis://localhost:6379"
+default_ttl = 300
+account_ttl = 60
 
 [kora.enabled_methods]
 liveness = true
