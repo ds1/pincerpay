@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.14.2 — 2026-02-22
+
+### Website SEO Hardening
+
+- **Favicon and app icons** — `favicon.ico` (32x32), `apple-touch-icon.png` (180x180), `icon-192.png`, `icon-512.png` generated from logo; wired into `metadata.icons`
+- **OG image** — 1200x630 static `og-image.png` (logo + title + tagline + protocol stack); connected to `openGraph.images` and `twitter.images` for social share previews
+- **Organization + WebSite JSON-LD** — structured data on root layout: Organization (name, logo, url, description, sameAs for GitHub/X) and WebSite schema
+- **Noindex on private pages** — `robots: { index: false, follow: false }` on `/dashboard/*`, `/login`, `/signup` layouts
+- **Security headers** — `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` via `next.config.ts` headers
+- **Theme color** — `#F97316` (orange) for mobile browsers, `#070300` for msapplication
+- **Sitemap link** — explicit `<link rel="sitemap">` in `<head>`
+- **ai-plugin.json fix** — `logo_url` updated to point to actual `icon-512.png`
+
+#### Validation
+- TypeScript: zero errors
+- Next.js build: clean, 22 pages, 4 turbo tasks
+- Deployed to Vercel (`pincerpay.com`)
+
+## 0.14.1 — 2026-02-22
+
+### Agent Demo: Squads SPN Spending Limits Parity
+
+Updated the playground at `demo.pincerpay.com` to match the Squads SPN spending limit enforcement implemented in v0.13.0/v0.14.0.
+
+- **Agent status simulation** — new dropdown (Active / Paused / Revoked); revoked/paused agents are rejected by the facilitator after signing (4-step error flow with 403)
+- **Correct error codes** — simulation returns structured codes matching the real facilitator: `PER_TX_LIMIT_EXCEEDED`, `DAILY_LIMIT_EXCEEDED`, `AGENT_REVOKED`, `AGENT_PAUSED`, `SPENDING_LIMIT_EXHAUSTED`
+- **Agent-side vs facilitator-side errors** — per-tx and daily limit violations error before signing (3-step flow); status and on-chain limit violations error after signing (4-step flow with 403 Forbidden)
+- **Squads Smart Account toggle** — enables simulated on-chain spending limit with auto-generated PDA, editable remaining amount that decrements on each successful payment
+- **SPN Policy Validated step** — when Smart Account is enabled, an extra step with shield icon appears in the flow visualizer showing remaining on-chain balance
+- **Error code badges** — error codes render as monospace badges in the flow visualizer
+- **UTC midnight daily reset** — spend tracker shows countdown to 00:00 UTC reset
+- **On-chain limit progress bar** — when Smart Account enabled, spend tracker shows Squads SPN remaining balance
+- **Field naming parity** — renamed `maxPerRequest` → `maxPerTransaction`, `dailyLimit` → `maxPerDay` to match SDK and facilitator field names
+- **Live mode policy wiring** — `executeLive()` now calls `agent.setPolicy()` with spending limits from the UI config, maps SDK errors to proper error codes
+- **Tour updated** — guided tour descriptions reference Squads SPN, facilitator-side enforcement, and correct field names
+
+#### Validation
+- TypeScript: zero errors
+- Next.js build: clean, zero warnings
+- Deployed to Vercel (`demo.pincerpay.com`)
+
 ## 0.14.0 — 2026-02-22
 
 ### Squads SPN Spending Limits: Dashboard UI + Facilitator Enforcement

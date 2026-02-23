@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
 import { SupabaseProvider } from "@/lib/supabase/provider";
 import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
-import { BASE_URL } from "@/lib/constants";
+import { BASE_URL, GITHUB_URL, safeJsonLd } from "@/lib/constants";
 import "./globals.css";
 
 const nunitoSans = Nunito_Sans({
@@ -32,6 +32,14 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "PincerPay", url: BASE_URL }],
   creator: "PincerPay",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -40,6 +48,14 @@ export const metadata: Metadata = {
     title: "PincerPay — On-chain payments for AI agents",
     description:
       "Accept USDC payments from AI agents. Add a few lines of code. Settle instantly on Solana via the x402 protocol.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "PincerPay — On-chain payments for AI agents",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -47,6 +63,7 @@ export const metadata: Metadata = {
     description:
       "Accept USDC payments from AI agents. Add a few lines of code. Settle instantly on Solana via the x402 protocol.",
     creator: "@pincerpay",
+    images: ["/og-image.png"],
   },
   alternates: {
     canonical: BASE_URL,
@@ -62,6 +79,31 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  other: {
+    "theme-color": "#F97316",
+    "msapplication-TileColor": "#070300",
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "PincerPay",
+  url: BASE_URL,
+  logo: `${BASE_URL}/icon-512.png`,
+  description:
+    "On-chain payment gateway for AI agents. Accept USDC payments via the x402 protocol with instant settlement on Solana.",
+  sameAs: [GITHUB_URL, "https://x.com/pincerpay"],
+};
+
+const webSiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "PincerPay",
+  url: BASE_URL,
+  description:
+    "Accept USDC payments from AI agents. Settle instantly on Solana via the x402 protocol.",
+  publisher: { "@type": "Organization", name: "PincerPay" },
 };
 
 export default function RootLayout({
@@ -82,6 +124,15 @@ export default function RootLayout({
     <html lang="en" className={`dark ${nunitoSans.variable}`}>
       <head>
         <link rel="alternate" type="text/plain" href="/llms.txt" />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(webSiteSchema) }}
+        />
       </head>
       <body className={`min-h-screen antialiased ${nunitoSans.className}`}>
         <SupabaseProvider url={supabaseUrl} publishableKey={supabaseKey}>

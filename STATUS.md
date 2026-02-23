@@ -53,8 +53,8 @@ E2E Kora gasless payment test PASSING on Solana devnet.
 ## Last Deploy
 - **Facilitator**: Railway — 2026-02-22T15:39Z (Kora gasless e2e passing)
 - **Kora Signer**: Railway — 2026-02-22T07:15Z (new service, `resplendent-freedom`)
-- **Dashboard**: Vercel — 2026-02-20T22:46Z (docs, blog, SEO, llms.txt, SiteHeader, server-side markdown, dependabot patches)
-- **Agent Demo**: Vercel — 2026-02-20 `demo.pincerpay.com` (rebrand: matching orange identity)
+- **Dashboard**: Vercel — 2026-02-22 (SEO hardening: favicon, OG image, JSON-LD, noindex, security headers)
+- **Agent Demo**: Vercel — 2026-02-22 `demo.pincerpay.com` (Squads SPN spending limits parity)
 
 ## Phase 1 MVP — Deployed to Production
 
@@ -212,9 +212,15 @@ Anchor program + TypeScript client + hybrid facilitator.
 ### Ready to publish
 - [ ] `npm publish` via GitHub Actions workflow
 
-## Agent Demo — Complete
+## Agent Demo — Complete (Updated 2026-02-22)
 
 Standalone demo project at [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo). Live at `demo.pincerpay.com`.
+
+- Squads SPN spending limits parity: agent status (active/paused/revoked), correct error codes, Smart Account toggle with on-chain limit simulation
+- Agent-side vs facilitator-side error flow differentiation
+- UTC midnight daily reset countdown, on-chain limit progress bar
+- Field names match SDK/facilitator (`maxPerTransaction`, `maxPerDay`)
+- Live mode wires up `setPolicy()` on the agent SDK
 
 ## Branding — Complete
 
