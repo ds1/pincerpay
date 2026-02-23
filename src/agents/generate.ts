@@ -93,7 +93,8 @@ async function generateFromEntry(entry: CalendarEntry): Promise<void> {
   }
 
   const env = getEnv();
-  const model = (values.model as string) ?? env.DEFAULT_MODEL;
+  // Blog posts use Opus for higher quality long-form; everything else uses default (Sonnet)
+  const model = (values.model as string) ?? (entry.channel === "blog" ? "claude-opus-4-6" : env.DEFAULT_MODEL);
 
   // Compose the system prompt with brand voice + channel rules + template
   const systemPrompt = composeSystemPrompt(entry.channel, entry.type);
@@ -113,7 +114,7 @@ async function generateFromEntry(entry: CalendarEntry): Promise<void> {
   // Create the content piece
   const piece: ContentPiece = {
     id,
-    title: entry.topic.slice(0, 80),
+    title: truncateAtWord(entry.topic, 80),
     channel: entry.channel,
     type: entry.type,
     status: "draft",
@@ -142,6 +143,13 @@ async function generateFromEntry(entry: CalendarEntry): Promise<void> {
   log.success(`  → ${filepath}`);
 }
 
+function truncateAtWord(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const truncated = text.slice(0, max);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
+}
+
 function buildUserMessage(entry: CalendarEntry): string {
   const parts = [
     `Generate a ${entry.type} for ${entry.channel} on the following topic:`,
@@ -158,6 +166,10 @@ function buildUserMessage(entry: CalendarEntry): string {
 
   if (entry.theme) {
     parts.push(`Weekly theme: ${entry.theme}`);
+  }
+
+  if (entry.notes) {
+    parts.push("", "Editorial notes (follow these closely):", entry.notes);
   }
 
   return parts.join("\n");

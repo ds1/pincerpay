@@ -205,12 +205,12 @@ Cold/Academic ←——— [PincerPay lives here] ———→ Hype/Marketing
 ### Twitter/X
 
 - **Tone**: Opinionated, punchy, occasionally dry
-- **Structure**: Hook → substance → (optional) code screenshot or demo video
+- **Structure**: Hook → substance → (optional) code screenshot or playground link
 - **Formats that work**:
   - Cost comparisons with real numbers
   - "We shipped X" with a code snippet
   - Hot takes on agent economy trends (backed by reasoning)
-  - Demo videos (30–60 seconds, no intro fluff)
+  - Playground demos (link to demo.pincerpay.com)
   - Thread format for technical deep dives (max 5 tweets)
 - **Never**: Engagement bait ("What do you think?"), hashtag spam, "GM" posts, price/token speculation
 
@@ -359,7 +359,7 @@ Every buzzword reduces credibility. Use specific, accurate terms.
 > In today's rapidly evolving technological landscape, the intersection of artificial intelligence and financial technology is creating unprecedented opportunities for innovation. As we stand on the cusp of a new era in autonomous commerce, it's worth examining how traditional payment rails fall short when it comes to serving the needs of AI agents.
 
 **After (PincerPay voice):**
-> Stripe charges $0.30 + 2.9% per transaction. For a $0.01 API call, that's a 3,100% fee. Card rails weren't built for machines making thousands of micropayments per hour. x402 was.
+> AI agents make thousands of API calls per hour. They don't have credit cards, billing addresses, or thumbs for 3D Secure. They need a payment protocol that speaks HTTP and settles on-chain. That's x402, and PincerPay is the infrastructure layer that makes it production-ready.
 
 ### Documentation Introduction
 

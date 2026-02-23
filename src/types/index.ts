@@ -66,6 +66,7 @@ export interface CalendarEntry {
   scheduled_for: string;
   subreddit?: string;
   theme?: string;
+  notes?: string;
 }
 
 export interface CalendarWeek {

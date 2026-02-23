@@ -20,7 +20,7 @@ weeks:
         type: blog-post
         topic: "Why We Built PincerPay — origin story, the problem with card rails for agents, vision for x402-native infrastructure"
         scheduled_for: "2026-02-24T14:00:00Z"
-        notes: "Structure with AEO in mind: include FAQ section, schema.org markup, clear problem/solution format"
+        notes: "Lead with WHY, not WHAT. Focus on the value prop for both agents (autonomous payments, no API keys, sub-second settlement) and merchants (new revenue from AI traffic, three lines of code, no billing infrastructure). Features and tech are supporting details. Structure with AEO in mind: include FAQ section, schema.org markup, clear problem/solution format."
       - channel: twitter
         type: tweet
         topic: "Pinned intro tweet — what PincerPay is (x402 payment gateway for AI agents), what it does (USDC micropayments over HTTP 402), who it's for (developers building agents or monetizing APIs), link to docs and playground"
