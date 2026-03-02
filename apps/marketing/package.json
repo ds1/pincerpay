@@ -1,7 +1,7 @@
 {
-  "name": "pincerpay-marketing-automation",
+  "name": "@pincerpay/marketing",
   "version": "0.1.0",
-  "description": "Local CLI-based marketing automation for PincerPay — content generation, review, and multi-channel publishing",
+  "description": "Local CLI-based marketing automation for PincerPay - content generation, review, and multi-channel publishing",
   "type": "module",
   "scripts": {
     "cli": "tsx src/cli/index.ts",
@@ -17,9 +17,6 @@
     "test": "vitest",
     "dashboard": "tsx src/web/server.ts",
     "typecheck": "tsc --noEmit"
-  },
-  "bin": {
-    "pincer": "./src/cli/index.ts"
   },
   "private": true,
   "dependencies": {

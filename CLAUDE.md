@@ -22,6 +22,8 @@ pnpm db:push          # Push schema to database
 # Individual packages
 pnpm --filter @pincerpay/facilitator dev    # Facilitator on :4402
 pnpm --filter @pincerpay/dashboard dev      # Dashboard on :3000
+pnpm --filter @pincerpay/agent-demo dev     # Agent demo on :3000
+pnpm --filter @pincerpay/marketing cli      # Marketing CLI
 pnpm --filter @pincerpay/core typecheck     # Typecheck core
 ```
 

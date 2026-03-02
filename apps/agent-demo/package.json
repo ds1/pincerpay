@@ -1,5 +1,5 @@
 {
-  "name": "pincerpay-agent-demo",
+  "name": "@pincerpay/agent-demo",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,6 +11,10 @@
     "demo:cli": "tsx cli/demo.ts"
   },
   "dependencies": {
+    "@pincerpay/agent": "workspace:*",
+    "@pincerpay/merchant": "workspace:*",
+    "@pincerpay/core": "workspace:*",
+    "express": "^5.1.0",
     "next": "^15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -25,11 +29,5 @@
     "tsx": "^4.19.4",
     "@tailwindcss/postcss": "^4.1.7",
     "tailwindcss": "^4.1.7"
-  },
-  "optionalDependencies": {
-    "@pincerpay/agent": "file:../pincerpay/packages/agent",
-    "@pincerpay/merchant": "file:../pincerpay/packages/merchant",
-    "@pincerpay/core": "file:../pincerpay/packages/core",
-    "express": "^5.1.0"
   }
 }

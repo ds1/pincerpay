@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@pincerpay/agent", "@pincerpay/merchant", "@pincerpay/core"],
   webpack: (config) => {
     // Prevent css-loader from resolving @import "tailwindcss" before PostCSS.

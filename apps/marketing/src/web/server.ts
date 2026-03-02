@@ -298,7 +298,7 @@ async function autoPublish(item: ContentFile): Promise<{ platform_id?: string; p
       const bodyMatch = item.body.match(/^## Body\n([\s\S]+?)(?=^## |$)/m);
       const title = titleMatch?.[1]?.trim() ?? item.frontmatter.title;
       const body = bodyMatch?.[1]?.trim() ?? text;
-      const subreddit = (item.frontmatter as Record<string, unknown>).subreddit as string ?? "solana";
+      const subreddit = (item.frontmatter as unknown as Record<string, unknown>).subreddit as string ?? "solana";
       const result = await submitPost(subreddit, title, body);
       return { platform_id: result.id, platform_url: result.url };
     }
