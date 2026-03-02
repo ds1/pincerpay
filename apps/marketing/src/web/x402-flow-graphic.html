@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>x402 Payment Flow — PincerPay</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #070300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 32px;
+  }
+  .wrapper {
+    background: #110d06;
+    border: 1px solid #2a1f0e;
+    border-radius: 12px;
+    padding: 20px 24px 16px;
+    max-width: 880px;
+  }
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #2a1f0e;
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  .footer-brand {
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #F97316;
+  }
+  .footer-url {
+    font-family: monospace;
+    font-size: 11px;
+    color: #7a7a90;
+    margin-left: 10px;
+  }
+  .footer-tags {
+    display: flex;
+    gap: 8px;
+  }
+  .footer-tag {
+    font-family: monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #2a1f0e;
+    color: #a0a0b0;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <pre class="mermaid">
+---
+title: x402 Payment Flow
+---
+sequenceDiagram
+    participant Agent
+    participant API as API Server
+    participant F as Facilitator
+
+    Agent->>API: GET /api/weather?city=tokyo
+    API-->>Agent: 402 Payment Required
+
+    Note over API,Agent: { amount: "0.001", token: "USDC", chain: "solana" }
+
+    rect rgba(249, 115, 22, 0.06)
+    Agent->>F: POST /verify (signed USDC transfer)
+    F-->>Agent: 200 OK + payment receipt
+    Note over Agent,F: Settled on Solana in ~200ms
+    end
+
+    Agent->>API: GET /api/weather + X-Payment-Receipt
+    API-->>Agent: 200 OK + response data
+  </pre>
+
+  <div class="footer">
+    <div>
+      <span class="footer-brand">PincerPay</span>
+      <span class="footer-url">pincerpay.com/docs</span>
+    </div>
+    <div class="footer-tags">
+      <span class="footer-tag">x402 protocol</span>
+      <span class="footer-tag">USDC on Solana</span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#110d06',
+      primaryColor: '#1a1408',
+      primaryTextColor: '#e4e4ef',
+      primaryBorderColor: '#3d2e14',
+      lineColor: '#a0a0b0',
+      secondaryColor: '#1a1408',
+      tertiaryColor: '#0c0800',
+      noteBkgColor: '#1a1408',
+      noteTextColor: '#a0a0b0',
+      noteBorderColor: '#3d2e14',
+      actorBkg: '#0c0800',
+      actorBorder: '#3d2e14',
+      actorTextColor: '#e4e4ef',
+      actorLineColor: '#2a1f0e',
+      signalColor: '#e4e4ef',
+      signalTextColor: '#e4e4ef',
+      labelBoxBkgColor: '#1a1408',
+      labelBoxBorderColor: '#3d2e14',
+      labelTextColor: '#e4e4ef',
+      activationBorderColor: '#F97316',
+      activationBkgColor: '#2a1f0e',
+      sequenceNumberColor: '#e4e4ef',
+      fontFamily: 'system-ui, sans-serif',
+      fontSize: '14px',
+    },
+    sequence: {
+      diagramMarginX: 16,
+      diagramMarginY: 10,
+      actorMargin: 60,
+      messageMargin: 35,
+      mirrorActors: false,
+      bottomMarginAdj: 1,
+      showSequenceNumbers: true,
+    },
+  });
+</script>
+</body>
+</html>

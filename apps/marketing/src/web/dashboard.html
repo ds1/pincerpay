@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PincerPay Content Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #0d1117; color: #c9d1d9; line-height: 1.5; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; padding: 6px 14px; border-radius: 6px; font-size: 13px; }
+  button:hover { background: #30363d; }
+  button.primary { background: #238636; border-color: #238636; color: #fff; }
+  button.primary:hover { background: #2ea043; }
+  button.danger { background: #da3633; border-color: #da3633; color: #fff; }
+  button.danger:hover { background: #f85149; }
+  input, textarea { font-family: inherit; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 6px; padding: 6px 10px; font-size: 13px; width: 100%; }
+  textarea { resize: vertical; min-height: 120px; }
+
+  /* Layout */
+  .app { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #21262d; margin-bottom: 16px; }
+  header h1 { font-size: 18px; color: #f0f6fc; font-weight: 600; }
+
+  /* Status bar */
+  .counts { display: flex; gap: 8px; }
+  .count-badge { padding: 4px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #30363d; background: #161b22; transition: background 0.15s; }
+  .count-badge:hover, .count-badge.active { background: #21262d; }
+  .count-badge.active { border-color: #58a6ff; color: #58a6ff; }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .chip { padding: 3px 10px; border-radius: 14px; font-size: 12px; cursor: pointer; border: 1px solid #30363d; background: #161b22; }
+  .chip:hover, .chip.active { background: #21262d; border-color: #58a6ff; color: #58a6ff; }
+
+  /* Content list */
+  .content-list { display: flex; flex-direction: column; gap: 2px; }
+  .content-row { display: grid; grid-template-columns: 90px 80px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+  .content-row:hover { background: #161b22; }
+  .content-row.selected { background: #161b22; border-color: #30363d; }
+
+  .channel-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; display: inline-block; text-align: center; }
+  .channel-badge.twitter { background: #1d9bf022; color: #1d9bf0; }
+  .channel-badge.reddit { background: #ff450022; color: #ff4500; }
+  .channel-badge.youtube { background: #ff000022; color: #ff4444; }
+  .channel-badge.discord { background: #5865f222; color: #5865f2; }
+  .channel-badge.blog { background: #23863622; color: #3fb950; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .status-dot.draft { background: #d29922; }
+  .status-dot.approved { background: #3fb950; }
+  .status-dot.published { background: #58a6ff; }
+  .status-dot.rejected { background: #f85149; }
+
+  .row-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-date { font-size: 11px; color: #8b949e; white-space: nowrap; }
+
+  /* Detail panel */
+  .detail { margin-top: 20px; border: 1px solid #21262d; border-radius: 8px; background: #161b22; padding: 20px; display: none; }
+  .detail.visible { display: block; }
+  .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; gap: 12px; }
+  .detail-title { font-size: 16px; font-weight: 600; color: #f0f6fc; }
+  .detail-meta { font-size: 12px; color: #8b949e; margin-top: 4px; }
+  .detail-body { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 14px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; margin-bottom: 16px; max-height: 400px; overflow-y: auto; }
+  .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* Navigation */
+  .detail-nav { display: flex; align-items: center; gap: 4px; }
+  .nav-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #8b949e; cursor: pointer; font-size: 16px; padding: 0; transition: all 0.15s; }
+  .nav-btn:hover:not(:disabled) { background: #30363d; color: #f0f6fc; border-color: #58a6ff; }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-pos { font-size: 12px; color: #8b949e; min-width: 40px; text-align: center; }
+  .nav-hint { font-size: 11px; color: #484f58; margin-left: 4px; }
+
+  /* Publish flow */
+  .publish-flow { margin-top: 12px; padding: 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; display: none; }
+  .publish-flow.visible { display: block; }
+  .publish-flow label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 4px; }
+  .publish-flow .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+
+  /* Edit mode */
+  .edit-area { display: none; margin-bottom: 16px; }
+  .edit-area.visible { display: block; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #238636; color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; }
+  .toast.show { opacity: 1; }
+
+  .empty { text-align: center; padding: 40px; color: #8b949e; }
+
+  /* Command toolbar */
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; padding: 12px; background: #161b22; border: 1px solid #21262d; border-radius: 8px; align-items: center; }
+  .toolbar-label { font-size: 12px; color: #8b949e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+  .cmd-btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+  .cmd-btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+  .cmd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cmd-btn:disabled:hover { background: #21262d; border-color: #30363d; color: #c9d1d9; }
+  .cmd-btn .icon { font-size: 14px; }
+
+  /* Command output */
+  .cmd-output { margin-bottom: 16px; border: 1px solid #21262d; border-radius: 8px; background: #161b22; display: none; }
+  .cmd-output.visible { display: block; }
+  .cmd-output-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-bottom: 1px solid #21262d; }
+  .cmd-output-title { font-size: 12px; color: #8b949e; font-weight: 600; }
+  .cmd-output-body { padding: 12px 14px; font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #c9d1d9; }
+  .cmd-output-body .stderr { color: #f85149; }
+  .cmd-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Command options modal */
+  .cmd-modal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; width: 440px; max-width: 90vw; }
+  .cmd-modal h3 { font-size: 15px; margin-bottom: 14px; color: #f0f6fc; }
+  .cmd-modal .field { margin-bottom: 10px; }
+  .cmd-modal .field label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 3px; }
+  .cmd-modal select { font-family: inherit; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 6px; padding: 6px 10px; font-size: 13px; width: 100%; }
+  .cmd-modal .check { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .cmd-modal .check input { width: auto; }
+
+  /* Reject dialog */
+  .modal-overlay { position: fixed; inset: 0; background: #00000088; display: none; align-items: center; justify-content: center; z-index: 50; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; width: 400px; max-width: 90vw; }
+  .modal h3 { font-size: 15px; margin-bottom: 12px; color: #f0f6fc; }
+  .modal .row { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>PincerPay Content</h1>
+    <div class="counts" id="counts"></div>
+  </header>
+
+  <div class="toolbar" id="toolbar">
+    <span class="toolbar-label">Commands</span>
+  </div>
+
+  <div class="cmd-output" id="cmd-output">
+    <div class="cmd-output-header">
+      <span class="cmd-output-title" id="cmd-output-title"></span>
+      <button style="padding:2px 8px;font-size:11px;" onclick="closeCmdOutput()">Close</button>
+    </div>
+    <div class="cmd-output-body" id="cmd-output-body"></div>
+  </div>
+
+  <div class="filters" id="channel-filters"></div>
+
+  <div class="content-list" id="content-list"></div>
+
+  <div class="detail" id="detail">
+    <div class="detail-header">
+      <div style="flex:1;min-width:0;">
+        <div class="detail-title" id="detail-title"></div>
+        <div class="detail-meta" id="detail-meta"></div>
+      </div>
+      <div class="detail-nav" id="detail-nav"></div>
+      <div class="detail-actions" id="detail-top-actions"></div>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="edit-area" id="edit-area">
+      <textarea id="edit-textarea"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="primary" onclick="saveEdit()">Save</button>
+        <button onclick="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+    <div class="detail-actions" id="detail-actions"></div>
+
+    <div class="publish-flow" id="publish-flow">
+      <label>Platform URL (paste the link after publishing, or leave blank)</label>
+      <div class="row">
+        <input type="text" id="publish-url" placeholder="https://x.com/...">
+        <button class="primary" onclick="confirmPublish()">Mark Published</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="cmd-modal">
+  <div class="cmd-modal" id="cmd-modal-content"></div>
+</div>
+
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <h3>Reject content</h3>
+    <textarea id="reject-reason" placeholder="Reason for rejection (optional)"></textarea>
+    <div class="row">
+      <button onclick="closeRejectModal()">Cancel</button>
+      <button class="danger" onclick="confirmReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+const CHANNELS = ['twitter','reddit','youtube','discord','blog'];
+const STATUSES = ['draft','approved','published','rejected'];
+const COMPOSE_URLS = {
+  twitter: 'https://x.com/compose/tweet',
+  reddit: 'https://www.reddit.com/submit',
+  discord: 'https://discord.com/channels/@me',
+};
+
+let state = {
+  status: 'draft',
+  channel: null,
+  items: [],
+  selected: null,
+  editing: false,
+  channelApis: {},
+};
+
+// --- API helpers ---
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  return res.json();
+}
+
+// --- Data loading ---
+async function loadCounts() {
+  const counts = await api('/api/counts');
+  const el = document.getElementById('counts');
+  el.innerHTML = STATUSES.map(s =>
+    `<div class="count-badge ${s === state.status ? 'active' : ''}" data-status="${s}">
+      <span class="status-dot ${s}"></span>${s} ${counts[s] ?? 0}
+    </div>`
+  ).join('');
+  el.querySelectorAll('.count-badge').forEach(b => {
+    b.onclick = () => { state.status = b.dataset.status; state.selected = null; refresh(); };
+  });
+}
+
+async function loadContent() {
+  const params = new URLSearchParams({ status: state.status });
+  if (state.channel) params.set('channel', state.channel);
+  state.items = await api(`/api/content?${params}`);
+  renderList();
+}
+
+// --- Rendering ---
+function renderChannelFilters() {
+  const el = document.getElementById('channel-filters');
+  const all = `<div class="chip ${!state.channel ? 'active' : ''}" data-ch="">All</div>`;
+  const chips = CHANNELS.map(c =>
+    `<div class="chip ${state.channel === c ? 'active' : ''}" data-ch="${c}">${c}</div>`
+  ).join('');
+  el.innerHTML = all + chips;
+  el.querySelectorAll('.chip').forEach(c => {
+    c.onclick = () => { state.channel = c.dataset.ch || null; state.selected = null; refresh(); };
+  });
+}
+
+function renderList() {
+  const el = document.getElementById('content-list');
+  if (state.items.length === 0) {
+    el.innerHTML = '<div class="empty">No content</div>';
+    document.getElementById('detail').classList.remove('visible');
+    return;
+  }
+  el.innerHTML = state.items.map(item =>
+    `<div class="content-row ${state.selected?.id === item.id ? 'selected' : ''}" data-id="${item.id}">
+      <span class="channel-badge ${item.channel}">${item.channel}</span>
+      <span style="font-size:12px;color:#8b949e">${item.type}</span>
+      <span class="row-title">${esc(item.title)}</span>
+      <span class="row-date">${item.scheduled_for ? item.scheduled_for.slice(0, 10) : ''}</span>
+    </div>`
+  ).join('');
+  el.querySelectorAll('.content-row').forEach(row => {
+    row.onclick = () => selectItem(row.dataset.id);
+  });
+}
+
+function renderDetail() {
+  const panel = document.getElementById('detail');
+  const item = state.selected;
+  if (!item) { panel.classList.remove('visible'); renderNav(); return; }
+  panel.classList.add('visible');
+  renderNav();
+
+  document.getElementById('detail-title').textContent = item.title;
+  document.getElementById('detail-meta').innerHTML =
+    `<span class="channel-badge ${item.channel}">${item.channel}</span> &middot; ${item.type} &middot; ${item.status}` +
+    (item.scheduled_for ? ` &middot; ${item.scheduled_for.slice(0, 10)}` : '') +
+    (item.platform_url && item.platform_url !== 'manual' ? ` &middot; <a href="${esc(item.platform_url)}" target="_blank">View</a>` : '');
+
+  document.getElementById('detail-body').textContent = item.body;
+  document.getElementById('edit-area').classList.remove('visible');
+  document.getElementById('publish-flow').classList.remove('visible');
+  state.editing = false;
+
+  // Top actions: copy + compose link
+  const topActs = document.getElementById('detail-top-actions');
+  let topHtml = `<button onclick="copyBody()">Copy</button>`;
+  const composeUrl = COMPOSE_URLS[item.channel];
+  if (composeUrl) topHtml += ` <a href="${composeUrl}" target="_blank"><button>Compose</button></a>`;
+  topActs.innerHTML = topHtml;
+
+  // Bottom actions based on status
+  const acts = document.getElementById('detail-actions');
+  let html = '';
+  if (item.status === 'draft') {
+    html += `<button class="primary" onclick="approveItem()">Approve</button>`;
+    html += `<button class="danger" onclick="openRejectModal()">Reject</button>`;
+    html += `<button onclick="startEdit()">Edit</button>`;
+  } else if (item.status === 'approved') {
+    const configured = state.channelApis[item.channel];
+    const pubLabel = configured ? `Publish to ${item.channel}` : 'Publish (manual)';
+    html += `<button class="primary" onclick="startPublish()">${pubLabel}</button>`;
+    html += `<button onclick="startEdit()">Edit</button>`;
+  } else if (item.status === 'published' || item.status === 'rejected') {
+    html += `<button onclick="startEdit()">Edit</button>`;
+  }
+  acts.innerHTML = html;
+}
+
+// --- Navigation ---
+function getSelectedIndex() {
+  if (!state.selected) return -1;
+  return state.items.findIndex(i => i.id === state.selected.id);
+}
+
+function navigatePrev() {
+  if (state.items.length === 0) return;
+  const idx = getSelectedIndex();
+  if (idx > 0) selectItem(state.items[idx - 1].id);
+  else if (idx === -1) selectItem(state.items[0].id);
+}
+
+function navigateNext() {
+  if (state.items.length === 0) return;
+  const idx = getSelectedIndex();
+  if (idx < state.items.length - 1) selectItem(state.items[idx + 1].id);
+  else if (idx === -1) selectItem(state.items[0].id);
+}
+
+function renderNav() {
+  const el = document.getElementById('detail-nav');
+  if (!state.selected || state.items.length === 0) { el.innerHTML = ''; return; }
+  const idx = getSelectedIndex();
+  const total = state.items.length;
+  el.innerHTML = `
+    <button class="nav-btn" onclick="navigatePrev()" ${idx <= 0 ? 'disabled' : ''} title="Previous (Left arrow / K)">&#8249;</button>
+    <span class="nav-pos">${idx + 1} / ${total}</span>
+    <button class="nav-btn" onclick="navigateNext()" ${idx >= total - 1 ? 'disabled' : ''} title="Next (Right arrow / J)">&#8250;</button>
+    <span class="nav-hint">\u2190\u2192</span>
+  `;
+}
+
+document.addEventListener('keydown', (e) => {
+  // Don't intercept when typing in inputs/textareas or modals are open
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (document.querySelector('.modal-overlay.visible')) return;
+  if (state.editing) return;
+
+  if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); navigatePrev(); }
+  else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); navigateNext(); }
+});
+
+// --- Actions ---
+function selectItem(id) {
+  state.selected = state.items.find(i => i.id === id) ?? null;
+  renderList();
+  renderDetail();
+}
+
+function copyBody() {
+  if (!state.selected) return;
+  navigator.clipboard.writeText(state.selected.body).then(() => toast('Copied to clipboard'));
+}
+
+async function approveItem() {
+  if (!state.selected) return;
+  await api(`/api/content/${enc(state.selected.id)}/approve`, { method: 'POST' });
+  toast('Approved');
+  state.selected = null;
+  refresh();
+}
+
+function openRejectModal() {
+  document.getElementById('reject-reason').value = '';
+  document.getElementById('reject-modal').classList.add('visible');
+}
+function closeRejectModal() {
+  document.getElementById('reject-modal').classList.remove('visible');
+}
+async function confirmReject() {
+  if (!state.selected) return;
+  const reason = document.getElementById('reject-reason').value;
+  await api(`/api/content/${enc(state.selected.id)}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+  closeRejectModal();
+  toast('Rejected');
+  state.selected = null;
+  refresh();
+}
+
+function startPublish() {
+  if (!state.selected) return;
+  const ch = state.selected.channel;
+  const configured = state.channelApis[ch];
+
+  if (configured) {
+    // Auto-publish via platform API
+    autoPublish();
+  } else {
+    // Manual fallback: show URL input
+    document.getElementById('publish-flow').classList.add('visible');
+    document.getElementById('publish-url').value = '';
+    document.getElementById('publish-url').focus();
+  }
+}
+
+async function autoPublish() {
+  if (!state.selected) return;
+  const btn = document.querySelector('#detail-actions .primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Publishing...'; }
+  try {
+    const result = await api(`/api/content/${enc(state.selected.id)}/publish`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    if (result.platform_url && result.platform_url !== 'manual' && result.platform_url !== 'published') {
+      toast(`Published: ${result.platform_url}`);
+    } else {
+      toast('Published');
+    }
+  } catch (e) {
+    toast('Publish failed');
+  }
+  state.selected = null;
+  refresh();
+}
+
+async function confirmPublish() {
+  if (!state.selected) return;
+  const url = document.getElementById('publish-url').value.trim();
+  await api(`/api/content/${enc(state.selected.id)}/publish`, {
+    method: 'POST',
+    body: JSON.stringify({ manual: true, platform_url: url || 'manual' }),
+  });
+  toast('Published');
+  state.selected = null;
+  refresh();
+}
+
+function startEdit() {
+  if (!state.selected) return;
+  state.editing = true;
+  document.getElementById('detail-body').style.display = 'none';
+  const area = document.getElementById('edit-area');
+  area.classList.add('visible');
+  const ta = document.getElementById('edit-textarea');
+  ta.value = state.selected.body;
+  ta.style.height = Math.max(200, ta.scrollHeight) + 'px';
+  ta.focus();
+}
+
+function cancelEdit() {
+  state.editing = false;
+  document.getElementById('detail-body').style.display = '';
+  document.getElementById('edit-area').classList.remove('visible');
+}
+
+async function saveEdit() {
+  if (!state.selected) return;
+  const body = document.getElementById('edit-textarea').value;
+  await api(`/api/content/${enc(state.selected.id)}/body`, {
+    method: 'PUT',
+    body: JSON.stringify({ body }),
+  });
+  state.selected.body = body;
+  cancelEdit();
+  document.getElementById('detail-body').textContent = body;
+  toast('Saved');
+}
+
+// --- Helpers ---
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function enc(s) { return encodeURIComponent(s); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+async function refresh() {
+  renderChannelFilters();
+  await Promise.all([loadCounts(), loadContent()]);
+  if (state.selected) {
+    const found = state.items.find(i => i.id === state.selected.id);
+    if (found) { state.selected = found; renderDetail(); }
+    else { state.selected = null; renderDetail(); }
+  } else {
+    renderDetail();
+  }
+}
+
+// --- Commands ---
+const CMD_DEFS = {
+  generate: {
+    label: 'Generate', icon: '\u2728',
+    options: [
+      { id: 'channel', label: 'Channel', type: 'select', values: ['', ...CHANNELS] },
+      { id: 'week', label: 'Week', type: 'text', placeholder: 'e.g. week-1' },
+      { id: 'dry-run', label: 'Dry run', type: 'checkbox' },
+      { id: 'verbose', label: 'Verbose', type: 'checkbox' },
+    ],
+  },
+  status:    { label: 'Status',    icon: '\ud83d\udcca', options: [] },
+  calendar:  {
+    label: 'Calendar', icon: '\ud83d\udcc5',
+    options: [
+      { id: 'channel', label: 'Channel', type: 'select', values: ['', ...CHANNELS] },
+      { id: 'week', label: 'Week', type: 'text', placeholder: 'e.g. week-1' },
+      { id: 'status', label: 'Show status', type: 'checkbox' },
+    ],
+  },
+  publish: {
+    label: 'Publish', icon: '\ud83d\ude80',
+    options: [
+      { id: 'channel', label: 'Channel', type: 'select', values: ['', ...CHANNELS] },
+      { id: 'scheduled', label: 'Scheduled only', type: 'checkbox' },
+      { id: 'dry-run', label: 'Dry run', type: 'checkbox' },
+      { id: 'verbose', label: 'Verbose', type: 'checkbox' },
+    ],
+  },
+  analytics: {
+    label: 'Analytics', icon: '\ud83d\udcc8',
+    options: [
+      { id: 'channel', label: 'Channel', type: 'select', values: ['', ...CHANNELS] },
+      { id: 'days', label: 'Days back', type: 'text', placeholder: '7' },
+    ],
+  },
+  report: {
+    label: 'Report', icon: '\ud83d\udcdd',
+    options: [
+      { id: 'channel', label: 'Channel', type: 'select', values: ['', ...CHANNELS] },
+      { id: 'month', label: 'Month', type: 'text', placeholder: 'e.g. 2026-03' },
+    ],
+  },
+};
+
+let cmdRunning = false;
+
+function renderToolbar() {
+  const el = document.getElementById('toolbar');
+  let html = '<span class="toolbar-label">Commands</span>';
+  for (const [id, def] of Object.entries(CMD_DEFS)) {
+    html += `<button class="cmd-btn" data-cmd="${id}" onclick="openCommand('${id}')">
+      <span class="icon">${def.icon}</span> ${def.label}
+    </button>`;
+  }
+  el.innerHTML = html;
+}
+
+function openCommand(cmdId) {
+  if (cmdRunning) return;
+  const def = CMD_DEFS[cmdId];
+  if (!def) return;
+
+  // No options: run directly
+  if (def.options.length === 0) {
+    runCommand(cmdId, []);
+    return;
+  }
+
+  // Show options modal
+  const modal = document.getElementById('cmd-modal');
+  const content = document.getElementById('cmd-modal-content');
+  let html = `<h3>${def.icon} ${def.label}</h3>`;
+
+  for (const opt of def.options) {
+    html += `<div class="field">`;
+    if (opt.type === 'select') {
+      html += `<label>${opt.label}</label>
+        <select id="cmd-opt-${opt.id}">
+          ${opt.values.map(v => `<option value="${v}">${v || 'All'}</option>`).join('')}
+        </select>`;
+    } else if (opt.type === 'text') {
+      html += `<label>${opt.label}</label>
+        <input type="text" id="cmd-opt-${opt.id}" placeholder="${opt.placeholder || ''}">`;
+    } else if (opt.type === 'checkbox') {
+      html += `<label class="check">
+        <input type="checkbox" id="cmd-opt-${opt.id}"> ${opt.label}
+      </label>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `<div class="row" style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+    <button onclick="closeCmdModal()">Cancel</button>
+    <button class="primary" onclick="submitCommand('${cmdId}')">Run</button>
+  </div>`;
+
+  content.innerHTML = html;
+  modal.classList.add('visible');
+}
+
+function closeCmdModal() {
+  document.getElementById('cmd-modal').classList.remove('visible');
+}
+
+function submitCommand(cmdId) {
+  const def = CMD_DEFS[cmdId];
+  const args = [];
+  for (const opt of def.options) {
+    const el = document.getElementById(`cmd-opt-${opt.id}`);
+    if (opt.type === 'checkbox') {
+      if (el.checked) args.push(`--${opt.id}`);
+    } else if (opt.type === 'select' || opt.type === 'text') {
+      const val = el.value.trim();
+      if (val) args.push(`--${opt.id}`, val);
+    }
+  }
+  closeCmdModal();
+  runCommand(cmdId, args);
+}
+
+function runCommand(cmdId, args) {
+  if (cmdRunning) return;
+  cmdRunning = true;
+  const def = CMD_DEFS[cmdId];
+
+  // Disable all buttons
+  document.querySelectorAll('.cmd-btn').forEach(b => b.disabled = true);
+
+  // Show output panel
+  const panel = document.getElementById('cmd-output');
+  const title = document.getElementById('cmd-output-title');
+  const body = document.getElementById('cmd-output-body');
+  panel.classList.add('visible');
+  title.innerHTML = `<span class="cmd-spinner"></span> Running: ${def.label} ${args.join(' ')}`;
+  body.innerHTML = '';
+
+  fetch(API + '/api/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command: cmdId, args }),
+  }).then(response => {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    function processChunk() {
+      reader.read().then(({ done, value }) => {
+        if (done) {
+          finishCommand(0);
+          return;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let eventType = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7);
+          } else if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            if (eventType === 'stdout') {
+              body.innerHTML += esc(data);
+            } else if (eventType === 'stderr') {
+              body.innerHTML += `<span class="stderr">${esc(data)}</span>`;
+            } else if (eventType === 'done') {
+              finishCommand(parseInt(data));
+              return;
+            } else if (eventType === 'error') {
+              body.innerHTML += `<span class="stderr">${esc(data)}</span>`;
+              finishCommand(1);
+              return;
+            }
+          }
+        }
+        body.scrollTop = body.scrollHeight;
+        processChunk();
+      });
+    }
+    processChunk();
+  }).catch(err => {
+    body.innerHTML += `<span class="stderr">Error: ${esc(err.message)}</span>`;
+    finishCommand(1);
+  });
+}
+
+function finishCommand(code) {
+  cmdRunning = false;
+  document.querySelectorAll('.cmd-btn').forEach(b => b.disabled = false);
+  const title = document.getElementById('cmd-output-title');
+  title.innerHTML = code === 0
+    ? `Completed`
+    : `<span style="color:#f85149">Exited with code ${code}</span>`;
+  // Refresh content data
+  refresh();
+}
+
+function closeCmdOutput() {
+  document.getElementById('cmd-output').classList.remove('visible');
+}
+
+// --- Init ---
+api('/api/channels').then(ch => { state.channelApis = ch; });
+renderToolbar();
+refresh();
+</script>
+</body>
+</html>

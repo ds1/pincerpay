@@ -1,0 +1,47 @@
+{
+  "name": "pincerpay-marketing-automation",
+  "version": "0.1.0",
+  "description": "Local CLI-based marketing automation for PincerPay — content generation, review, and multi-channel publishing",
+  "type": "module",
+  "scripts": {
+    "cli": "tsx src/cli/index.ts",
+    "generate": "tsx src/agents/generate.ts",
+    "publish": "tsx src/agents/publish.ts",
+    "analytics": "tsx src/agents/analytics.ts",
+    "discord-bot": "tsx src/agents/discord-bot.ts",
+    "review": "tsx src/cli/index.ts review",
+    "calendar": "tsx src/cli/index.ts calendar",
+    "report": "tsx src/cli/index.ts report",
+    "status": "tsx src/cli/index.ts status",
+    "validate": "tsx scripts/validate-config.ts",
+    "test": "vitest",
+    "dashboard": "tsx src/web/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "bin": {
+    "pincer": "./src/cli/index.ts"
+  },
+  "private": true,
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@inquirer/prompts": "^7.10.1",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "dayjs": "^1.11.19",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "googleapis": "^171.4.0",
+    "gray-matter": "^4.0.3",
+    "ora": "^9.3.0",
+    "snoowrap": "^1.23.0",
+    "twitter-api-v2": "^1.29.0",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

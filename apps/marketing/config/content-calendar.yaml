@@ -1,0 +1,382 @@
+# Content Calendar — Month 1 (February/March 2026)
+# Based on marketing plan Phase G1: Foundation
+# Theme: Launch & Educate
+#
+# Growth strategy notes (from _planning/research/2026-02-21-organic-growth-strategies.md):
+# - Target 3-5 tweets/day (engagement tweets fill the gaps between scheduled content)
+# - Never put links in the main tweet — link goes in the FIRST REPLY
+# - Content mix: 40% entertaining, 30% educational, 20% inspirational, 10% selling
+# - Bluesky: cross-post all Twitter content (low effort, growing dev audience)
+# - Reddit: build karma for 2-4 weeks before posting PincerPay content
+# - AEO: structure blog posts with clear Q&A, original data, schema.org markup
+
+weeks:
+  # Week 1: Launch
+  - week: "week-1"
+    start_date: "2026-02-23"
+    theme: "Launch & Origin Story"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "Why We Built PincerPay — origin story, the problem with card rails for agents, vision for x402-native infrastructure"
+        scheduled_for: "2026-02-24T14:00:00Z"
+        notes: "Lead with WHY, not WHAT. Focus on the value prop for both agents (autonomous payments, no API keys, sub-second settlement) and merchants (new revenue from AI traffic, three lines of code, no billing infrastructure). Features and tech are supporting details. Structure with AEO in mind: include FAQ section, schema.org markup, clear problem/solution format."
+      - channel: twitter
+        type: tweet
+        topic: "Pinned intro tweet — what PincerPay is (x402 payment gateway for AI agents), what it does (USDC micropayments over HTTP 402), who it's for (developers building agents or monetizing APIs), link to docs and playground"
+        scheduled_for: "2026-02-24T16:00:00Z"
+        pinned: true
+        notes: "Put docs/playground link in FIRST REPLY, not main tweet"
+      - channel: twitter
+        type: tweet
+        topic: "Build-in-public: We just launched PincerPay. Here's what we're building and why — personal founder story, what drove us to solve agent payments"
+        scheduled_for: "2026-02-24T18:00:00Z"
+        notes: "Personality tweet — 40% entertaining bucket. Invite replies."
+      - channel: twitter
+        type: tweet
+        topic: "Stripe charges $0.30 per transaction. For a $0.01 API call, that's a 3,100% fee. We built something better."
+        scheduled_for: "2026-02-25T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "What's the most you've ever paid in payment processing fees on a small transaction? We want to hear your horror stories."
+        scheduled_for: "2026-02-25T19:00:00Z"
+        notes: "Engagement/reply-bait tweet — drives replies (13.5x algorithm weight)"
+      - channel: twitter
+        type: tweet
+        topic: "Day 3 of building in public: Here's what our first week of signups/feedback looks like — transparent numbers, what surprised us"
+        scheduled_for: "2026-02-26T16:00:00Z"
+        notes: "Build-in-public with proof/numbers — most shareable format"
+      - channel: twitter
+        type: tweet
+        topic: "Unpopular opinion: API keys are the new fax machines. Agents don't need billing accounts — they need wallets."
+        scheduled_for: "2026-02-27T15:00:00Z"
+        notes: "Hot take — entertainment bucket, drives engagement"
+      - channel: twitter
+        type: tweet
+        topic: "Weekend project idea: What if every API endpoint had a price tag instead of a rate limit? That's what x402 enables."
+        scheduled_for: "2026-02-28T16:00:00Z"
+      - channel: reddit
+        type: reddit-post
+        topic: "How HTTP 402 enables AI agents to pay for APIs autonomously — technical explanation of x402 protocol"
+        subreddit: programming
+        scheduled_for: "2026-02-26T12:00:00Z"
+      # discord-announcement deferred — Discord server not yet set up
+      # bluesky: cross-post all twitter content (set up account first, see growth research)
+
+  # Week 2: Protocol Education
+  - week: "week-2"
+    start_date: "2026-03-02"
+    theme: "x402 Protocol Education"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "x402 Explained: HTTP Payments for the Agent Economy — how the protocol works, why HTTP 402, comparison to traditional payment flows"
+        scheduled_for: "2026-03-03T14:00:00Z"
+        notes: "AEO: include 'What is x402?' FAQ section with concise answers. Add schema.org FAQ markup."
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "HTTP 402 has existed since 1997. For 29 years, no one implemented it. x402 finally gives it a real payment protocol."
+        scheduled_for: "2026-03-03T16:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "The story behind HTTP 402: reserved 'for future use' in 1997. Everyone forgot about it. Until AI agents needed to pay for things."
+        scheduled_for: "2026-03-03T19:00:00Z"
+        notes: "Storytelling tweet — entertaining bucket"
+      - channel: twitter
+        type: tweet
+        topic: "Hot take: API keys are the new fax machines. Agents don't need billing accounts. They need wallets."
+        scheduled_for: "2026-03-04T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Quick poll: How do you currently handle payments in your side projects? Stripe / PayPal / Crypto / No monetization yet"
+        scheduled_for: "2026-03-04T19:00:00Z"
+        notes: "Engagement tweet — polls drive replies"
+      - channel: twitter
+        type: tweet
+        topic: "Try it yourself — PincerPay playground lets you watch an agent pay for a weather API in real time"
+        scheduled_for: "2026-03-05T16:00:00Z"
+        notes: "Link to demo.pincerpay.com in FIRST REPLY"
+      - channel: twitter
+        type: tweet
+        topic: "Week 2 update: Here's what we shipped, what broke, and what we learned. Build-in-public numbers."
+        scheduled_for: "2026-03-06T16:00:00Z"
+        notes: "Build-in-public recap — proof post with real data"
+      - channel: twitter
+        type: tweet
+        topic: "The best developer tools disappear. You don't think about Stripe — you just add 7 lines. We want PincerPay to be 3 lines."
+        scheduled_for: "2026-03-07T15:00:00Z"
+      - channel: reddit
+        type: reddit-post
+        topic: "The economics of AI agent micropayments — why card rails don't work and what the alternatives are"
+        subreddit: artificial
+        scheduled_for: "2026-03-05T12:00:00Z"
+      # youtube deferred — YouTube channel not yet set up
+
+  # Week 3: Cost Advantage
+  - week: "week-3"
+    start_date: "2026-03-09"
+    theme: "Cost Comparison & Developer Appeal"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "PincerPay vs. Stripe vs. Skyfire: A Developer's Comparison — real numbers, architecture differences, when to use what"
+        scheduled_for: "2026-03-10T14:00:00Z"
+        notes: "HIGH-PRIORITY SEO/AEO: 'vs' comparison pages are highest-converting content for dev tools. Include original fee calculations, code comparison, honest pros/cons."
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "What does $100 in micropayments actually cost? Stripe: $3,000 in fees. PayPal: $2,900. x402 on Solana: $0.50. Real numbers."
+        scheduled_for: "2026-03-10T16:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "I calculated what Stripe fees would cost an AI agent making 10,000 API calls per day. The number is absurd. Here's the math."
+        scheduled_for: "2026-03-10T19:00:00Z"
+        notes: "Multi-image post with fee breakdown screenshots — proof post"
+      - channel: twitter
+        type: tweet
+        topic: "Your agent just paid $0.001 for weather data. Stripe would have charged $0.30. Math is math."
+        scheduled_for: "2026-03-11T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "What's the smallest payment you've ever needed to process? Reply with the amount — curious how many of you hit the 'too small for Stripe' problem."
+        scheduled_for: "2026-03-11T19:00:00Z"
+        notes: "Reply-bait engagement tweet"
+      - channel: twitter
+        type: tweet
+        topic: "Code snippet: 3 lines of Express middleware to accept USDC from AI agents. That's the whole integration."
+        scheduled_for: "2026-03-12T15:00:00Z"
+        notes: "Code screenshot — process screenshot format. Link to full tutorial in FIRST REPLY."
+      - channel: twitter
+        type: tweet
+        topic: "Week 3 build-in-public: our first integration partner, what the conversion funnel looks like, and what we're shipping next."
+        scheduled_for: "2026-03-13T16:00:00Z"
+        notes: "Build-in-public proof post"
+      - channel: twitter
+        type: tweet
+        topic: "The payment industry's dirty secret: minimum transaction fees exist because legacy rails can't handle small payments efficiently. Blockchain fixes this."
+        scheduled_for: "2026-03-14T15:00:00Z"
+        notes: "Hot take — weekend engagement"
+      - channel: reddit
+        type: reddit-post
+        topic: "Building a paid API that AI agents can use autonomously — walkthrough with code examples"
+        subreddit: solana
+        scheduled_for: "2026-03-12T12:00:00Z"
+      - channel: blog
+        type: blog-post
+        topic: "Stripe Alternative for Indie Hackers: When $0.30 Per Transaction Kills Your Business Model"
+        scheduled_for: "2026-03-13T14:00:00Z"
+        notes: "SEO play: target 'stripe alternative' keywords. AEO: answer 'what is the cheapest payment API for small transactions?'"
+
+  # Week 4: Solana Ecosystem
+  - week: "week-4"
+    start_date: "2026-03-16"
+    theme: "Solana Ecosystem & Agentic Economy"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "The Agentic Economy Needs New Payment Rails — thought piece on why autonomous agents need non-custodial, programmable money"
+        scheduled_for: "2026-03-17T14:00:00Z"
+        notes: "AEO: target 'how do AI agents pay for services' and 'agent economy payments'"
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "PincerPay agents no longer need SOL for gas. Kora gasless + Squads smart accounts = fully Solana-native agent payments in USDC."
+        scheduled_for: "2026-03-17T16:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Agents on PincerPay no longer need SOL for gas. Kora integration is live — agents pay gas in USDC. One less token to manage."
+        scheduled_for: "2026-03-18T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "The agent economy will be bigger than the app economy. Here's my reasoning in 5 points."
+        scheduled_for: "2026-03-18T19:00:00Z"
+        notes: "Hot take — drives debate and replies"
+      - channel: twitter
+        type: tweet
+        topic: "If you're building an AI agent that needs to pay for anything, what's your biggest pain point right now? Genuinely want to know."
+        scheduled_for: "2026-03-19T15:00:00Z"
+        notes: "Engagement tweet — market research + replies"
+      - channel: twitter
+        type: tweet
+        topic: "Weekend build challenge: Can you build a paid AI API in under 10 minutes with PincerPay?"
+        scheduled_for: "2026-03-20T16:00:00Z"
+        notes: "Link to getting started guide in FIRST REPLY"
+      - channel: twitter
+        type: tweet
+        topic: "Month 1 recap: everything we shipped, every number we can share, and what month 2 looks like. Full transparency."
+        scheduled_for: "2026-03-21T16:00:00Z"
+        notes: "Build-in-public milestone post — proof format, drives bookmarks + retweets"
+      - channel: reddit
+        type: reddit-post
+        topic: "Non-custodial agent wallets and why they matter for autonomous AI — exploring Squads SPN and session key patterns"
+        subreddit: cryptocurrency
+        scheduled_for: "2026-03-19T12:00:00Z"
+      # youtube deferred — YouTube channel not yet set up
+
+  # Month 2: Integrate & Demonstrate
+  # Week 5
+  - week: "week-5"
+    start_date: "2026-03-23"
+    theme: "Integration Tutorials"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "Build a Paid AI API in 10 Minutes with PincerPay — step-by-step tutorial with code"
+        scheduled_for: "2026-03-24T14:00:00Z"
+        notes: "AEO: target 'how to build paid API for AI agents'. Include complete working code."
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "3 lines of Express middleware. That's what it takes to accept USDC from AI agents. npm i @pincerpay/merchant and you're live."
+        scheduled_for: "2026-03-24T16:00:00Z"
+        notes: "Code screenshot. Link to npm package in FIRST REPLY."
+      - channel: twitter
+        type: tweet
+        topic: "Every API should have a price tag. Not a subscription. Not an API key. A price per call. x402 makes this possible."
+        scheduled_for: "2026-03-25T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "We just pair-programmed a PincerPay integration with a developer in 8 minutes over a screen share. That's our new onboarding bar."
+        scheduled_for: "2026-03-25T19:00:00Z"
+        notes: "Collison Installation story — social proof + engagement"
+      - channel: twitter
+        type: tweet
+        topic: "What framework do you use for your AI agents? LangChain / CrewAI / AutoGen / Custom / Other? Building integrations for the most popular ones."
+        scheduled_for: "2026-03-26T15:00:00Z"
+        notes: "Poll/engagement tweet — market research"
+      - channel: twitter
+        type: tweet
+        topic: "The 'aha moment' for PincerPay: watching an AI agent autonomously pay for a weather API for the first time. No API key. No billing account. Just HTTP 402."
+        scheduled_for: "2026-03-27T16:00:00Z"
+        notes: "Storytelling — inspirational bucket"
+      - channel: twitter
+        type: tweet
+        topic: "Week 5 numbers: signups, integrations, what's working, what's not. Build-in-public update."
+        scheduled_for: "2026-03-28T16:00:00Z"
+        notes: "Build-in-public proof post"
+      - channel: reddit
+        type: reddit-post
+        topic: "Show r/programming: HTTP 402 payment protocol for AI agents with working demo"
+        subreddit: programming
+        scheduled_for: "2026-03-26T12:00:00Z"
+      - channel: blog
+        type: blog-post
+        topic: "I Tested 5 Payment APIs for My AI Agent Side Project — Here's What Actually Worked"
+        scheduled_for: "2026-03-27T14:00:00Z"
+        notes: "Experience-driven title format outperforms generic listicles. Honest comparison with original data."
+
+  # Week 6
+  - week: "week-6"
+    start_date: "2026-03-30"
+    theme: "Framework Integrations"
+    content:
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "PincerPay now works as a LangChain tool. Your agents can pay for premium APIs mid-chain, autonomously. Docs + example in thread."
+        scheduled_for: "2026-03-31T16:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Hot take: The agent economy will be bigger than the app economy. And it needs fundamentally different payment infrastructure."
+        scheduled_for: "2026-04-01T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Show me your AI agent project and I'll show you how to add payments in under 5 minutes. Serious offer — reply or DM."
+        scheduled_for: "2026-04-01T19:00:00Z"
+        notes: "Collison Installation offer — engagement + conversion"
+      - channel: twitter
+        type: tweet
+        topic: "New: PincerPay now works as a LangChain tool. Your agents can pay for premium APIs autonomously. Docs + example."
+        scheduled_for: "2026-04-02T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "The three hardest problems in agent payments: 1) Sub-cent transactions 2) No human in the loop 3) Non-custodial security. How we solve each one."
+        scheduled_for: "2026-04-03T16:00:00Z"
+        notes: "Educational listicle tweet — drives bookmarks"
+      - channel: twitter
+        type: tweet
+        topic: "Week 6 build-in-public: framework integrations shipped, developer feedback themes, and the feature request we didn't expect."
+        scheduled_for: "2026-04-04T16:00:00Z"
+        notes: "Build-in-public proof post"
+      - channel: reddit
+        type: reddit-post
+        topic: "Discussion: What happens when AI agents can autonomously pay for services? Exploring the implications"
+        subreddit: artificial
+        scheduled_for: "2026-04-02T12:00:00Z"
+
+  # Week 7
+  - week: "week-7"
+    start_date: "2026-04-06"
+    theme: "Non-Custodial & Security"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "Why Non-Custodial Agent Wallets Matter — security analysis, trust model comparison, Squads SPN deep dive"
+        scheduled_for: "2026-04-07T14:00:00Z"
+        notes: "AEO: target 'are AI agent wallets safe' and 'non-custodial agent payments'"
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "If your agent payment provider holds the keys, they hold the money. Non-custodial isn't a feature. It's a requirement."
+        scheduled_for: "2026-04-07T16:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Your agent's wallet should be a smart account with session keys and spending limits. Not a hot wallet on someone else's server."
+        scheduled_for: "2026-04-08T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Security question: Would you trust an AI agent with access to your funds? What controls would you need? Genuinely curious about your red lines."
+        scheduled_for: "2026-04-08T19:00:00Z"
+        notes: "Engagement tweet — drives discussion"
+      - channel: twitter
+        type: tweet
+        topic: "We open-sourced our agent wallet security model. Here's exactly how session keys, spending limits, and timeouts work."
+        scheduled_for: "2026-04-09T16:00:00Z"
+        notes: "Link to GitHub in FIRST REPLY. Open-source = trust signal."
+      - channel: twitter
+        type: tweet
+        topic: "Week 7: security audit results, what we changed, and the bug a community member found. Transparency post."
+        scheduled_for: "2026-04-11T16:00:00Z"
+        notes: "Build-in-public — vulnerability transparency builds trust"
+      - channel: reddit
+        type: reddit-post
+        topic: "Technical comparison: custodial vs non-custodial agent wallets — security models, trust assumptions, and trade-offs"
+        subreddit: solana
+        scheduled_for: "2026-04-09T12:00:00Z"
+
+  # Week 8
+  - week: "week-8"
+    start_date: "2026-04-13"
+    theme: "Micropayment Economics"
+    content:
+      - channel: blog
+        type: blog-post
+        topic: "Micropayments Are Finally Viable — data-driven analysis of on-chain settlement costs vs traditional rails"
+        scheduled_for: "2026-04-14T14:00:00Z"
+        notes: "AEO: target 'are micropayments viable in 2026' and 'cheapest way to process micropayments'. Include original fee data."
+      # thread deferred — threads disabled for now
+      - channel: twitter
+        type: tweet
+        topic: "Micropayments have been 'the future' for 25 years. What changed: stablecoins + Solana's sub-cent fees + a real protocol (x402)."
+        scheduled_for: "2026-04-14T16:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "The average API call costs $0.001-$0.01. The average Stripe transaction costs $0.30. That's the entire problem."
+        scheduled_for: "2026-04-16T15:00:00Z"
+      - channel: twitter
+        type: tweet
+        topic: "Two months in. Here's our full Month 2 report: every metric, every lesson, every mistake. The complete build-in-public story."
+        scheduled_for: "2026-04-18T16:00:00Z"
+        notes: "Major build-in-public milestone — proof post with comprehensive data. Drives bookmarks + retweets."
+      - channel: twitter
+        type: tweet
+        topic: "What should we build next? Reply with the one integration or feature that would make you try PincerPay today."
+        scheduled_for: "2026-04-19T15:00:00Z"
+        notes: "Engagement + product research. Drives replies."
+      # youtube deferred — YouTube channel not yet set up
+      - channel: blog
+        type: blog-post
+        topic: "Payment Processing Fees Compared: PincerPay vs Stripe vs Square vs Paddle for Small Transactions"
+        scheduled_for: "2026-04-17T14:00:00Z"
+        notes: "SEO/AEO: comprehensive comparison page targeting 'cheapest payment processing' keywords. Include calculator or data table."

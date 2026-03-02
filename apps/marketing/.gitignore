@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Secrets
+*.pem
+*.key
+client_secret.json
+youtube-token.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Published content archive (large over time)
+# content/published/
+
+# Analytics data
+content/analytics/
