@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@source "../../src";
+
+@theme {
+  --color-bg: #070300;
+  --color-bg-card: #110d06;
+  --color-bg-card-hover: #1a1408;
+  --color-bg-input: #0c0800;
+  --color-border: #2a1f0e;
+  --color-border-bright: #3d2e14;
+  --color-text: #e4e4ef;
+  --color-text-muted: #6b6b80;
+  --color-text-dim: #44445a;
+  --color-accent: #F97316;
+  --color-accent-hover: #fb923c;
+  --color-green: #22c55e;
+  --color-green-dim: #16a34a;
+  --color-red: #ef4444;
+  --color-yellow: #eab308;
+  --color-cyan: #06b6d4;
+  --color-orange: #f97316;
+
+  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-bright);
+  border-radius: 3px;
+}
+
+/* Pulse animation for active step */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+/* Step slide-in */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+/* Glow effect for CTA */
+.glow {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+}
+
+.glow:hover {
+  box-shadow: 0 0 30px rgba(249, 115, 22, 0.5);
+}
+
+/* Tour animations */
+@keyframes tour-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tour-fade-in {
+  animation: tour-fade-in 0.25s ease-out forwards;
+}
+
+@keyframes tour-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tour-tooltip-in {
+  animation: tour-tooltip-in 0.25s ease-out forwards;
+}
+
+@keyframes tour-ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(249, 115, 22, 0.4); }
+  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(249, 115, 22, 0.2); }
+}
+
+.tour-ring-pulse {
+  animation: tour-ring-pulse 2s ease-in-out infinite;
+}
