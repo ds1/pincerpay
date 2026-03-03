@@ -2,6 +2,29 @@
 
 Last updated: 2026-03-03
 
+## Deployed — Docs Consolidation + Demo Integration (2026-03-03)
+
+### Docs Single Source of Truth
+- [x] In-app docs (`/dashboard/docs`) now load from markdown files instead of hardcoded JSX
+- [x] Created `faq.md` for FAQ content previously hardcoded in JSX
+- [x] Supported Chains table remains dynamic JSX (from `@pincerpay/core`)
+- [x] Split `concepts.md` into 4 focused pages: x402, AP2, UCP, Chain Architecture
+
+### Demo Site Integration
+- [x] Added "Demo" nav link to site header (desktop + mobile), links to demo.pincerpay.com
+- [x] Added "Try the Demo" CTA on landing page
+- [x] Added demo callouts in 6 doc pages: getting-started, quickstart-agent, quickstart-merchant, agent-sdk, testing, FAQ
+- [x] Fixed demo code snippet: `agent.fetch()` returns `Response`, added `.json()` step
+- [x] Fixed tour: removed false claim that Squads SPN middleware enforces limits server-side
+- [x] Labeled Squads Smart Account as "Coming Soon" in demo config panel and tour
+- [x] Fixed "sub-second finality" to "sub-second latency"
+- [x] Removed em dashes from demo copy
+
+### Deploy Infrastructure
+- [x] Fixed Vercel deploy scripts: `--cwd` doubled the path with server-side Root Directory setting
+- [x] Deploy scripts now source `.vercel/env.sh` (gitignored) for project IDs
+- [x] Added `.npmrc` with `script-shell=bash` for pnpm scripts on Windows
+
 ## Deployed — SDK Docs + Security + CI Fix (2026-03-03)
 
 ### SDK Docs Reconciliation
