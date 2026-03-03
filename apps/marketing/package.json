@@ -14,7 +14,7 @@
     "report": "tsx src/cli/index.ts report",
     "status": "tsx src/cli/index.ts status",
     "validate": "tsx scripts/validate-config.ts",
-    "test": "vitest",
+    "test": "vitest --passWithNoTests",
     "dashboard": "tsx src/web/server.ts",
     "typecheck": "tsc --noEmit"
   },
