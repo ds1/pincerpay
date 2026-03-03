@@ -12,7 +12,10 @@
     "db:generate": "pnpm --filter @pincerpay/db generate",
     "db:migrate": "pnpm --filter @pincerpay/db migrate",
     "db:push": "pnpm --filter @pincerpay/db push",
-    "db:seed": "pnpm --filter @pincerpay/db build && node packages/db/dist/seed.js"
+    "db:seed": "pnpm --filter @pincerpay/db build && node packages/db/dist/seed.js",
+    "deploy:dashboard": "vercel --prod --cwd apps/dashboard",
+    "deploy:agent-demo": "vercel --prod --cwd apps/agent-demo",
+    "deploy:facilitator": "railway up"
   },
   "pnpm": {
     "overrides": {
