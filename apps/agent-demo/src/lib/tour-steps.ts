@@ -30,7 +30,7 @@ export const tourSteps: TourStep[] = [
     target: "spending-limits",
     title: "Spending Policies",
     description:
-      "Guardrails are critical. The per-transaction limit caps any single payment, while the daily limit resets at UTC midnight. These are enforced both agent-side (before signing) and facilitator-side (Squads SPN middleware).",
+      "Guardrails are critical. The per-transaction limit caps any single payment, while the daily limit resets at UTC midnight. These are enforced agent-side by the SDK before signing any transaction.",
     position: "right",
   },
   {
@@ -55,7 +55,7 @@ export const tourSteps: TourStep[] = [
     target: "flow-visualizer",
     title: "x402 Payment Flow",
     description:
-      "Watch the payment flow: HTTP request → 402 challenge → sign → verify → settle → data delivered. When a Squads Smart Account is enabled, an SPN policy validation step appears before settlement.",
+      "Watch the payment flow: HTTP request → 402 challenge → sign → verify → settle → data delivered. When a Squads Smart Account is enabled, an additional on-chain policy check appears before settlement (coming soon).",
     position: "left",
   },
   {
@@ -101,7 +101,7 @@ export const tourSteps: TourStep[] = [
     target: "playground-header",
     title: "That's x402",
     description:
-      "HTTP-native micropayments for AI agents. No card rails, no 3% fees, sub-second settlement. Agents pay for exactly what they use, with built-in spending controls. Try more endpoints or explore the code!",
+      "HTTP-native micropayments for AI agents. No card rails, no 3% fees. Agents pay for exactly what they use, with built-in spending controls. Try more endpoints or explore the code!",
     position: "bottom",
   },
 ];

@@ -155,7 +155,7 @@ export function AgentConfigPanel({ config, onChange, isLive }: AgentConfigPanelP
       <div data-tour="smart-account" className="border-t border-border pt-3">
         <div className="mb-2 flex items-center justify-between">
           <div>
-            <span className="text-xs font-medium text-text">Squads Smart Account</span>
+            <span className="text-xs font-medium text-text">Squads Smart Account <span className="text-accent">(Coming Soon)</span></span>
             <p className="text-[10px] text-text-dim">On-chain spending limits via Squads SPN</p>
           </div>
           <button
