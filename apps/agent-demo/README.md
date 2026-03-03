@@ -107,7 +107,7 @@ Use these when demoing PincerPay or presenting the agent payment story.
 
 > "PincerPay is the infrastructure that makes x402 work in production. Three pieces:"
 >
-> 1. **Merchant SDK** — One middleware to add x402 pricing to any API endpoint. `app.get('/api/weather', pay('0.001'), handler)`.
+> 1. **Merchant SDK** — One middleware to add x402 pricing to any API endpoint. `app.use(pincerpay({ routes: { "GET /api/weather": { price: "0.001" } } }))`.
 > 2. **Agent SDK** — One wrapper around fetch. `agent.fetch(url)` handles 402 challenges automatically.
 > 3. **Facilitator** — Verifies payment signatures and settles on-chain. Merchants don't touch crypto directly.
 
@@ -164,7 +164,17 @@ PincerPay is an on-chain payment gateway for the agentic economy built on the **
 **For merchants**: Add a middleware to your API. One line per endpoint sets the price. PincerPay handles verification and settlement.
 
 ```typescript
-app.get("/api/weather", pay("0.001"), (req, res) => {
+app.use(
+  pincerpay({
+    apiKey: process.env.PINCERPAY_API_KEY!,
+    merchantAddress: process.env.MERCHANT_ADDRESS!,
+    routes: {
+      "GET /api/weather": { price: "0.001", chain: "solana-devnet" },
+    },
+  })
+);
+
+app.get("/api/weather", (req, res) => {
   res.json({ temp: 68, conditions: "Sunny" });
 });
 ```

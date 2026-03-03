@@ -13,14 +13,21 @@ async function main() {
   try {
     const { pincerpay } = await import("@pincerpay/merchant");
 
-    const pay = pincerpay({
-      facilitatorUrl: process.env.FACILITATOR_URL || "http://localhost:4402",
-      payTo: process.env.MERCHANT_ADDRESS!,
-      chain: "solana",
-      network: "devnet",
-    });
+    app.use(
+      pincerpay({
+        apiKey: process.env.PINCERPAY_API_KEY!,
+        facilitatorUrl: process.env.FACILITATOR_URL || "http://localhost:4402",
+        merchantAddress: process.env.MERCHANT_ADDRESS!,
+        routes: {
+          "GET /api/weather": { price: "0.001", chain: "solana-devnet", description: "Weather data" },
+          "GET /api/market-data": { price: "0.01", chain: "solana-devnet", description: "Market data" },
+          "GET /api/research": { price: "0.05", chain: "solana-devnet", description: "Research report" },
+          "GET /api/premium-analytics": { price: "0.10", chain: "solana-devnet", description: "Premium analytics" },
+        },
+      })
+    );
 
-    app.get("/api/weather", pay("0.001"), (_req, res) => {
+    app.get("/api/weather", (_req, res) => {
       res.json({
         city: "San Francisco",
         temp: 68,
@@ -35,7 +42,7 @@ async function main() {
       });
     });
 
-    app.get("/api/market-data", pay("0.01"), (_req, res) => {
+    app.get("/api/market-data", (_req, res) => {
       res.json({
         timestamp: new Date().toISOString(),
         prices: {
@@ -48,7 +55,7 @@ async function main() {
       });
     });
 
-    app.get("/api/research", pay("0.05"), (_req, res) => {
+    app.get("/api/research", (_req, res) => {
       res.json({
         topic: "Agent-to-Agent Payments",
         summary:
@@ -61,7 +68,7 @@ async function main() {
       });
     });
 
-    app.get("/api/premium-analytics", pay("0.10"), (_req, res) => {
+    app.get("/api/premium-analytics", (_req, res) => {
       res.json({
         period: "Last 30 days",
         visitors: 12847,

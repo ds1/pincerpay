@@ -133,9 +133,9 @@ toBaseUnits("1.5");  // "1500000" (USDC has 6 decimals)`}</Pre>
         </p>
         <Pre>{`import { PincerPayAgent } from "@pincerpay/agent";
 
-const agent = PincerPayAgent.create({
-  privateKey: process.env.AGENT_PRIVATE_KEY!,
-  chain: "solana-devnet",
+const agent = await PincerPayAgent.create({
+  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
+  chains: ["solana-devnet"],
 });
 
 // Fetch a paywalled endpoint — payment is automatic
@@ -144,10 +144,10 @@ console.log(await res.json());`}</Pre>
         <h4 className="font-semibold text-[var(--foreground)] mt-4">
           Spending Policies
         </h4>
-        <Pre>{`const agent = PincerPayAgent.create({
-  privateKey: process.env.AGENT_PRIVATE_KEY!,
-  chain: "solana-devnet",
-  maxPaymentPerRequest: "0.10",  // Max USDC per request
+        <Pre>{`const agent = await PincerPayAgent.create({
+  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
+  chains: ["solana-devnet"],
+  policies: [{ maxPerTransaction: "100000", maxPerDay: "5000000" }],
 });`}</Pre>
       </>
     ),

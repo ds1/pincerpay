@@ -30,7 +30,7 @@ function buildSnippets(wallet: string, apiKey: string, chain: string) {
 
   const env = `# .env
 PINCERPAY_API_KEY=${apiKey}
-PINCERPAY_WALLET=${wallet}`;
+MERCHANT_ADDRESS=${wallet}`;
 
   const express = `import express from "express";
 import { pincerpay } from "@pincerpay/merchant";
@@ -80,11 +80,15 @@ app.get("/api/data", (c) => c.json({ data: "Premium content" }));
 
 export default app;`;
 
+  const isSolana = chain.startsWith("solana");
+  const keyParam = isSolana ? "solanaPrivateKey" : "evmPrivateKey";
+  const keyEnv = isSolana ? "AGENT_SOLANA_KEY" : "AGENT_EVM_KEY";
+
   const agent = `import { PincerPayAgent } from "@pincerpay/agent";
 
-const agent = PincerPayAgent.create({
-  privateKey: process.env.AGENT_PRIVATE_KEY!,
-  chain: "${chain}",
+const agent = await PincerPayAgent.create({
+  ${keyParam}: process.env.${keyEnv}!,
+  chains: ["${chain}"],
 });
 
 // Fetch a paywalled endpoint — payment is automatic
