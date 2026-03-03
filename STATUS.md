@@ -212,9 +212,9 @@ Anchor program + TypeScript client + hybrid facilitator.
 ### Ready to publish
 - [ ] `npm publish` via GitHub Actions workflow
 
-## Agent Demo — Complete (Updated 2026-02-22)
+## Agent Demo — Complete (Updated 2026-03-02)
 
-Standalone demo project at [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo). Live at `demo.pincerpay.com`.
+Migrated into monorepo as `apps/agent-demo` (`@pincerpay/agent-demo`). Live at `demo.pincerpay.com`.
 
 - Squads SPN spending limits parity: agent status (active/paused/revoked), correct error codes, Smart Account toggle with on-chain limit simulation
 - Agent-side vs facilitator-side error flow differentiation
@@ -237,9 +237,27 @@ Docs, blog, and SEO infrastructure merged to dashboard:
 - robots.txt, sitemap.xml, .well-known/ucp, .well-known/ai-plugin.json
 - Closed #44 (Landing page refresh), #51 (llms.txt)
 
-## Distribution Strategy — 40 Issues Created
+## Marketing Automation — Migrated (2026-03-02)
 
-40 GitHub Issues (#49-#88) across 4 tiers from distribution strategy. See GitHub Issues for full list.
+Migrated into monorepo as `apps/marketing` (`@pincerpay/marketing`). CLI content pipeline for content generation, review, and multi-channel publishing.
+
+## Monorepo Consolidation (2026-03-02)
+
+- [x] Import `pincerpay-agent-demo` via git subtree (history preserved)
+- [x] Import `pincerpay-marketing-automation` via git subtree (history preserved)
+- [x] Convert to workspace packages (`workspace:*` deps)
+- [x] Agent SDK: replace stale Railway fallback URL with `DEFAULT_FACILITATOR_URL`
+- [x] Program package: `PINCERPAY_PROGRAM_ID` now configurable via `ANCHOR_PROGRAM_ID` env var (#90)
+
+## npm Publishing (#49)
+
+- [x] All 7 packages have metadata, `prepublishOnly`, `files` field, MIT license
+- [x] GitHub Actions publish workflow ready (manual trigger, version bump, CI gate)
+- [ ] Waiting on npm support to release `@pincerpay` org scope (deleted username cooldown)
+
+## Distribution Strategy — 38 Open Issues
+
+GitHub Issues (#49-#88) across 4 tiers. Closed #55 (LangChain), #62 (CrewAI).
 
 ## Blockers
-_None_
+- npm `@pincerpay` org scope unavailable (support ticket sent to npm)

@@ -1,6 +1,6 @@
 import type { Address, Instruction } from "@solana/kit";
 import { createSolanaRpc } from "@solana/kit";
-import type { SolanaSmartAgentConfig } from "@pincerpay/core";
+import { DEFAULT_FACILITATOR_URL, type SolanaSmartAgentConfig } from "@pincerpay/core";
 import {
   deriveSmartAccountPda,
   deriveSettingsPda,
@@ -117,7 +117,7 @@ export class SolanaSmartAgent extends PincerPayAgent {
   }> {
     const facilitatorUrl = options?.facilitatorUrl
       ?? this.smartConfig.facilitatorUrl
-      ?? "https://pincerpayfacilitator-production.up.railway.app";
+      ?? DEFAULT_FACILITATOR_URL;
 
     const solanaAddr = this.solanaAddress;
     if (!solanaAddr) {

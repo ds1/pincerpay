@@ -2,8 +2,10 @@ import { type Address, getProgramDerivedAddress, getAddressEncoder } from "@sola
 
 const encoder = getAddressEncoder();
 
-/** Deployed Anchor program address (devnet) */
-export const PINCERPAY_PROGRAM_ID = "E53zfNo9DYxAUCu37bA2NakJMMbzPFszjgB5kPaTMvF3" as Address;
+/** Deployed Anchor program address (devnet). Override via ANCHOR_PROGRAM_ID env var for mainnet. */
+export const PINCERPAY_PROGRAM_ID = (
+  globalThis.process?.env?.ANCHOR_PROGRAM_ID ?? "E53zfNo9DYxAUCu37bA2NakJMMbzPFszjgB5kPaTMvF3"
+) as Address;
 
 const CONFIG_SEED = new TextEncoder().encode("config");
 const MERCHANT_SEED = new TextEncoder().encode("merchant");
