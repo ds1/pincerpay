@@ -33,6 +33,8 @@ Merchant delivers resource
 4. The PincerPay Facilitator verifies the payment and broadcasts the transaction on-chain
 5. Your middleware confirms payment and allows the request through
 
+![The x402 payment flow in the interactive playground](/docs/playground-flow.png)
+
 ## Quick Start
 
 ### 1. Sign Up
@@ -116,6 +118,8 @@ console.log(data); // { temp: 72, condition: "sunny" }
 ```
 
 Check the **Transactions** page in your dashboard to see the payment.
+
+![Merchant endpoints with per-request USDC pricing](/docs/endpoint-picker.png)
 
 ## Examples
 

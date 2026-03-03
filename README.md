@@ -8,6 +8,8 @@ The payment gateway for the agentic economy. Accept payments from AI agents. Add
 Agent → 402 Challenge → Sign USDC Transfer → PincerPay Facilitator → Blockchain → Merchant
 ```
 
+![PincerPay Agent Playground — x402 payment flow in action](apps/dashboard/public/docs/playground-flow.png)
+
 PincerPay is a non-custodial x402 facilitator. When an AI agent hits a merchant API and gets HTTP 402, the agent signs a USDC transfer. PincerPay verifies the signature, broadcasts to the blockchain, and confirms settlement.
 
 ## Monorepo Structure

@@ -14,6 +14,8 @@ A minimal AI agent that uses `PincerPayAgent` to fetch weather data from a paywa
 3. Fetches weather data from a paywalled merchant endpoint
 4. The SDK handles the full 402 payment flow automatically
 
+![Payment flow for a weather API request](/docs/flow-visualizer.png)
+
 ## Agent code
 
 ```typescript
@@ -112,6 +114,8 @@ Weather data received:
   "timestamp": "2026-03-02T12:00:00.000Z"
 }
 ```
+
+![API response with payment metadata](/docs/response-panel.png)
 
 ## Related
 
