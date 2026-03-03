@@ -56,6 +56,9 @@ packages/solana-program/target/
 contracts/cache/
 contracts/out/
 
+# Screenshots
+screenshots/
+
 # Logs
 *.log
 *.tsbuildinfo

@@ -15,7 +15,8 @@
     "db:seed": "pnpm --filter @pincerpay/db build && node packages/db/dist/seed.js",
     "deploy:dashboard": "source apps/dashboard/.vercel/env.sh && vercel --prod",
     "deploy:agent-demo": "source apps/agent-demo/.vercel/env.sh && vercel --prod",
-    "deploy:facilitator": "railway up"
+    "deploy:facilitator": "railway up",
+    "screenshots": "tsx scripts/screenshots.ts"
   },
   "pnpm": {
     "overrides": {
@@ -26,6 +27,7 @@
     }
   },
   "devDependencies": {
+    "@playwright/test": "^1.50",
     "turbo": "^2",
     "typescript": "^5.7",
     "vitest": "^4.0.18"
