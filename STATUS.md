@@ -1,6 +1,14 @@
 # Project Status
 
-Last updated: 2026-02-22
+Last updated: 2026-03-02
+
+## Deployed — SDK Docs Reconciliation (2026-03-02)
+
+- [x] Fixed agent-demo merchant server: replaced non-existent curried `pay()` API with real `pincerpay({ routes })` middleware
+- [x] Fixed dashboard docs page: corrected Agent SDK snippets (solanaPrivateKey, chains, policies)
+- [x] Fixed setup wizard: corrected agent snippet + PINCERPAY_WALLET -> MERCHANT_ADDRESS env var
+- [x] Fixed agent-demo README: updated merchant code examples to match real API
+- Deployed: Dashboard (Vercel), Facilitator + Agent Demo (Railway) — 2026-03-02
 
 ## Completed — Pre-Mainnet Preparation (2026-02-22)
 
