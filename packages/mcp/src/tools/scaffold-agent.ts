@@ -17,12 +17,14 @@ const inputSchema = {
     .string()
     .optional()
     .describe(
-      "Max USDC per transaction in human-readable format (e.g., '0.10').",
+      "Max USDC per transaction in base units (6 decimals). E.g., '100000' = $0.10, '1000000' = $1.00.",
     ),
   maxPerDay: z
     .string()
     .optional()
-    .describe("Max USDC per day in human-readable format (e.g., '5.00')."),
+    .describe(
+      "Max USDC per day in base units (6 decimals). E.g., '5000000' = $5.00, '10000000' = $10.00.",
+    ),
   typescript: z
     .boolean()
     .default(true)
@@ -47,9 +49,14 @@ export function registerScaffoldAgent(server: McpServer) {
       if (maxPerTransaction || maxPerDay) {
         const entries: string[] = [];
         if (maxPerTransaction)
-          entries.push(`      maxPerTransaction: "${maxPerTransaction}"`);
-        if (maxPerDay) entries.push(`      maxPerDay: "${maxPerDay}"`);
-        policiesBlock = `\n  policies: [\n    {\n${entries.join(",\n")},\n    },\n  ],`;
+          entries.push(
+            `      maxPerTransaction: "${maxPerTransaction}"`,
+          );
+        if (maxPerDay)
+          entries.push(`      maxPerDay: "${maxPerDay}"`);
+        policiesBlock =
+          `\n  // Spending policies use base units (6 decimals): 1 USDC = "1000000", $0.10 = "100000"` +
+          `\n  policies: [\n    {\n${entries.join(",\n")},\n    },\n  ],`;
       }
 
       const code = `import { PincerPayAgent } from "@pincerpay/agent";
@@ -86,7 +93,17 @@ console.log(data);`;
               `4. PincerPay facilitator verifies + broadcasts the transaction\n` +
               `5. Server delivers the protected resource\n\n` +
               `Spending policies prevent runaway spending — the agent will reject\n` +
-              `payments that exceed the configured limits.`,
+              `payments that exceed the configured limits.\n\n` +
+              `## USDC Base Units Reference\n\n` +
+              `| Human Amount | Base Units |\n` +
+              `|-------------|------------|\n` +
+              `| $0.01 | \`"10000"\` |\n` +
+              `| $0.10 | \`"100000"\` |\n` +
+              `| $1.00 | \`"1000000"\` |\n` +
+              `| $10.00 | \`"10000000"\` |\n\n` +
+              `**Important:** Route \`price\` uses human-readable amounts (e.g., \`"0.01"\`), ` +
+              `but spending \`policies\` use base units (6 decimals). ` +
+              `Multiply the human amount by 1,000,000 to get base units.`,
           },
         ],
       };

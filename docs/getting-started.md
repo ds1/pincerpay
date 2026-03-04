@@ -56,9 +56,11 @@ Go to **Paywalls** and click **New Paywall**:
 npm install @pincerpay/merchant
 ```
 
+> **ESM Required:** Your project must have `"type": "module"` in package.json. Both `@pincerpay/merchant` and `@pincerpay/agent` are ESM-only packages. Without this, you'll get `ERR_MODULE_NOT_FOUND`.
+
 ### 6. Add the Middleware
 
-See [Merchant SDK Integration](#merchant-sdk-integration) below for Express and Hono examples.
+See [Merchant SDK Integration](#merchant-sdk-integration) below for Express, Hono, and Next.js examples.
 
 ### 7. Test It
 
@@ -68,7 +70,7 @@ Use the agent SDK or `curl` to send a request. Check the **Transactions** page i
 
 ## Merchant SDK Integration
 
-The `@pincerpay/merchant` package provides middleware for Express and Hono that automatically handles the x402 payment flow.
+The `@pincerpay/merchant` package provides middleware for Express, Hono, and Next.js that automatically handles the x402 payment flow.
 
 ### Express
 
@@ -133,6 +135,42 @@ app.get("/api/weather", (c) => {
 
 export default app;
 ```
+
+### Next.js (Hono Adapter)
+
+Next.js doesn't have native x402 middleware support. Use Hono as a lightweight handler inside a catch-all App Router route:
+
+```typescript
+// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { pincerpayHono } from "@pincerpay/merchant";
+
+const app = new Hono().basePath("/api");
+
+app.use("*", pincerpayHono({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
+  routes: {
+    "GET /api/weather": {
+      price: "0.01",
+      chain: "solana",
+      description: "Current weather data",
+    },
+  },
+}));
+
+app.get("/weather", (c) => {
+  return c.json({ temp: 72, condition: "sunny" });
+});
+
+export const GET = handle(app);
+export const POST = handle(app);
+```
+
+Install: `npm install @pincerpay/merchant hono`
+
+> **Note:** `basePath("/api")` must match the catch-all route location. Route handlers use paths relative to basePath (`/weather` serves `/api/weather`).
 
 ### Configuration
 
@@ -220,7 +258,9 @@ const agent = await PincerPayAgent.create({
 
 ### Spending Policies
 
-Policies are enforced client-side before signing any transaction:
+Policies are enforced client-side before signing any transaction.
+
+> **Important:** Spending policies use **base units** (6 decimals), NOT human-readable amounts. Using `"0.10"` will cause `BigInt()` to throw at runtime. Use `"100000"` for $0.10.
 
 | Option | Type | Description |
 |--------|------|-------------|
@@ -228,6 +268,21 @@ Policies are enforced client-side before signing any transaction:
 | `maxPerDay` | `string` | Max USDC spend per 24-hour rolling window |
 | `allowedMerchants` | `string[]` | Restrict payments to specific wallet addresses |
 | `allowedChains` | `string[]` | Restrict to specific chains |
+
+### Runtime Policy Management
+
+```typescript
+// Pre-check if a payment would be allowed
+const check = agent.checkPolicy("500000"); // 0.50 USDC
+if (!check.allowed) console.log(check.reason);
+
+// Update spending limits dynamically
+agent.setPolicy({ maxPerTransaction: "5000000", maxPerDay: "50000000" });
+
+// Monitor daily spending
+const { date, amount } = agent.getDailySpend();
+console.log(`Spent ${amount} base units on ${date}`);
+```
 
 ### Solana Smart Agent (Advanced)
 
@@ -315,6 +370,8 @@ After a test payment, check your PincerPay dashboard:
 |----------|----------|-------------|
 | `AGENT_SOLANA_KEY` | For Solana | Solana private key (base58 encoded) |
 | `AGENT_EVM_KEY` | For EVM | EVM private key (hex, `0x` prefixed) |
+
+> **Security:** Store all keys in `.env` files and ensure `.env*` is in your `.gitignore`. Never commit API keys or private keys to source control.
 
 ### USDC Amounts
 

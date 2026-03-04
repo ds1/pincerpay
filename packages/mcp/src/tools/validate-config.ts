@@ -70,9 +70,38 @@ export function registerValidateConfig(server: McpServer) {
         );
       }
 
+      const validMethods = new Set([
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH",
+      ]);
       const allChains = new Set<string>();
       for (const [pattern, route] of Object.entries(data.routes)) {
-        const chains = route.chains ?? (route.chain ? [route.chain] : ["solana"]);
+        // Validate route pattern format: "METHOD /path"
+        const parts = pattern.split(" ");
+        if (parts.length < 2) {
+          warnings.push(
+            `Route "${pattern}": invalid format. Must be "METHOD /path" (e.g., "GET /api/weather").`,
+          );
+        } else {
+          const method = parts[0]!;
+          const path = parts.slice(1).join(" ");
+          if (!validMethods.has(method)) {
+            warnings.push(
+              `Route "${pattern}": "${method}" is not a standard HTTP method. Expected: GET, POST, PUT, DELETE, or PATCH.`,
+            );
+          }
+          if (!path.startsWith("/")) {
+            warnings.push(
+              `Route "${pattern}": path must start with "/" (e.g., "GET /api/weather").`,
+            );
+          }
+        }
+
+        const chains =
+          route.chains ?? (route.chain ? [route.chain] : ["solana"]);
         for (const chain of chains) {
           allChains.add(chain);
           if (!resolveChain(chain)) {

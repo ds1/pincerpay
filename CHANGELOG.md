@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.15.0 — 2026-03-03
+
+### MCP Server: Production-Ready for Public Distribution
+
+Major enhancement to `@pincerpay/mcp` — comprehensive docs, Next.js support, bug fixes, and clear merchant vs agent UX separation.
+
+#### Bug Fixes
+- **Fixed spending policy base units bug** — scaffold-agent tool and docs used human-readable amounts (`"0.10"`) for spending policies, but `SpendingPolicy.maxPerTransaction` expects base units (`"100000"`). `BigInt("0.10")` would throw at runtime. All descriptions, generated code, and docs now use base units with conversion comments.
+- **Fixed agent prompt base units passthrough** — `integrate-agent` prompt's `maxBudget` parameter (e.g., `"5.00"`) now auto-converts to base units (`"5000000"`) before passing to `scaffold-agent-client`, preventing the same BigInt crash.
+
+#### New Features
+- **Next.js framework support** — `scaffold-x402-middleware` now supports `"nextjs"` framework, generating a Hono adapter pattern in `app/api/[...route]/route.ts` with `handle` from `hono/vercel`
+- **`get-started` triage prompt** — new zero-argument prompt that determines the user's role (merchant, agent developer, both, or troubleshooting) and routes to the appropriate integration flow
+- **Route pattern validation** — `validate-payment-config` now validates route patterns must be `"METHOD /path"` format, warns on non-standard HTTP methods and missing leading `/`
+- **Server instructions** — McpServer now includes `instructions` field with role routing guidance, key gotchas (ESM, base units, .gitignore), and prompt/tool/resource discovery
+
+#### Documentation
+- **2 new doc topics**: `troubleshooting` (common issues table, devnet funding, debugging tips) and `reference` (chain shorthands, USDC amounts, package exports, API methods)
+- **Enhanced existing docs**: `getting-started` (Choose Your Path merchant/agent fork, ESM prerequisite, devnet table), `merchant` (Next.js Hono adapter example, multi-chain routes, `toBaseUnits`), `agent` (fixed base units, runtime policy methods, agent properties table)
+- **Merchant prompt** — added `"nextjs"` to framework enum
+- **Agent prompt** — added explicit BigInt crash warning in generated instructions
+
+#### Cleanup
+- Removed global `/pay` skill (`~/.claude/commands/pay.md`) — knowledge now embedded in MCP docs resources and tool descriptions
+
+#### Validation
+- `pnpm --filter @pincerpay/mcp build` — zero TS errors
+- `pnpm --filter @pincerpay/mcp test` — 22/22 tests pass
+
 ## 0.14.2 — 2026-02-22
 
 ### Website SEO Hardening

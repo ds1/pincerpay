@@ -2,6 +2,8 @@
 
 Agent SDK for AI agents to pay for APIs using on-chain USDC via the x402 protocol.
 
+> **ESM Required:** Your project must have `"type": "module"` in package.json. This package is ESM-only.
+
 ## Install
 
 ```bash
@@ -36,6 +38,8 @@ class PincerPayAgent {
   fetch(url: string | URL, init?: RequestInit): Promise<Response>;
 
   checkPolicy(amountBaseUnits: string): { allowed: boolean; reason?: string };
+  setPolicy(policy: Partial<SpendingPolicy>): void;
+  getDailySpend(): { date: string; amount: string };
   recordSpend(amountBaseUnits: string): void;
 
   get evmAddress(): string | undefined;
@@ -88,6 +92,9 @@ interface SpendingPolicy {
   allowedMerchants?: string[];     // Whitelist merchant addresses
   allowedChains?: string[];        // Whitelist chain shorthands
 }
+
+// USDC base units (6 decimals): $0.01 = "10000", $0.10 = "100000", $1.00 = "1000000"
+// WARNING: Do NOT use human-readable amounts like "0.10" — BigInt("0.10") throws at runtime.
 ```
 
 ## Common Patterns
@@ -132,6 +139,21 @@ const agent = await SolanaSmartAgent.create({
 const result = await agent.settleDirectly("merchant-uuid", "500000", {
   apiKey: process.env.PINCERPAY_API_KEY!,
 });
+```
+
+### Runtime policy management
+
+```typescript
+// Pre-check if a payment would be allowed
+const check = agent.checkPolicy("500000"); // 0.50 USDC
+if (!check.allowed) console.log(check.reason);
+
+// Update spending limits dynamically
+agent.setPolicy({ maxPerTransaction: "5000000", maxPerDay: "50000000" });
+
+// Monitor daily spending
+const { date, amount } = agent.getDailySpend();
+console.log(`Spent ${amount} base units on ${date}`);
 ```
 
 ## Anti-Patterns

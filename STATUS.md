@@ -256,20 +256,25 @@ Anchor program + TypeScript client + hybrid facilitator.
 - `list-supported-chains` — chain configs (local or live facilitator)
 - `check-transaction-status` — query tx status (auth required)
 - `estimate-gas-cost` — gas estimates per chain
-- `validate-payment-config` — validate merchant config JSON
-- `scaffold-x402-middleware` — generate Express/Hono middleware
-- `scaffold-agent-client` — generate agent fetch wrapper
+- `validate-payment-config` — validate merchant config JSON + route pattern format
+- `scaffold-x402-middleware` — generate Express/Hono/Next.js middleware
+- `scaffold-agent-client` — generate agent fetch wrapper with base units spending policies
 - `generate-ucp-manifest` — create /.well-known/ucp manifest
 
 ### Resources (3)
 - `chain://{shorthand}` — chain config template (6 chains)
 - `pincerpay://openapi` — live OpenAPI spec
-- `docs://pincerpay/{topic}` — embedded docs (getting-started, merchant, agent)
+- `docs://pincerpay/{topic}` — embedded docs (getting-started, merchant, agent, troubleshooting, reference)
 
-### Prompts (3)
-- `integrate-merchant` — merchant SDK integration guide
-- `integrate-agent` — agent SDK setup guide
+### Prompts (4)
+- `get-started` — interactive onboarding, triages merchant vs agent vs troubleshooting
+- `integrate-merchant` — merchant SDK integration guide (Express/Hono/Next.js)
+- `integrate-agent` — agent SDK setup guide with base units conversion
 - `debug-transaction` — transaction troubleshooting
+
+### Server Instructions
+- Role routing: Claude determines if user is merchant or agent, routes to appropriate prompt
+- Key gotchas embedded: ESM requirement, base units vs human amounts, .gitignore security
 
 ### Transports
 - stdio (default, for npx/Claude Desktop/Cursor)

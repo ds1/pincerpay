@@ -21,7 +21,7 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ### SDKs
 
-- [Merchant SDK](https://pincerpay.com/docs/merchant-sdk): Express and Hono middleware for accepting USDC payments from agents
+- [Merchant SDK](https://pincerpay.com/docs/merchant-sdk): Express, Hono, and Next.js middleware for accepting USDC payments from agents
 - [Agent SDK](https://pincerpay.com/docs/agent-sdk): Drop-in fetch wrapper that handles 402 payment flows automatically
 
 ### Learn
@@ -64,9 +64,9 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ## Integration
 
-- npm: @pincerpay/merchant (Express/Hono middleware)
+- npm: @pincerpay/merchant (Express/Hono/Next.js middleware)
 - npm: @pincerpay/agent (fetch wrapper with auto-payment)
-- npm: @pincerpay/mcp (MCP server — 7 tools, 3 resources, 3 prompts)
+- npm: @pincerpay/mcp (MCP server — 7 tools, 3 resources, 4 prompts, 5 doc topics)
 - npm: @pincerpay/core (shared types, chain configs, constants)
 - Facilitator API: https://facilitator.pincerpay.com
 - OpenAPI spec: https://facilitator.pincerpay.com/openapi.json

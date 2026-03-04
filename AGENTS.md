@@ -15,7 +15,7 @@ pincerpay/
 │   ├── solana/          # Kora gasless txns + Squads smart accounts
 │   ├── program/         # Anchor program client for on-chain settlement
 │   ├── agent/           # Agent SDK (fetch wrapper with auto x402 payment)
-│   ├── merchant/        # Merchant SDK (Express + Hono middleware)
+│   ├── merchant/        # Merchant SDK (Express + Hono + Next.js middleware)
 │   └── mcp/             # MCP server for AI agent tool integration
 ├── examples/
 │   ├── express-merchant/ # Express merchant demo
@@ -81,7 +81,7 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 
 1. Merchant adds `@pincerpay/merchant` middleware to Express/Hono routes
 2. Agent hits protected endpoint, gets HTTP 402 with payment requirements
-3. Agent signs a USDC transfer transaction using `@pincerpay/agent`
+3. Agent signs a USDC transfer transaction using `@pincerpay/agent` (spending policies use base units with 6 decimals — $1.00 = "1000000")
 4. PincerPay facilitator verifies signature, broadcasts to chain, confirms settlement
 5. Merchant delivers the resource
 

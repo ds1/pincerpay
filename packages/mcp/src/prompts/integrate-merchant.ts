@@ -8,8 +8,10 @@ export function registerMerchantPrompt(server: McpServer) {
       "Generates middleware code, environment setup, and testing instructions.",
     {
       framework: z
-        .enum(["express", "hono"])
-        .describe("Web framework to use."),
+        .enum(["express", "hono", "nextjs"])
+        .describe(
+          "Web framework to use. Use 'nextjs' for Next.js App Router (Hono adapter).",
+        ),
       chain: z
         .string()
         .default("solana")

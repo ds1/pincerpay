@@ -1,6 +1,8 @@
 # @pincerpay/merchant
 
-Merchant SDK for accepting on-chain USDC payments from AI agents via the x402 protocol.
+Merchant SDK for accepting on-chain USDC payments from AI agents via the x402 protocol. Supports Express, Hono, and Next.js.
+
+> **ESM Required:** Your project must have `"type": "module"` in package.json. This package is ESM-only.
 
 ## Install
 
@@ -72,6 +74,43 @@ app.get("/api/weather", (c) => c.json({ temp: 72 }));
 export default app;
 ```
 
+### Next.js (Hono Adapter)
+
+Next.js doesn't have native x402 middleware support. Use Hono as a lightweight handler inside a catch-all App Router route:
+
+```typescript
+// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { pincerpayHono } from "@pincerpay/merchant/hono";
+
+const app = new Hono().basePath("/api");
+
+app.use(
+  "*",
+  pincerpayHono({
+    apiKey: process.env.PINCERPAY_API_KEY!,
+    merchantAddress: "YOUR_SOLANA_ADDRESS",
+    routes: {
+      "GET /api/weather": {
+        price: "0.01",
+        chain: "solana",
+        description: "Current weather data",
+      },
+    },
+  })
+);
+
+app.get("/weather", (c) => c.json({ temp: 72 }));
+
+export const GET = handle(app);
+export const POST = handle(app);
+```
+
+Install: `npm install @pincerpay/merchant hono`
+
+> **Note:** `basePath("/api")` must match the catch-all route location. Route handlers use paths relative to basePath (`/weather` serves `/api/weather`).
+
 ## API Reference
 
 ### `pincerpay(config): Express.RequestHandler`
@@ -80,7 +119,7 @@ Express middleware that intercepts requests matching configured routes and retur
 
 ### `pincerpayHono(config): HonoMiddleware`
 
-Hono middleware with identical behavior.
+Hono middleware with identical behavior. Also used for Next.js via the Hono adapter pattern (see Next.js example above).
 
 ### `PincerPayClient`
 

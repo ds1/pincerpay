@@ -41,6 +41,8 @@ Go from zero to a working PincerPay integration in 5 minutes.
 npm install @pincerpay/merchant
 ```
 
+ESM Required: Your project must have `"type": "module"` in package.json. Both `@pincerpay/merchant` and `@pincerpay/agent` are ESM-only packages.
+
 6. Add Middleware:
 
 ```typescript
@@ -302,7 +304,7 @@ USDC base units: $0.01 = "10000", $0.10 = "100000", $1.00 = "1000000", $10.00 = 
 
 ## Merchant SDK (@pincerpay/merchant)
 
-Accept USDC payments from AI agents with Express or Hono middleware.
+Accept USDC payments from AI agents with Express, Hono, or Next.js middleware.
 
 Install: `npm install @pincerpay/merchant`
 
@@ -369,6 +371,40 @@ app.get("/api/weather", (c) => {
 
 export default app;
 ```
+
+### Next.js (Hono Adapter)
+
+Next.js doesn't have native x402 middleware support. Use Hono inside a catch-all App Router route:
+
+```typescript
+// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { pincerpayHono } from "@pincerpay/merchant";
+
+const app = new Hono().basePath("/api");
+
+app.use("*", pincerpayHono({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
+  routes: {
+    "GET /api/weather": {
+      price: "0.01",
+      chain: "solana",
+      description: "Current weather data",
+    },
+  },
+}));
+
+app.get("/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
+
+export const GET = handle(app);
+export const POST = handle(app);
+```
+
+Install: `npm install @pincerpay/merchant hono`
+
+Note: `basePath("/api")` must match the catch-all route location. Route handlers use paths relative to basePath (`/weather` serves `/api/weather`).
 
 ### Configuration
 
@@ -491,14 +527,22 @@ Spending limits are enforced at two layers:
 ### Managing Policies at Runtime
 
 ```typescript
+// Pre-check if a payment would be allowed
+const check = agent.checkPolicy("500000"); // 0.50 USDC
+if (!check.allowed) console.log(check.reason);
+
+// Update spending limits dynamically
 agent.setPolicy({
   maxPerTransaction: "1000000",  // 1.00 USDC
   maxPerDay: "10000000",         // 10.00 USDC
 });
 
-const policy = agent.getPolicy();
+// Monitor daily spending
 const { date, amount } = agent.getDailySpend();
+console.log(`Spent ${amount} base units on ${date}`);
 ```
+
+Important: Spending policies use base units (6 decimals), NOT human-readable amounts. Using "0.10" will cause BigInt() to throw at runtime. Use "100000" for $0.10.
 
 ### Solana Smart Agent (Squads Protocol)
 
