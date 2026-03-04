@@ -77,17 +77,62 @@ Add via the Cascade MCP panel or `mcp.json`:
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-## Tools
+## Tools (20)
+
+### Monitoring & Discovery
 
 | Tool | Description | Auth Required |
 |------|-------------|:---:|
 | `list-supported-chains` | List supported chains and USDC configs | No |
 | `estimate-gas-cost` | Estimate gas fees per chain | No |
+| `check-facilitator-health` | Check facilitator connectivity and worker status | No |
+| `get-settlement-metrics` | Fetch performance metrics (latency, counters, error rates) | No |
+
+### Operations
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
+| `check-transaction-status` | Query transaction status by hash/signature | Yes |
+| `verify-payment` | Dry-run payment validation without broadcasting | Yes |
+| `list-transactions` | List transactions with filtering and pagination | Yes |
+
+### Paywall CRUD
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
+| `list-paywalls` | List paywalled endpoints | Yes |
+| `create-paywall` | Create a new paywalled endpoint | Yes |
+| `update-paywall` | Update paywall price, status, or chains | Yes |
+| `delete-paywall` | Permanently delete a paywall | Yes |
+
+### Agent Management
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
+| `list-agents` | List agents that have interacted with your account | Yes |
+| `update-agent` | Update agent name, status, or spending limits | Yes |
+
+### Webhook Observability
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
+| `list-webhooks` | List webhook delivery attempts | Yes |
+| `retry-webhook` | Retry a failed webhook delivery | Yes |
+
+### Account
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
+| `get-merchant-profile` | Fetch merchant profile and configuration | Yes |
+
+### Scaffolding & Validation
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
 | `validate-payment-config` | Validate merchant config with route pattern checks | No |
 | `scaffold-x402-middleware` | Generate Express/Hono/Next.js middleware | No |
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies | No |
 | `generate-ucp-manifest` | Create commerce discovery manifest | No |
-| `check-transaction-status` | Query transaction status | Yes |
 
 ## Resources
 
@@ -107,7 +152,7 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 | Troubleshooting | `docs://pincerpay/troubleshooting` | Common issues table, devnet funding, debugging tips |
 | Reference | `docs://pincerpay/reference` | Chain shorthands, USDC amounts, package exports, API methods |
 
-## Prompts
+## Prompts (6)
 
 | Prompt | Description |
 |--------|-------------|
@@ -115,6 +160,8 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 | `integrate-merchant` | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
 | `integrate-agent` | Agent SDK setup with spending policies and gas estimates |
 | `debug-transaction` | Transaction troubleshooting by hash/signature |
+| `manage-paywalls` | Paywall management — list, create, update, delete, or review configuration |
+| `monitor-payments` | Payment monitoring — overview, failure investigation, pending transaction analysis |
 
 ## CLI Options
 
@@ -129,7 +176,7 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 
 Get your API key from [pincerpay.com/dashboard/settings](https://pincerpay.com/dashboard/settings).
 
-Developer tools (scaffolding, gas estimates, chain listing, config validation) work without an API key. Operations tools (transaction status) require one.
+Developer tools (scaffolding, gas estimates, chain listing, config validation, health checks) work without an API key. Operations tools (transactions, paywalls, agents, webhooks, merchant profile) require one.
 
 ## License
 

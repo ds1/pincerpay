@@ -1,6 +1,6 @@
 ---
 title: API Reference
-description: Facilitator REST API endpoints for payment verification and settlement.
+description: Facilitator REST API — payment verification, settlement, paywall CRUD, transaction listing, agent management, webhooks, and merchant profile.
 order: 5
 section: Reference
 ---
@@ -294,6 +294,254 @@ Real-time metrics snapshot. No authentication required.
 
 OpenAPI 3.1.0 specification for the Facilitator API. No authentication required.
 
+## GET /v1/paywalls
+
+List paywalled endpoints for the authenticated merchant. Supports pagination and filtering.
+
+### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | 50 | Max items (1-200) |
+| `offset` | number | 0 | Pagination offset |
+| `active` | boolean | — | Filter by active status |
+
+### Response (200)
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "endpointPattern": "GET /api/weather",
+      "amount": "0.01",
+      "chains": null,
+      "description": "Weather data",
+      "isActive": true,
+      "createdAt": "2026-03-01T12:00:00Z",
+      "updatedAt": "2026-03-01T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+## POST /v1/paywalls
+
+Create a new paywalled endpoint. The endpoint pattern must be unique per merchant.
+
+### Request
+
+```json
+{
+  "endpointPattern": "GET /api/weather",
+  "amount": "0.01",
+  "description": "Weather data",
+  "chains": ["solana"]
+}
+```
+
+### Response (201)
+
+Returns the created paywall object.
+
+### Response (409)
+
+```json
+{
+  "error": "A paywall for this endpoint already exists"
+}
+```
+
+## PUT /v1/paywalls/:id
+
+Update an existing paywall. Only provided fields are changed.
+
+### Request
+
+```json
+{
+  "amount": "0.05",
+  "isActive": false
+}
+```
+
+### Response (200)
+
+Returns the updated paywall object.
+
+## DELETE /v1/paywalls/:id
+
+Permanently delete a paywall. Returns 204 No Content on success.
+
+## GET /v1/transactions
+
+List transactions for the authenticated merchant. Supports pagination and filtering.
+
+### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | 50 | Max items (1-200) |
+| `offset` | number | 0 | Pagination offset |
+| `status` | string | — | Filter: pending, mempool, optimistic, confirmed, failed |
+| `chain` | string | — | Filter by CAIP-2 chain ID |
+| `from` | string | — | Filter by sender address |
+| `to` | string | — | Filter by recipient address |
+| `agent` | string | — | Filter by agent UUID |
+
+### Response (200)
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "chainId": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+      "txHash": "5UxK3...abc",
+      "fromAddress": "AgentWallet...",
+      "toAddress": "MerchantWallet...",
+      "amount": "1000000",
+      "gasCost": "5000",
+      "gasToken": "SOL",
+      "status": "confirmed",
+      "optimistic": false,
+      "createdAt": "2026-03-01T12:00:00Z",
+      "confirmedAt": "2026-03-01T12:00:05Z"
+    }
+  ],
+  "total": 42,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+## GET /v1/agents
+
+List agents that have interacted with the authenticated merchant. Supports pagination and status filtering.
+
+### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | 50 | Max items (1-200) |
+| `offset` | number | 0 | Pagination offset |
+| `status` | string | — | Filter: active, paused, revoked |
+
+### Response (200)
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "weather-agent",
+      "solanaAddress": "AgentWallet...",
+      "maxPerTransaction": "5000000",
+      "maxPerDay": "50000000",
+      "status": "active",
+      "createdAt": "2026-03-01T12:00:00Z"
+    }
+  ],
+  "total": 3,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+## PUT /v1/agents/:id
+
+Update an agent's name, status, or spending limits. Only provided fields are changed.
+
+### Request
+
+```json
+{
+  "status": "paused",
+  "maxPerDay": "10000000"
+}
+```
+
+### Response (200)
+
+Returns the updated agent object.
+
+## GET /v1/webhooks
+
+List webhook delivery attempts for the authenticated merchant.
+
+### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | 50 | Max items (1-200) |
+| `offset` | number | 0 | Pagination offset |
+| `status` | string | — | Filter: pending, delivered, retrying, failed |
+| `event` | string | — | Filter: payment.settled, payment.confirmed, payment.failed |
+
+### Response (200)
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "event": "payment.settled",
+      "url": "https://merchant.com/webhook",
+      "status": "delivered",
+      "statusCode": 200,
+      "attempts": 1,
+      "createdAt": "2026-03-01T12:00:00Z",
+      "deliveredAt": "2026-03-01T12:00:01Z"
+    }
+  ],
+  "total": 10,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+## POST /v1/webhooks/:id/retry
+
+Manually retry a failed or pending webhook delivery. Resets the delivery status and queues it for immediate retry. Cannot retry already-delivered webhooks.
+
+### Response (200)
+
+```json
+{
+  "success": true,
+  "message": "Webhook queued for retry"
+}
+```
+
+### Response (409)
+
+```json
+{
+  "error": "Webhook already delivered successfully"
+}
+```
+
+## GET /v1/merchant
+
+Fetch the authenticated merchant's profile.
+
+### Response (200)
+
+```json
+{
+  "id": "uuid",
+  "name": "My App",
+  "walletAddress": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  "supportedChains": ["solana"],
+  "webhookUrl": "https://merchant.com/webhook",
+  "onChainRegistered": false,
+  "createdAt": "2026-02-15T12:00:00Z"
+}
+```
+
 ## Rate Limiting
 
 All authenticated endpoints are rate-limited per API key using a sliding window.
@@ -304,6 +552,9 @@ All authenticated endpoints are rate-limited per API key using a sliding window.
 | `/v1/settle` | 50 req/min |
 | `/v1/settle-direct` | 50 req/min |
 | `/v1/verify` | 100 req/min |
+| `/v1/paywalls` (write) | 30 req/min |
+| `/v1/agents` (write) | 30 req/min |
+| `/v1/webhooks` | 30 req/min |
 
 Rate limit headers are included on every authenticated response:
 

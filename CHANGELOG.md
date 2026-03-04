@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.16.0 — 2026-03-04
+
+### MCP Server Expansion: 7 → 20 Tools (Full IDE Lifecycle)
+
+Expanded `@pincerpay/mcp` from 7 scaffolding-only tools to 20 tools covering setup, configure, deploy, monitor, and debug. Previously 100% scaffolding, now 65% operational.
+
+#### New Facilitator API Routes
+- **Paywall CRUD** — `GET/POST/PUT/DELETE /v1/paywalls` with pagination, unique constraint, merchant scoping
+- **Transaction listing** — `GET /v1/transactions` with status/chain/address/agent filters
+- **Agent management** — `GET/PUT /v1/agents` with status and spending limit updates
+- **Webhook observability** — `GET /v1/webhooks` with status/event filters, `POST /v1/webhooks/:id/retry`
+- **Merchant profile** — `GET /v1/merchant`
+- Zod schemas for all new request/query validation
+- Write operations rate-limited to 30 req/min
+
+#### New MCP Tools (13)
+- **Monitoring:** `check-facilitator-health`, `get-settlement-metrics`
+- **Operations:** `verify-payment`, `list-transactions`
+- **Paywall CRUD:** `list-paywalls`, `create-paywall`, `update-paywall`, `delete-paywall`
+- **Agent management:** `list-agents`, `update-agent`
+- **Webhooks:** `list-webhooks`, `retry-webhook`
+- **Account:** `get-merchant-profile`
+
+#### New MCP Prompts (2)
+- `manage-paywalls` — orchestrates paywall CRUD tools (list/create/update/delete/review)
+- `monitor-payments` — payment monitoring with timeframe and focus parameters
+
+#### FacilitatorClient Enhancements
+- `requestWithMethod()` for PUT/DELETE support (existing `request()` preserved)
+- 12 new API methods for all CRUD operations
+- Route constants added to `@pincerpay/core`
+
+#### Docs Updated
+- MCP README: expanded tools table (7→20), prompts table (4→6)
+- Dashboard MCP docs page: full tool inventory by category, new "Try It" examples
+- API Reference: documented all new endpoints with request/response schemas
+- llms.txt: updated tool/prompt counts
+- CHANGELOG and STATUS updated
+
+#### Validation
+- `pnpm typecheck` — 16/16 passed, zero errors
+- `pnpm test` — 14/14 passed (142 tests)
+- `pnpm build` — 11/11 passed, clean build
+- Bumped `@pincerpay/mcp` to v0.4.0
+
 ## 0.15.2 — 2026-03-04
 
 ### MCP Server Docs + Claude Code Enablement

@@ -67,7 +67,7 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 - npm: @pincerpay/merchant (Express/Hono/Next.js middleware)
 - npm: @pincerpay/agent (fetch wrapper with auto-payment)
-- npm: @pincerpay/mcp (MCP server — 7 tools, 3 resources, 4 prompts, 5 doc topics)
+- npm: @pincerpay/mcp (MCP server — 20 tools, 3 resources, 6 prompts, 5 doc topics)
 - npm: @pincerpay/core (shared types, chain configs, constants)
 - npm: @pincerpay/solana (Solana integration — Kora gasless txns, Squads smart accounts)
 - Facilitator API: https://facilitator.pincerpay.com

@@ -609,17 +609,15 @@ Remote (Streamable HTTP):
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-### Tools
+### Tools (20)
 
-| Tool | Description | Auth Required |
-|------|-------------|:---:|
-| list-supported-chains | List supported chains and USDC configs | No |
-| estimate-gas-cost | Estimate gas fees per chain | No |
-| validate-payment-config | Validate merchant config with route pattern checks | No |
-| scaffold-x402-middleware | Generate Express/Hono/Next.js middleware | No |
-| scaffold-agent-client | Generate agent fetch wrapper with spending policies | No |
-| generate-ucp-manifest | Create commerce discovery manifest | No |
-| check-transaction-status | Query transaction status | Yes |
+Monitoring (no auth): list-supported-chains, estimate-gas-cost, check-facilitator-health, get-settlement-metrics
+Operations (auth): check-transaction-status, verify-payment, list-transactions
+Paywall CRUD (auth): list-paywalls, create-paywall, update-paywall, delete-paywall
+Agent management (auth): list-agents, update-agent
+Webhooks (auth): list-webhooks, retry-webhook
+Account (auth): get-merchant-profile
+Scaffolding (no auth): validate-payment-config, scaffold-x402-middleware, scaffold-agent-client, generate-ucp-manifest
 
 ### Resources
 
@@ -631,7 +629,7 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 
 Doc topics: getting-started, merchant, agent, troubleshooting, reference.
 
-### Prompts
+### Prompts (6)
 
 | Prompt | Description |
 |--------|-------------|
@@ -639,10 +637,12 @@ Doc topics: getting-started, merchant, agent, troubleshooting, reference.
 | integrate-merchant | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
 | integrate-agent | Agent SDK setup with spending policies and gas estimates |
 | debug-transaction | Transaction troubleshooting by hash/signature |
+| manage-paywalls | Paywall management — list, create, update, delete, or review configuration |
+| monitor-payments | Payment monitoring — overview, failure investigation, pending transaction analysis |
 
 ### API Key
 
-Developer tools (scaffolding, gas estimates, chain listing, config validation) work without an API key. Operations tools (transaction status) require one. Get your key from https://pincerpay.com/dashboard/settings.
+Developer tools (scaffolding, gas estimates, chain listing, config validation, health checks) work without an API key. Operations tools (transactions, paywalls, agents, webhooks, merchant profile) require one. Get your key from https://pincerpay.com/dashboard/settings.
 
 ### CLI Options
 

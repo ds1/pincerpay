@@ -79,19 +79,64 @@ Run as a standalone HTTP server for remote or shared environments:
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-## Tools
+## Tools (20)
 
-The MCP server exposes 7 tools that your AI assistant can call:
+The MCP server exposes 20 tools covering the full developer lifecycle: setup, configure, deploy, monitor, and debug.
 
-| Tool | Description | Auth Required |
+### Monitoring & Discovery
+
+| Tool | Description | Auth |
 |------|-------------|:---:|
 | `list-supported-chains` | List supported chains and USDC configs | No |
 | `estimate-gas-cost` | Estimate gas fees per chain | No |
+| `check-facilitator-health` | Check facilitator connectivity and worker status | No |
+| `get-settlement-metrics` | Fetch performance metrics (latency, counters, error rates) | No |
+
+### Operations
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `check-transaction-status` | Query transaction status by hash/signature | Yes |
+| `verify-payment` | Dry-run payment validation without broadcasting | Yes |
+| `list-transactions` | List transactions with filtering and pagination | Yes |
+
+### Paywall CRUD
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `list-paywalls` | List paywalled endpoints | Yes |
+| `create-paywall` | Create a new paywalled endpoint | Yes |
+| `update-paywall` | Update paywall price, status, or chains | Yes |
+| `delete-paywall` | Permanently delete a paywall | Yes |
+
+### Agent Management
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `list-agents` | List agents that have interacted with your account | Yes |
+| `update-agent` | Update agent name, status, or spending limits | Yes |
+
+### Webhook Observability
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `list-webhooks` | List webhook delivery attempts | Yes |
+| `retry-webhook` | Retry a failed webhook delivery | Yes |
+
+### Account
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `get-merchant-profile` | Fetch merchant profile and configuration | Yes |
+
+### Scaffolding & Validation
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
 | `validate-payment-config` | Validate merchant config with route pattern checks | No |
 | `scaffold-x402-middleware` | Generate Express/Hono/Next.js middleware | No |
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies | No |
 | `generate-ucp-manifest` | Create commerce discovery manifest | No |
-| `check-transaction-status` | Query transaction status | Yes |
 
 ## Resources
 
@@ -113,7 +158,7 @@ The server embeds full documentation that your assistant can read on demand:
 | Troubleshooting | `docs://pincerpay/troubleshooting` | Common issues table, devnet funding, debugging tips |
 | Reference | `docs://pincerpay/reference` | Chain shorthands, USDC amounts, package exports, API methods |
 
-## Prompts
+## Prompts (6)
 
 Interactive prompts guide your assistant through common workflows:
 
@@ -123,6 +168,8 @@ Interactive prompts guide your assistant through common workflows:
 | `integrate-merchant` | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
 | `integrate-agent` | Agent SDK setup with spending policies and gas estimates |
 | `debug-transaction` | Transaction troubleshooting by hash/signature |
+| `manage-paywalls` | Paywall management — list, create, update, delete, or review configuration |
+| `monitor-payments` | Payment monitoring — overview, failure investigation, pending transaction analysis |
 
 ## Try It
 
@@ -134,12 +181,17 @@ After connecting, paste any of these into your AI assistant:
 - "Generate a UCP manifest for my API"
 - "Check the status of this transaction: 5UxK3..."
 - "Help me debug why my agent is getting 402 errors"
+- "List all my paywalled endpoints and review the pricing"
+- "Show me failed transactions from the last week"
+- "Create a paywall for GET /api/premium at $0.05 USDC"
+- "List my agents and their spending limits"
+- "Show me failed webhook deliveries and retry them"
 
 ## API Key
 
 Get your API key from [pincerpay.com/dashboard/settings](https://pincerpay.com/dashboard/settings).
 
-Developer tools (scaffolding, gas estimates, chain listing, config validation) work **without** an API key. Operations tools (transaction status) require one.
+Developer tools (scaffolding, gas estimates, chain listing, config validation, health checks) work **without** an API key. Operations tools (transactions, paywalls, agents, webhooks, merchant profile) require one.
 
 For Claude Code, pass the key as an environment variable:
 

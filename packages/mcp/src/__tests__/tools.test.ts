@@ -27,7 +27,7 @@ function createTestSetup(apiKey?: string) {
 // For unit tests, we'll test the tool handler logic more directly.
 
 describe("Tool registrations", () => {
-  it("registers 7 tools", () => {
+  it("registers 20 tools", () => {
     const { server } = createTestSetup();
     // The server has internal state — we verify via the protocol
     // Since we can't easily extract tool list without a transport,

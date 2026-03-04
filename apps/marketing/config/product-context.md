@@ -30,7 +30,7 @@ Discovery (UCP) -> Trust (AP2) -> Settlement (x402) -> Chain Abstraction (Solana
 - **`@pincerpay/agent`** -- Wraps fetch(). Handles 402 challenges automatically. 3 lines of code.
 - **`@pincerpay/core`** -- Shared types, protocol definitions, chain utilities.
 - **`@pincerpay/solana`** -- Solana-specific program interactions and utilities.
-- **`@pincerpay/mcp`** -- MCP server (7 tools, 3 resources, 3 prompts for Claude/Cursor/Copilot).
+- **`@pincerpay/mcp`** -- MCP server (20 tools, 3 resources, 6 prompts for Claude/Cursor/Copilot).
 - **Facilitator** -- Server that verifies payments, broadcasts transactions, settles on-chain.
 - **Dashboard** -- Merchant dashboard at pincerpay.com for configuration, analytics, and agent management.
 

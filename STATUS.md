@@ -2,6 +2,37 @@
 
 Last updated: 2026-03-04
 
+## Deployed — MCP Server Expansion v0.4.0 (2026-03-04)
+
+Expanded `@pincerpay/mcp` from 7 scaffolding-only tools to 20 tools covering the full developer lifecycle: setup, configure, deploy, monitor, debug.
+
+### Phase 1: Monitoring (3 tools)
+- [x] `check-facilitator-health` — wraps GET /health
+- [x] `get-settlement-metrics` — wraps GET /v1/metrics
+- [x] `verify-payment` — wraps POST /v1/verify
+
+### Phase 2: Facilitator CRUD + MCP Tools (5 tools, 2 prompts)
+- [x] Facilitator routes: paywall CRUD (GET/POST/PUT/DELETE /v1/paywalls), transaction listing (GET /v1/transactions)
+- [x] MCP tools: `list-paywalls`, `create-paywall`, `update-paywall`, `delete-paywall`, `list-transactions`
+- [x] MCP prompts: `manage-paywalls`, `monitor-payments`
+- [x] Zod schemas: pagination, paywall CRUD, transaction filters
+
+### Phase 3: Agents + Webhooks + Merchant (5 tools)
+- [x] Facilitator routes: agents (GET/PUT /v1/agents), webhooks (GET /v1/webhooks, POST /v1/webhooks/:id/retry), merchant (GET /v1/merchant)
+- [x] MCP tools: `list-agents`, `update-agent`, `list-webhooks`, `retry-webhook`, `get-merchant-profile`
+
+### Cross-cutting
+- [x] FacilitatorClient: `requestWithMethod()` for PUT/DELETE, 12 new API methods
+- [x] Route constants in @pincerpay/core
+- [x] Rate limits: 30/min for write operations on CRUD routes
+- [x] All docs updated (README, llms.txt, MCP docs page, API reference, CHANGELOG)
+- [x] `pnpm typecheck` — 16/16 passed
+- [x] `pnpm test` — 14/14 passed (142 tests)
+- [x] `pnpm build` — 11/11 passed
+
+### TODO: npm Publish
+- [ ] `npm publish` for @pincerpay/mcp v0.4.0
+
 ## Deployed — MCP Server Docs + Claude Code Enablement (2026-03-04)
 
 MCP server integration is now fully documented and one-command-ready for Claude Code users.
@@ -34,6 +65,12 @@ All 5 @pincerpay packages republished to npm as v0.1.1 with SEO and discoverabil
 - [x] Added `syncFacilitatorOnStart` option to `PincerPayConfig` (fixes build-time facilitator error in Next.js examples)
 - [x] All 5 packages republished as v0.1.1
 - [x] Closes #87, #88
+
+### MCP Server Expansion — Done
+- [x] Plan mode completed, 3-phase plan executed
+- [x] 13 new tools (7 → 20), 2 new prompts (4 → 6)
+- [x] New facilitator CRUD routes: paywalls, transactions, agents, webhooks, merchant
+- [x] See "Deployed — MCP Server Expansion v0.4.0" above
 
 ### MCP Directory Submissions (Manual — Pending)
 - [ ] Submit to Smithery (https://smithery.ai/new — reads smithery.yaml)
@@ -288,33 +325,31 @@ Anchor program + TypeScript client + hybrid facilitator.
 - [ ] CCTP v2 EVM→Solana bridging
 - [ ] Agent identity (DIDs, trust scores)
 
-## MCP Server — Complete
+## MCP Server — v0.4.0
 
 `@pincerpay/mcp` — MCP server for PincerPay. Works with Claude, Cursor, Windsurf, Copilot, Replit.
 
-### Tools (7)
-- `list-supported-chains` — chain configs (local or live facilitator)
-- `check-transaction-status` — query tx status (auth required)
-- `estimate-gas-cost` — gas estimates per chain
-- `validate-payment-config` — validate merchant config JSON + route pattern format
-- `scaffold-x402-middleware` — generate Express/Hono/Next.js middleware
-- `scaffold-agent-client` — generate agent fetch wrapper with base units spending policies
-- `generate-ucp-manifest` — create /.well-known/ucp manifest
+### Tools (20)
+**Monitoring (no auth):** `list-supported-chains`, `estimate-gas-cost`, `check-facilitator-health`, `get-settlement-metrics`
+**Operations (auth):** `check-transaction-status`, `verify-payment`, `list-transactions`
+**Paywall CRUD (auth):** `list-paywalls`, `create-paywall`, `update-paywall`, `delete-paywall`
+**Agent Management (auth):** `list-agents`, `update-agent`
+**Webhook Observability (auth):** `list-webhooks`, `retry-webhook`
+**Account (auth):** `get-merchant-profile`
+**Scaffolding (no auth):** `validate-payment-config`, `scaffold-x402-middleware`, `scaffold-agent-client`, `generate-ucp-manifest`
 
 ### Resources (3)
 - `chain://{shorthand}` — chain config template (6 chains)
 - `pincerpay://openapi` — live OpenAPI spec
 - `docs://pincerpay/{topic}` — embedded docs (getting-started, merchant, agent, troubleshooting, reference)
 
-### Prompts (4)
+### Prompts (6)
 - `get-started` — interactive onboarding, triages merchant vs agent vs troubleshooting
 - `integrate-merchant` — merchant SDK integration guide (Express/Hono/Next.js)
 - `integrate-agent` — agent SDK setup guide with base units conversion
 - `debug-transaction` — transaction troubleshooting
-
-### Server Instructions
-- Role routing: Claude determines if user is merchant or agent, routes to appropriate prompt
-- Key gotchas embedded: ESM requirement, base units vs human amounts, .gitignore security
+- `manage-paywalls` — paywall CRUD orchestration
+- `monitor-payments` — payment monitoring and failure investigation
 
 ### Transports
 - stdio (default, for npx/Claude Desktop/Cursor)
