@@ -1,6 +1,32 @@
 # Project Status
 
-Last updated: 2026-03-03
+Last updated: 2026-03-04
+
+## Published — npm Packages v0.1.1 (2026-03-04)
+
+All 5 @pincerpay packages republished to npm as v0.1.1 with SEO and discoverability improvements:
+- [x] `@pincerpay/core@0.1.1` — badges, expanded keywords (16), types/chain-config/constants
+- [x] `@pincerpay/solana@0.1.1` — badges, expanded keywords (17), spl-token/transfer-checked/devnet/mainnet
+- [x] `@pincerpay/merchant@0.1.1` — badges, expanded keywords (18), paywall/api-monetization/machine-to-machine
+- [x] `@pincerpay/agent@0.1.1` — badges, expanded keywords (18), fetch-wrapper/autonomous/spending-policy/agentic
+- [x] `@pincerpay/mcp@0.1.1` — badges, expanded keywords (19), mcpName, claude/cursor/copilot/ai-tools
+
+### npm SEO + LLM Discoverability (#87, #88)
+- [x] Added 4 badges to all 5 READMEs (npm version, downloads, license, TypeScript)
+- [x] Expanded keywords to 16-19 per package for npm search indexing
+- [x] Added `@pincerpay/solana` to llms.txt (was missing)
+- [x] Created `smithery.yaml` for MCP directory auto-registration
+- [x] Added `mcpName: "pincerpay-mcp"` to MCP package.json
+- [x] Added `syncFacilitatorOnStart` option to `PincerPayConfig` (fixes build-time facilitator error in Next.js examples)
+- [x] All 5 packages republished as v0.1.1
+- [x] Closes #87, #88
+
+### MCP Directory Submissions (Manual — Pending)
+- [ ] Submit to Smithery (https://smithery.ai/new — reads smithery.yaml)
+- [ ] Submit to mcp.so
+- [ ] PR to awesome-mcp-servers
+- [ ] Glama (auto-indexes from npm — should appear after keyword update)
+- [ ] Submit to cursor.directory
 
 ## Deployed — Docs Screenshots (2026-03-03)
 
@@ -280,9 +306,6 @@ Anchor program + TypeScript client + hybrid facilitator.
 - stdio (default, for npx/Claude Desktop/Cursor)
 - Streamable HTTP (--transport=http, for remote deployment)
 
-### Ready to publish
-- [ ] `npm publish` via GitHub Actions workflow
-
 ## Agent Demo — Complete (Updated 2026-03-02)
 
 Migrated into monorepo as `apps/agent-demo` (`@pincerpay/agent-demo`). Live at `demo.pincerpay.com`.
@@ -320,15 +343,14 @@ Migrated into monorepo as `apps/marketing` (`@pincerpay/marketing`). CLI content
 - [x] Agent SDK: replace stale Railway fallback URL with `DEFAULT_FACILITATOR_URL`
 - [x] Program package: `PINCERPAY_PROGRAM_ID` now configurable via `ANCHOR_PROGRAM_ID` env var (#90)
 
-## npm Publishing (#49)
+## npm Publishing (#49) — Complete
 
-- [x] All 7 packages have metadata, `prepublishOnly`, `files` field, MIT license
-- [x] GitHub Actions publish workflow ready (manual trigger, version bump, CI gate)
-- [ ] Waiting on npm support to release `@pincerpay` org scope (deleted username cooldown)
+- [x] All 5 packages published to npm v0.1.0 (core, solana, merchant, agent, mcp)
+- [x] Granular access token configured (90-day expiry, @pincerpay scope)
 
-## Distribution Strategy — 38 Open Issues
+## Distribution Strategy — 36 Open Issues
 
-GitHub Issues (#49-#88) across 4 tiers. Closed #55 (LangChain), #62 (CrewAI).
+GitHub Issues (#49-#88) across 4 tiers. Closed #55 (LangChain), #62 (CrewAI), #87 (npm SEO), #88 (MCP directories).
 
 ## Blockers
-- npm `@pincerpay` org scope unavailable (support ticket sent to npm)
+- None

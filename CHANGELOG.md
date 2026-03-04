@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.15.1 — 2026-03-04
+
+### npm SEO + LLM Discoverability (#87, #88)
+
+Metadata-only release to maximize discoverability across npm search, LLM contexts, and MCP directories.
+
+- **Badges** — Added npm version, downloads, license, and TypeScript badges to all 5 package READMEs
+- **Keywords** — Expanded from 8-10 to 16-19 keywords per package (cross-cutting: `typescript`, `web3`, `crypto`, `on-chain`, `http-402`; package-specific: `spl-token`, `paywall`, `fetch-wrapper`, `claude`, `cursor`, etc.)
+- **llms.txt** — Added missing `@pincerpay/solana` entry
+- **smithery.yaml** — Created MCP directory config for Smithery auto-registration
+- **mcpName** — Added `"pincerpay-mcp"` to MCP package.json for official MCP registry
+- **syncFacilitatorOnStart** — New `PincerPayConfig` option to defer facilitator sync to first request (fixes build-time 401 errors in Next.js examples)
+- **Version bump** — All 5 packages republished as v0.1.1
+- Closes #87, #88
+
 ## 0.15.0 — 2026-03-03
 
 ### MCP Server: Production-Ready for Public Distribution
