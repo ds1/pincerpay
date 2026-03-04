@@ -1,6 +1,7 @@
 {
   "name": "@pincerpay/program",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "description": "Anchor program client for PincerPay Solana on-chain settlement.",
   "license": "MIT",

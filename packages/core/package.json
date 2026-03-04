@@ -4,6 +4,9 @@
   "type": "module",
   "description": "Shared types, chain configs, and constants for PincerPay on-chain payment gateway",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://pincerpay.com",
   "repository": {
     "type": "git",

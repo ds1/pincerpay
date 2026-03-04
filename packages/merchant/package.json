@@ -4,6 +4,9 @@
   "type": "module",
   "description": "Merchant SDK for PincerPay. Express and Hono middleware for accepting USDC payments from AI agents.",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://pincerpay.com",
   "repository": {
     "type": "git",

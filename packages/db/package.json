@@ -1,6 +1,7 @@
 {
   "name": "@pincerpay/db",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "description": "Database schema and migrations for PincerPay. Drizzle ORM with PostgreSQL.",
   "license": "MIT",

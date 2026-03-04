@@ -4,6 +4,9 @@
   "type": "module",
   "description": "Agent SDK for PincerPay. Drop-in fetch wrapper that handles x402 payment flows automatically.",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://pincerpay.com",
   "repository": {
     "type": "git",
