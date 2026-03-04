@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/merchant",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Merchant SDK for PincerPay. Express and Hono middleware for accepting USDC payments from AI agents.",
   "license": "MIT",
@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/ds1/pincerpay/issues"
   },
-  "keywords": ["pincerpay", "x402", "usdc", "payments", "ai-agents", "solana", "merchant-sdk", "middleware", "express", "hono"],
+  "keywords": ["pincerpay", "x402", "usdc", "payments", "ai-agents", "solana", "merchant-sdk", "middleware", "express", "hono", "typescript", "web3", "crypto", "on-chain", "http-402", "paywall", "api-monetization", "machine-to-machine"],
   "files": ["dist", "README.md", "LICENSE"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

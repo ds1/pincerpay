@@ -9,6 +9,7 @@ app.use(
   pincerpayHono({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
+    syncFacilitatorOnStart: false,
     routes: {
       "GET /api/weather": {
         price: "0.001",

@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/solana",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Solana integration for PincerPay. Kora gasless transactions and Squads smart account support.",
   "license": "MIT",
@@ -16,7 +16,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "keywords": ["pincerpay", "solana", "kora", "squads", "gasless", "usdc", "smart-accounts", "session-keys"],
+  "keywords": ["pincerpay", "solana", "kora", "squads", "gasless", "usdc", "smart-accounts", "session-keys", "typescript", "web3", "crypto", "on-chain", "http-402", "spl-token", "transfer-checked", "devnet", "mainnet"],
   "files": ["dist", "README.md", "LICENSE"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -82,6 +82,8 @@ export function pincerpayHono(config: PincerPayConfig, paywallConfig?: PaywallCo
     facilitatorClient,
     schemes,
     paywallConfig,
+    undefined, // paywall provider
+    config.syncFacilitatorOnStart ?? true,
   );
 }
 

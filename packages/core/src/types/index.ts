@@ -181,6 +181,8 @@ export interface PincerPayConfig {
   facilitatorUrl?: string;
   /** Route-level paywall configs */
   routes: Record<string, RoutePaywallConfig>;
+  /** Defer facilitator sync to first request instead of middleware init (default: false) */
+  syncFacilitatorOnStart?: boolean;
 }
 
 export interface RoutePaywallConfig {

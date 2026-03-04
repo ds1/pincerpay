@@ -1,0 +1,20 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      facilitatorUrl:
+        type: string
+        description: "PincerPay facilitator URL"
+      apiKey:
+        type: string
+        description: "PincerPay API key"
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@pincerpay/mcp"],
+      env: {
+        ...(config.facilitatorUrl && { PINCERPAY_FACILITATOR_URL: config.facilitatorUrl }),
+        ...(config.apiKey && { PINCERPAY_API_KEY: config.apiKey })
+      }
+    })

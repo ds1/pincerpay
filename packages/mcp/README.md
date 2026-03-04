@@ -1,5 +1,10 @@
 # @pincerpay/mcp
 
+[![npm](https://img.shields.io/npm/v/@pincerpay/mcp?style=flat-square)](https://www.npmjs.com/package/@pincerpay/mcp)
+[![downloads](https://img.shields.io/npm/dm/@pincerpay/mcp?style=flat-square)](https://www.npmjs.com/package/@pincerpay/mcp)
+[![license](https://img.shields.io/npm/l/@pincerpay/mcp?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
 MCP server for [PincerPay](https://pincerpay.com) — on-chain USDC payment gateway for AI agents using the [x402 protocol](https://x402.org).
 
 Works with Claude, Cursor, Windsurf, GitHub Copilot, Replit, and any MCP-compatible client.

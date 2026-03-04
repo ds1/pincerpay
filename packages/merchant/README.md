@@ -1,5 +1,10 @@
 # @pincerpay/merchant
 
+[![npm](https://img.shields.io/npm/v/@pincerpay/merchant?style=flat-square)](https://www.npmjs.com/package/@pincerpay/merchant)
+[![downloads](https://img.shields.io/npm/dm/@pincerpay/merchant?style=flat-square)](https://www.npmjs.com/package/@pincerpay/merchant)
+[![license](https://img.shields.io/npm/l/@pincerpay/merchant?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
 Merchant SDK for accepting on-chain USDC payments from AI agents via the x402 protocol. Supports Express, Hono, and Next.js.
 
 > **ESM Required:** Your project must have `"type": "module"` in package.json. This package is ESM-only.

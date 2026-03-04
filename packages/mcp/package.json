@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "MCP server for PincerPay — on-chain USDC payment gateway for AI agents",
   "main": "dist/index.js",
@@ -52,6 +52,7 @@
     "README.md",
     "LICENSE"
   ],
+  "mcpName": "pincerpay-mcp",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -62,7 +63,16 @@
     "ai-agents",
     "solana",
     "payment-gateway",
-    "stablecoin"
+    "stablecoin",
+    "typescript",
+    "web3",
+    "crypto",
+    "on-chain",
+    "http-402",
+    "claude",
+    "cursor",
+    "copilot",
+    "ai-tools"
   ],
   "license": "MIT",
   "publishConfig": {
