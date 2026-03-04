@@ -2,6 +2,20 @@
 
 Last updated: 2026-03-04
 
+## Deployed — MCP Server Docs + Claude Code Enablement (2026-03-04)
+
+MCP server integration is now fully documented and one-command-ready for Claude Code users.
+
+- [x] New doc page: [pincerpay.com/docs/mcp-server](https://pincerpay.com/docs/mcp-server)
+- [x] Quick Start for Claude Code, Claude Desktop, Cursor, Windsurf, Remote HTTP
+- [x] Tools/Resources/Prompts reference tables
+- [x] "Try It" section with example prompts
+- [x] Updated `llms.txt` (root + public) with MCP Server entry in SDKs section
+- [x] Updated `llms-full.txt` with full MCP Server content
+- [x] Deployed to Vercel (`pnpm deploy:dashboard`)
+
+**Claude Code one-liner:** `claude mcp add pincerpay -- npx -y @pincerpay/mcp`
+
 ## Published — npm Packages v0.1.1 (2026-03-04)
 
 All 5 @pincerpay packages republished to npm as v0.1.1 with SEO and discoverability improvements:
@@ -145,7 +159,7 @@ E2E Kora gasless payment test PASSING on Solana devnet.
 ## Last Deploy
 - **Facilitator**: Railway — 2026-02-22T15:39Z (Kora gasless e2e passing)
 - **Kora Signer**: Railway — 2026-02-22T07:15Z (new service, `resplendent-freedom`)
-- **Dashboard**: Vercel — 2026-03-03 (docs screenshots at 2x resolution)
+- **Dashboard**: Vercel — 2026-03-04 (MCP Server docs page)
 - **Agent Demo**: Vercel — 2026-02-22 `demo.pincerpay.com` (Squads SPN spending limits parity)
 
 ## Phase 1 MVP — Deployed to Production

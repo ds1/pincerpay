@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.15.2 — 2026-03-04
+
+### MCP Server Docs + Claude Code Enablement
+
+- **Doc page** — New `/docs/mcp-server` with Quick Start for Claude Code, Claude Desktop, Cursor, Windsurf, and remote HTTP
+- **Tools/Resources/Prompts tables** — Full reference for all 7 tools, 3 resources (with 5 doc topics), and 4 prompts
+- **llms.txt** — Added MCP Server entry to SDKs section (root + public copies)
+- **llms-full.txt** — Appended complete MCP Server content after Agent SDK section
+
 ## 0.15.1 — 2026-03-04
 
 ### npm SEO + LLM Discoverability (#87, #88)
