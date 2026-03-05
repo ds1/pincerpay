@@ -1,6 +1,39 @@
 # Project Status
 
-Last updated: 2026-03-04
+Last updated: 2026-03-05
+
+## Published -- npm Packages v0.2.0 + MCP v0.4.0 (2026-03-05)
+
+All 5 @pincerpay packages updated with comprehensive README documentation and republished:
+
+- [x] `@pincerpay/core@0.2.0` -- documented all facilitator routes, `syncFacilitatorOnStart`, Transaction/AgentProfile types, Solana tx fields, rate limit constants, Zod schemas
+- [x] `@pincerpay/solana@0.2.0` -- documented all Squads instruction builders (`createSmartAccountInstruction`, `addSpendingLimitInstruction`, `useSpendingLimitInstruction`, `removeSpendingLimitInstruction`), `koraConfigSchema`, Kora env parsing
+- [x] `@pincerpay/merchant@0.2.0` -- documented `getUsdcAsset()`, `syncFacilitatorOnStart` in Next.js example, expanded utility function docs
+- [x] `@pincerpay/agent@0.2.0` -- documented `getPolicy()`, fixed `getDailySpend()` return type (bigint not string), documented `SolanaSmartAgent` instruction builders, x402 hook enforcement, base units anti-pattern
+- [x] `@pincerpay/mcp@0.4.0` -- 20 tools (was 7 in v0.1.1), 6 prompts, full paywall CRUD, agent management, webhook observability, merchant profile
+
+## TODO: Domain Reputation Remediation (2026-03-04)
+
+pincerpay.com flagged by heuristic reputation scanners (Gridinsoft 38/100, ScamAdviser 0/100). No actual malware/phishing — clean on all 26 major engines (Google SafeBrowsing, BitDefender, Kaspersky, etc.). Low scores caused by: domain age (18 days), WHOIS privacy, crypto/payment keywords, low traffic.
+
+### Next Up
+- [ ] Submit `https://pincerpay.com/robots.txt` for Google Search Console URL indexing (quota resets daily)
+
+### Tier 1: Immediate
+- [ ] Gridinsoft: Claim profile + dispute at portal.gridinsoft.com (or email review@gridinsoft.com). Provide GitHub repo, npm packages, SSL cert, company details. Other owners report 45→100 after document submission.
+- [ ] ScamAdviser: Dispute score via scamadviser.com/faq. Provide business details + evidence.
+- [ ] Disable WHOIS privacy on Spaceship registrar, OR add visible About/Contact page with owner name, company, contact email
+- [ ] Add trust signals to site: GitHub repo link in footer, npm package links, Terms of Service page, Privacy Policy page, contact email
+
+### Tier 2: This Week
+- [ ] Set up email authentication DNS records: SPF, DKIM, DMARC (`v=DMARC1; p=reject;`)
+- [ ] Create/link Twitter/X account for PincerPay
+- [ ] Request re-scans on Gridinsoft + ScamAdviser after changes
+
+### Tier 3: Ongoing (Time-Based)
+- [ ] Domain age maturity — scores improve significantly at 3 months, penalty drops at 6 months
+- [ ] Build organic traffic via blog posts, dev content, npm downloads
+- [ ] Collect user reviews on Gridinsoft, ScamAdviser, Trustpilot
 
 ## Deployed — MCP Server Expansion v0.4.0 (2026-03-04)
 
@@ -30,8 +63,8 @@ Expanded `@pincerpay/mcp` from 7 scaffolding-only tools to 20 tools covering the
 - [x] `pnpm test` — 14/14 passed (142 tests)
 - [x] `pnpm build` — 11/11 passed
 
-### TODO: npm Publish
-- [ ] `npm publish` for @pincerpay/mcp v0.4.0
+### npm Publish
+- [x] `npm publish` for @pincerpay/mcp v0.4.0 (published 2026-03-05)
 
 ## Deployed — MCP Server Docs + Claude Code Enablement (2026-03-04)
 
@@ -47,14 +80,14 @@ MCP server integration is now fully documented and one-command-ready for Claude 
 
 **Claude Code one-liner:** `claude mcp add pincerpay -- npx -y @pincerpay/mcp`
 
-## Published — npm Packages v0.1.1 (2026-03-04)
+## Published -- npm Packages v0.1.1 (2026-03-04)
 
-All 5 @pincerpay packages republished to npm as v0.1.1 with SEO and discoverability improvements:
-- [x] `@pincerpay/core@0.1.1` — badges, expanded keywords (16), types/chain-config/constants
-- [x] `@pincerpay/solana@0.1.1` — badges, expanded keywords (17), spl-token/transfer-checked/devnet/mainnet
-- [x] `@pincerpay/merchant@0.1.1` — badges, expanded keywords (18), paywall/api-monetization/machine-to-machine
-- [x] `@pincerpay/agent@0.1.1` — badges, expanded keywords (18), fetch-wrapper/autonomous/spending-policy/agentic
-- [x] `@pincerpay/mcp@0.1.1` — badges, expanded keywords (19), mcpName, claude/cursor/copilot/ai-tools
+All 5 @pincerpay packages republished to npm as v0.1.1 with SEO and discoverability improvements. **Superseded by v0.2.0 + MCP v0.4.0 (2026-03-05).**
+- [x] `@pincerpay/core@0.1.1` -- badges, expanded keywords (16), types/chain-config/constants
+- [x] `@pincerpay/solana@0.1.1` -- badges, expanded keywords (17), spl-token/transfer-checked/devnet/mainnet
+- [x] `@pincerpay/merchant@0.1.1` -- badges, expanded keywords (18), paywall/api-monetization/machine-to-machine
+- [x] `@pincerpay/agent@0.1.1` -- badges, expanded keywords (18), fetch-wrapper/autonomous/spending-policy/agentic
+- [x] `@pincerpay/mcp@0.1.1` -- badges, expanded keywords (19), mcpName, claude/cursor/copilot/ai-tools
 
 ### npm SEO + LLM Discoverability (#87, #88)
 - [x] Added 4 badges to all 5 READMEs (npm version, downloads, license, TypeScript)

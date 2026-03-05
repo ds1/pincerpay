@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/npm/l/@pincerpay/merchant?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Merchant SDK for accepting on-chain USDC payments from AI agents via the x402 protocol. Supports Express, Hono, and Next.js.
+Merchant SDK for accepting on-chain USDC payments from AI agents via the [x402 protocol](https://x402.org). Supports Express, Hono, and Next.js.
 
 > **ESM Required:** Your project must have `"type": "module"` in package.json. This package is ESM-only.
 
@@ -96,6 +96,7 @@ app.use(
   pincerpayHono({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "YOUR_SOLANA_ADDRESS",
+    syncFacilitatorOnStart: false, // Avoids build-time network call during prerendering
     routes: {
       "GET /api/weather": {
         price: "0.01",
@@ -151,8 +152,9 @@ const supported = await client.getSupported();
 interface PincerPayConfig {
   apiKey: string;
   merchantAddress: string;
-  facilitatorUrl?: string; // defaults to https://facilitator.pincerpay.com
+  facilitatorUrl?: string;          // defaults to https://facilitator.pincerpay.com
   routes: Record<string, RoutePaywallConfig>;
+  syncFacilitatorOnStart?: boolean; // defer facilitator sync to first request (default: false)
 }
 
 interface RoutePaywallConfig {
@@ -166,10 +168,15 @@ interface RoutePaywallConfig {
 ### Utility Functions
 
 ```typescript
-import { toBaseUnits, resolveRouteChains } from "@pincerpay/merchant";
+import { toBaseUnits, resolveRouteChains, getUsdcAsset } from "@pincerpay/merchant";
 
 toBaseUnits("0.01");              // "10000" (USDC has 6 decimals)
+toBaseUnits("1.00");              // "1000000"
+
 resolveRouteChains(routeConfig);  // ["solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"]
+
+getUsdcAsset("solana-devnet");    // USDC mint address for Solana devnet
+getUsdcAsset("base");             // USDC contract address for Base
 ```
 
 ## Common Patterns
@@ -200,7 +207,7 @@ pincerpay({
   merchantAddress: "YOUR_ADDRESS",
   routes: {
     "GET /api/premium": { price: "1.00", chain: "solana" },
-    // GET /api/free is not listed — no paywall
+    // GET /api/free is not listed -- no paywall
   },
 });
 ```

@@ -1,6 +1,46 @@
 # Changelog
 
-## 0.16.0 — 2026-03-04
+## 0.17.0 -- 2026-03-05
+
+### npm Package Documentation Overhaul + MCP v0.4.0 Publish
+
+Comprehensive README updates for all 5 @pincerpay npm packages to document post-onboarding capabilities that were built but not described. MCP server published with full 20-tool lifecycle.
+
+#### @pincerpay/core v0.2.0
+- Documented all 11 facilitator routes (was 5): added `/metrics`, `/paywalls`, `/transactions`, `/agents`, `/webhooks`, `/merchant`
+- Added `syncFacilitatorOnStart` option documentation (defers facilitator sync for Next.js prerendering)
+- Documented full `Transaction` interface with Solana-specific fields: `slot`, `priorityFee`, `computeUnits`, `gasToken`, `settlementType`, `programNonce`
+- Added `AgentProfile` interface with Squads smart account fields
+- Documented rate limit constants (`RATE_LIMIT`), polling intervals (`TX_POLL_INTERVAL_MS`, `TX_CONFIRMATION_TIMEOUT_MS`)
+- Added Zod schema documentation and sub-path exports section
+
+#### @pincerpay/solana v0.2.0
+- Documented all 4 low-level Squads instruction builders: `createSmartAccountInstruction`, `addSpendingLimitInstruction`, `useSpendingLimitInstruction`, `removeSpendingLimitInstruction`
+- Added `koraConfigSchema` Zod schema documentation
+- Added `parseKoraConfig()` environment variable parsing pattern
+- Expanded Kora Quick Start with env parsing example
+
+#### @pincerpay/merchant v0.2.0
+- Documented `getUsdcAsset()` utility function (resolves chain shorthand to USDC contract address)
+- Added `syncFacilitatorOnStart` to Next.js Hono adapter example
+- Expanded utility function documentation with more examples
+
+#### @pincerpay/agent v0.2.0
+- Added missing `getPolicy()` method to API reference
+- Fixed `getDailySpend()` return type: `amount` is `bigint`, not `string`
+- Documented all 3 `SolanaSmartAgent` instruction builders: `buildCreateSmartAccountInstruction`, `buildAddSpendingLimitInstruction`, `buildRevokeSpendingLimitInstruction`
+- Added `SolanaSmartAgentConfig` type documentation
+- Documented x402 hook-based policy enforcement (`onBeforePaymentCreation`, `onAfterPaymentCreation`)
+- Added base units anti-pattern section (BigInt("0.10") throws at runtime)
+- Added Squads instruction building example
+
+#### @pincerpay/mcp v0.4.0 (first publish at this version)
+- **20 tools** (was 7 in v0.1.1): monitoring, paywall CRUD, agent management, webhook observability, merchant profile, scaffolding
+- **6 prompts** (was 4): added `manage-paywalls` and `monitor-payments`
+- Full facilitator API coverage via FacilitatorClient
+- npm users running `npx @pincerpay/mcp` now get the complete IDE lifecycle
+
+## 0.16.0 -- 2026-03-04
 
 ### MCP Server Expansion: 7 → 20 Tools (Full IDE Lifecycle)
 

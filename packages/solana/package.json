@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/solana",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "description": "Solana integration for PincerPay. Kora gasless transactions and Squads smart account support.",
   "license": "MIT",
