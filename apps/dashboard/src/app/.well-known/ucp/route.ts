@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { GITHUB_URL } from "@/lib/constants";
 
 export function GET() {
   return NextResponse.json(
@@ -53,7 +52,6 @@ export function GET() {
         ],
       },
       links: {
-        github: GITHUB_URL,
         dashboard: "https://pincerpay.com/dashboard",
         blog: "https://pincerpay.com/blog",
         llms_txt: "https://pincerpay.com/llms.txt",

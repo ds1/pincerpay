@@ -1,5 +1,4 @@
 export const BASE_URL = "https://pincerpay.com";
-export const GITHUB_URL = "https://github.com/ds1/pincerpay";
 
 /**
  * Safely serialize an object to JSON for embedding in a `<script>` tag.

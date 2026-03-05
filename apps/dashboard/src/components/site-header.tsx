@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GITHUB_URL } from "@/lib/constants";
 
 const navLinks: { href: string; label: string; external?: boolean }[] = [
   { href: "/docs", label: "Docs" },
@@ -50,14 +49,6 @@ export function SiteHeader() {
           </nav>
         </div>
         <div className="hidden sm:flex items-center gap-3">
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-          >
-            GitHub
-          </a>
           <Link
             href="/login"
             className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
@@ -135,14 +126,6 @@ export function SiteHeader() {
               </Link>
             );
           })}
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-          >
-            GitHub
-          </a>
           <div className="flex gap-3 pt-2 border-t border-[var(--border)]">
             <Link
               href="/login"

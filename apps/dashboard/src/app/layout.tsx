@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
 import { SupabaseProvider } from "@/lib/supabase/provider";
 import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
-import { BASE_URL, GITHUB_URL, safeJsonLd } from "@/lib/constants";
+import { BASE_URL, safeJsonLd } from "@/lib/constants";
 import "./globals.css";
 
 const nunitoSans = Nunito_Sans({
@@ -93,7 +93,7 @@ const organizationSchema = {
   logo: `${BASE_URL}/icon-512.png`,
   description:
     "On-chain payment gateway for AI agents. Accept USDC payments via the x402 protocol with instant settlement on Solana.",
-  sameAs: [GITHUB_URL, "https://x.com/pincerpay"],
+  sameAs: ["https://x.com/pincerpay"],
 };
 
 const webSiteSchema = {
