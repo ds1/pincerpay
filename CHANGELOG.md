@@ -258,7 +258,7 @@ npm publish readiness, DX artifacts, OFAC compliance, and Squads SPN integration
 
 Kora signer node deployed on Railway, enabling agents to pay Solana gas fees in USDC instead of SOL.
 
-- **Kora signer node** deployed on Railway (`resplendent-freedom`), connected via private networking
+- **Kora signer node** deployed on Railway, connected via private networking
 - **Fee payer wallet**: `Fh8gDkM2aaEhX29LAMg7u48NPtCVjjB1ykFqjUhATJkB` (devnet, 10 SOL + 20 USDC)
 - **Facilitator health** now reports `kora.feePayer` + `kora.status`; `/v1/supported` shows Kora signer address
 - **Graceful fallback**: facilitator falls back to local `SOLANA_PRIVATE_KEY` if Kora is unreachable

@@ -435,7 +435,7 @@ async function settlePayment(agentKeypairBase58, agentAddress, merchantPayTo, ap
   log("Diagnostic: signing via Kora directly...");
   const koraSignRes = await fetch("https://facilitator.pincerpay.com/health");
   const healthData = await koraSignRes.json();
-  const koraUrl = "http://resplendent-freedom.railway.internal:8080"; // won't work externally
+  const koraUrl = process.env.KORA_RPC_URL || "http://kora.railway.internal:8080"; // private networking only
   // Instead, sign via Kora and send via Solana RPC from our script
   // Use the KORA_FEE_PAYER_KEY to sign locally as a diagnostic
   try {

@@ -234,7 +234,7 @@ E2E Kora gasless payment test PASSING on Solana devnet.
 
 ## Last Deploy
 - **Facilitator**: Railway — 2026-03-05 (hono 4.12.4 + @hono/node-server 1.19.11 security patches)
-- **Kora Signer**: Railway — 2026-02-22T07:15Z (new service, `resplendent-freedom`)
+- **Kora Signer**: Railway — 2026-02-22T07:15Z
 - **Dashboard**: Vercel — 2026-03-05 (auto-deploy from security patch push)
 - **Agent Demo**: Vercel — 2026-02-22 `demo.pincerpay.com` (Squads SPN spending limits parity)
 
@@ -244,7 +244,7 @@ E2E Kora gasless payment test PASSING on Solana devnet.
 
 ### Infrastructure
 - **Facilitator**: `https://facilitator.pincerpay.com` — healthy, Solana devnet + Base Sepolia + Anchor program + Kora gasless
-- **Kora Signer Node**: Railway internal (`resplendent-freedom.railway.internal:8080`)
+- **Kora Signer Node**: Railway private networking
 - **Dashboard**: `https://pincerpay.com` (Vercel)
 - **Database**: Supabase PostgreSQL with RLS enabled on all tables
 - **Kora fee payer wallet**: `Fh8gDkM2aaEhX29LAMg7u48NPtCVjjB1ykFqjUhATJkB` (devnet, 10 SOL + 20 USDC) — gasless signer

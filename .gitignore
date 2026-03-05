@@ -41,6 +41,9 @@ Thumbs.db
 # Internal planning (strategy, marketing, brand docs)
 _planning/
 
+# Marketing automation (separate private repo)
+apps/marketing/
+
 # Turbo
 .turbo/
 
