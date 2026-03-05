@@ -38,11 +38,17 @@ Thumbs.db
 # Claude Code
 .claude/
 
-# Internal planning (strategy, marketing, brand docs)
+# Internal state (not for public consumption)
 _planning/
+STATUS.md
+CHANGELOG.md
+TESTS.md
 
 # Marketing automation (separate private repo)
 apps/marketing/
+
+# Internal tooling
+scripts/screenshots.ts
 
 # Turbo
 .turbo/

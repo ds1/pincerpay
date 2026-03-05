@@ -23,7 +23,6 @@ pnpm db:push          # Push schema to database
 pnpm --filter @pincerpay/facilitator dev    # Facilitator on :4402
 pnpm --filter @pincerpay/dashboard dev      # Dashboard on :3000
 pnpm --filter @pincerpay/agent-demo dev     # Agent demo on :3000
-pnpm --filter @pincerpay/marketing cli      # Marketing CLI
 pnpm --filter @pincerpay/core typecheck     # Typecheck core
 ```
 
@@ -61,11 +60,11 @@ Discovery (UCP) → Trust (AP2) → Settlement (x402) → Chain Abstraction (Sol
 6. **Phase S5 (Advanced)**: Micropayment batching (ZK compression), CCTP v2 EVM→Solana bridging, agent identity (DIDs + trust scores)
 
 ## Current Status
-See `STATUS.md` for current work and `CHANGELOG.md` for completed milestones.
+See `STATUS.md` for current work and `CHANGELOG.md` for completed milestones. Both are gitignored (internal only).
 
 ## Backlog Tracking
 
-**Source of truth: [GitHub Issues](https://github.com/ds1/pincerpay/issues).** Local snapshot at `_planning/backlog.md`.
+**Source of truth: [GitHub Issues](https://github.com/ds1/pincerpay/issues).**
 
 ### Auto-sync rules
 - When completing work that corresponds to a GitHub Issue, close the issue: `gh issue close <number>`

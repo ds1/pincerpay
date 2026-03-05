@@ -8,11 +8,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in PincerPay, please report it responsibly.
-
-**Email:** danmakesthings@gmail.com
-
-**Subject line:** `[SECURITY] PincerPay: <brief description>`
+If you discover a security vulnerability in PincerPay, please report it using [GitHub's private vulnerability reporting](https://github.com/ds1/pincerpay/security/advisories/new).
 
 **What to include:**
 - Description of the vulnerability
