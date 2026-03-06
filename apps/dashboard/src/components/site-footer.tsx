@@ -51,13 +51,16 @@ export function SiteFooter() {
               </nav>
             </div>
             <div>
-              <p className="text-sm font-medium mb-2">Contact</p>
+              <p className="text-sm font-medium mb-2">Community</p>
               <nav className="flex flex-col gap-1.5">
-                <a href="mailto:contact@pincerpay.com" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                  contact@pincerpay.com
+                <a href="https://discord.gg/sZkYQTqT23" target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+                  Discord
                 </a>
                 <a href="https://x.com/pincerpay" target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
                   @pincerpay on X
+                </a>
+                <a href="mailto:contact@pincerpay.com" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
+                  contact@pincerpay.com
                 </a>
               </nav>
             </div>

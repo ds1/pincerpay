@@ -153,6 +153,11 @@ pnpm test
 | [`examples/agent-weather`](examples/agent-weather/) | AI agent paying for weather API data |
 | [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo) | Standalone agent demo repository |
 
+## Community
+
+- [Discord](https://discord.gg/sZkYQTqT23)
+- [@pincerpay on X](https://x.com/pincerpay)
+
 ## License
 
 MIT
