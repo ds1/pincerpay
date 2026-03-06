@@ -39,7 +39,7 @@ The x402 protocol, created by Coinbase and now adopted by over 5,400 developers 
 1. Agent sends an HTTP request to a paywalled endpoint.
 2. Server responds with `402 Payment Required` and includes the price, token (USDC), chain (Solana), and facilitator URL.
 3. Agent signs a USDC transfer and submits it to the facilitator.
-4. Facilitator broadcasts the transaction and returns a receipt.
+4. Facilitator verifies the signature and broadcasts the transaction.
 5. Agent retries the original request with proof of payment.
 6. Server verifies the receipt and returns the data.
 
@@ -51,19 +51,27 @@ PincerPay is the infrastructure that makes this production-ready.
 
 PincerPay is an x402 payment gateway. It sits between agents and merchants, handling the verification, broadcasting, and settlement of USDC payments on Solana (with optional Base and Polygon support).
 
-For merchants, integration is three lines of Express middleware:
+For merchants, integration is a few lines of Express middleware:
 
 ```typescript
-import { createPaywall } from "@pincerpay/merchant";
+import express from "express";
+import { pincerpay } from "@pincerpay/merchant/express";
 
-const paywall = createPaywall({
-  facilitatorUrl: "https://facilitator.pincerpay.com",
-  address: "YOUR_SOLANA_ADDRESS",
-});
+const app = express();
 
-app.get("/api/weather", paywall({ price: "0.001" }), (req, res) => {
-  res.json({ temperature: 72, unit: "F" });
-});
+app.use(
+  pincerpay({
+    apiKey: process.env.PINCERPAY_API_KEY!,
+    merchantAddress: "YOUR_SOLANA_ADDRESS",
+    routes: {
+      "GET /api/weather": {
+        price: "0.01",
+        chain: "solana",
+        description: "Weather data",
+      },
+    },
+  })
+);
 ```
 
 That endpoint now accepts USDC from any x402-compatible agent. No billing infrastructure. No Stripe dashboard. No invoice reconciliation. The merchant receives USDC directly into their wallet.
@@ -71,13 +79,17 @@ That endpoint now accepts USDC from any x402-compatible agent. No billing infras
 For agents, it is equally minimal:
 
 ```typescript
-import { createPincerAgent } from "@pincerpay/agent";
+import { PincerPayAgent } from "@pincerpay/agent";
 
-const agent = createPincerAgent({ privateKey: AGENT_PRIVATE_KEY });
+const agent = await PincerPayAgent.create({
+  chains: ["solana"],
+  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
+});
+
 const response = await agent.fetch("https://api.example.com/weather");
 ```
 
-The agent SDK wraps `fetch()`. When it encounters a 402 response, it reads the payment terms, signs the transaction, submits it, and retries the request. The developer writes one line of fetch. The SDK handles the rest.
+The agent SDK wraps `fetch()`. When it encounters a 402 response, it reads the payment terms, signs the transaction, submits it, and retries the request. The SDK handles the payment flow automatically.
 
 ## Why Non-Custodial Matters
 
@@ -91,35 +103,29 @@ Non-custodial design means the security model scales with the agent, not with Pi
 
 ### For agents
 
-Agents gain the ability to pay for any x402-enabled API without pre-negotiated contracts, stored credentials, or human intermediaries. An agent can discover a new data source via UCP (the Universal Commerce Protocol), check its price via the 402 response, pay $0.002 in USDC, and consume the data. All in a single HTTP round trip.
+Agents gain the ability to pay for any x402-enabled API without pre-negotiated contracts, stored credentials, or human intermediaries. An agent hits a paywalled endpoint, reads the 402 response, pays in USDC, and gets the data. All in a single HTTP round trip.
 
 The economics work at any scale. A $0.001 transaction costs roughly $0.0001 in Solana fees. Compare that to $0.31 on card rails. That is a 99.9% cost reduction.
 
 Three layers of spending controls keep agents safe:
 
-- **SDK-level limits** prevent the agent from overspending per request.
-- **Facilitator-level limits** enforce daily and per-transaction caps.
+- **SDK-level policies** enforce per-request and daily spending limits before the agent signs any transaction.
+- **Facilitator-level limits** check per-transaction and daily caps server-side before broadcasting.
 - **On-chain limits** via Squads SPN Smart Accounts provide cryptographic spending boundaries that no software bug can override.
 
 ### For merchants
 
 API providers gain a new revenue stream from AI traffic with zero billing infrastructure. No user accounts. No subscription management. No invoicing. The agent pays per request, and the merchant receives USDC directly.
 
-The merchant sets a price on an endpoint. The middleware handles everything else: returning the 402 challenge, verifying receipts, gating access. Settlement is on-chain. Revenue is visible in real time on the PincerPay dashboard.
+The merchant configures routes with prices. The middleware handles everything else: returning the 402 challenge, verifying receipts, gating access. Settlement is on-chain. Revenue is visible in real time on the PincerPay dashboard.
 
 For API providers already seeing significant AI agent traffic in their logs, PincerPay turns that traffic from a cost center into a revenue stream.
 
-## The Protocol Stack: Open Standards, Not Lock-In
+## Built on Open Standards
 
-PincerPay is built entirely on open protocols:
+PincerPay is built on the x402 protocol (Coinbase, 5,400+ GitHub stars), an open standard for HTTP-native payments. Any x402-compatible facilitator works with PincerPay merchants. Any x402-compatible agent can pay a PincerPay-powered API.
 
-| Layer | Protocol | Purpose | Ecosystem |
-|-------|----------|---------|-----------|
-| Discovery | UCP | Agents find and read commerce endpoints | Google + Shopify, 20+ partners |
-| Trust | AP2 | Cryptographic authorization and mandates | Google, 60+ partners |
-| Settlement | x402 | HTTP 402-based USDC payments | Coinbase, 5,400+ GitHub stars |
-
-Any x402-compatible facilitator works with PincerPay merchants. Any x402-compatible agent can pay a PincerPay-powered API. We succeed when the protocol wins, even if others build alternative infrastructure on the same standards.
+Merchants can also publish a [UCP manifest](https://pincerpay.com/docs/ucp) (Universal Commerce Protocol, backed by Google and Shopify) at `/.well-known/ucp` so agents can discover their endpoints, pricing, and supported payment methods programmatically.
 
 This is not a walled garden. It is plumbing.
 
@@ -136,26 +142,28 @@ This is not a walled garden. It is plumbing.
 ## Frequently Asked Questions
 
 **What is PincerPay?**
-PincerPay is an on-chain payment gateway that lets AI agents pay for API resources with USDC stablecoins via the x402 protocol. Merchants add a few lines of middleware. Agents wrap their fetch calls. Settlement happens on Solana in about 200 milliseconds.
+PincerPay is an on-chain payment gateway that lets AI agents pay for API resources with USDC stablecoins via the x402 protocol. Merchants add middleware to their routes. Agents wrap their fetch calls. Settlement happens on Solana in about 200 milliseconds.
 
 **How does PincerPay work?**
-When an agent hits a paywalled endpoint, the server returns an HTTP 402 response with payment details. The agent SDK signs a USDC transfer, sends it to the PincerPay facilitator for verification and broadcasting, then retries the request with proof of payment. The merchant verifies the receipt and serves the data.
+When an agent hits a paywalled endpoint, the server returns an HTTP 402 response with payment details. The agent SDK signs a USDC transfer, sends it to the PincerPay facilitator for verification and broadcasting, then retries the request with proof of payment. The merchant middleware verifies the receipt and serves the data.
 
 **Is PincerPay custodial?**
 No. PincerPay never holds funds. Agents sign transactions with their own keys. USDC moves directly from the agent's wallet to the merchant's wallet on-chain.
 
 **What chains does PincerPay support?**
-Solana is the primary chain. Base and Polygon are supported as secondary options.
+Solana is the primary chain. Base and Polygon are supported as optional secondary chains.
 
 **What does PincerPay cost?**
-PincerPay charges a 1% settlement fee on USDC volume. On-chain gas on Solana is approximately $0.0001 per transaction, paid by the agent in USDC via Kora.
+PincerPay charges a 1% settlement fee on USDC volume. On-chain gas on Solana is approximately $0.0001 per transaction, paid by the agent in USDC via Kora (gasless transactions).
 
 **How is PincerPay different from Stripe or traditional payment processors?**
 Traditional processors use card rails designed for human cardholders, with minimum fees around $0.30 and settlement times of 1 to 3 business days. PincerPay uses stablecoin settlement on Solana: no minimum fee floor, sub-second settlement, and no requirement for a human in the loop.
 
 ## What's Next
 
-PincerPay v0.14.0 is live with Squads SPN spending limits, on-chain Smart Accounts via the dashboard, and full agent operator controls. The protocol stack (x402 + AP2 + UCP) is maturing fast, with backing from Coinbase, Google, and Shopify.
+PincerPay is live on Solana devnet with three layers of spending controls, Kora gasless transactions, an on-chain Anchor program, and OFAC compliance screening. The SDKs are published on npm: `@pincerpay/merchant`, `@pincerpay/agent`, `@pincerpay/core`, `@pincerpay/solana`, and `@pincerpay/mcp`.
+
+On the roadmap: mainnet deployment, AP2 mandate validation for cryptographic authorization, agent identity via on-chain trust scores, micropayment batching, and cross-chain USDC bridging.
 
 Agents are already making API calls at scale. The only missing piece was a payment layer built for them, not adapted from one built for humans.
 

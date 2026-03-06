@@ -58,8 +58,8 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 - **Non-custodial**: Agents hold their own keys. PincerPay verifies transactions but never controls funds.
 - **Solana-first**: Sub-second finality, sub-cent fees. Kora integration for gasless transactions (agents pay gas in USDC).
 - **Spending Policies**: Per-transaction limits, daily budgets, merchant allowlists — enforced client-side by the SDK, server-side by the facilitator, and optionally on-chain via Squads SPN.
-- **AP2 Mandates**: Intent Mandates (autonomous limits), Cart Mandates (human approval), Payment Mandates (execution-level authorization). Double-Lock enforcement ensures both x402 and AP2 must validate.
-- **UCP Discovery**: /.well-known/ucp manifest for agent-readable commerce discovery. Agents browse merchant offerings at runtime.
+- **AP2 Mandates (roadmap)**: Intent Mandates (autonomous limits), Cart Mandates (human approval), Payment Mandates (execution-level authorization). Not yet implemented; planned for a future phase.
+- **UCP Discovery**: Merchants publish a /.well-known/ucp manifest for agent-readable commerce discovery. PincerPay includes a UCP manifest generator for merchants.
 - **Optimistic Finality**: Sub-$1 payments release after mempool broadcast (~200ms) before block confirmation.
 - **Gas Passthrough**: PincerPay never subsidizes gas. Agents pay via Kora (Solana) or meta-transactions (EVM).
 

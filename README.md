@@ -126,7 +126,7 @@ See [`@pincerpay/agent` README](packages/agent/README.md) for spending policies,
 | Facilitator | `https://pincerpayfacilitator-production.up.railway.app` |
 | Dashboard | `https://pincerpay.com` |
 
-The facilitator is deployed to Railway via Docker. The dashboard is deployed to Vercel. The facilitator is currently registered on **Base Sepolia** (testnet).
+The facilitator is deployed to Railway via Docker. The dashboard is deployed to Vercel. Solana is the primary chain (devnet). Base and Polygon are supported as optional secondary chains.
 
 ## Tech Stack
 
@@ -135,7 +135,7 @@ The facilitator is deployed to Railway via Docker. The dashboard is deployed to 
 - **Dashboard:** Next.js 15 + Tailwind CSS + Supabase Auth
 - **Database:** PostgreSQL (Supabase) + Drizzle ORM
 - **CI:** GitHub Actions (typecheck → test → build)
-- **Protocols:** x402 (Coinbase), AP2 (Phase 2), UCP (Phase 2)
+- **Protocols:** x402 (Coinbase)
 
 ## Testing
 
