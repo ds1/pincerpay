@@ -45,6 +45,9 @@ STATUS.md
 CHANGELOG.md
 TESTS.md
 
+# Admin dashboard (private — deploy via local `vercel --prod`)
+apps/dashboard/src/app/dashboard/admin/
+
 # Marketing automation (separate private repo)
 apps/marketing/
 
