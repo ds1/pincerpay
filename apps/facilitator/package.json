@@ -20,9 +20,9 @@
     "@pincerpay/solana": "workspace:*",
     "@scure/base": "^1.2.6",
     "@solana/kit": "^5.5.1",
-    "@x402/core": "^2.3",
-    "@x402/evm": "^2.3",
-    "@x402/svm": "^2.3.0",
+    "@x402/core": "^2.6.0",
+    "@x402/evm": "^2.6.0",
+    "@x402/svm": "^2.6.0",
     "drizzle-orm": "^0.38",
     "hono": "^4.12.4",
     "pino": "^9",
@@ -34,7 +34,7 @@
     "@pincerpay/agent": "workspace:*",
     "@pincerpay/merchant": "workspace:*",
     "@types/node": "^22",
-    "@x402/hono": "^2.3",
+    "@x402/hono": "^2.6.0",
     "tsx": "^4",
     "typescript": "^5.7"
   }

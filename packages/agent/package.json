@@ -16,8 +16,31 @@
   "bugs": {
     "url": "https://github.com/ds1/pincerpay/issues"
   },
-  "keywords": ["pincerpay", "x402", "usdc", "payments", "ai-agents", "solana", "agent-sdk", "payment-gateway", "stablecoin", "typescript", "web3", "crypto", "on-chain", "http-402", "fetch-wrapper", "autonomous", "spending-policy", "agentic"],
-  "files": ["dist", "README.md", "LICENSE"],
+  "keywords": [
+    "pincerpay",
+    "x402",
+    "usdc",
+    "payments",
+    "ai-agents",
+    "solana",
+    "agent-sdk",
+    "payment-gateway",
+    "stablecoin",
+    "typescript",
+    "web3",
+    "crypto",
+    "on-chain",
+    "http-402",
+    "fetch-wrapper",
+    "autonomous",
+    "spending-policy",
+    "agentic"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -37,10 +60,10 @@
     "@pincerpay/core": "workspace:*",
     "@pincerpay/solana": "workspace:*",
     "@solana/kit": "^5.5.1",
-    "@x402/core": "^2.3",
-    "@x402/evm": "^2.3",
-    "@x402/fetch": "^2.3",
-    "@x402/svm": "^2.3.0",
+    "@x402/core": "^2.6.0",
+    "@x402/evm": "^2.6.0",
+    "@x402/fetch": "^2.6.0",
+    "@x402/svm": "^2.6.0",
     "viem": "^2",
     "zod": "^3.24"
   },

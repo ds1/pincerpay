@@ -1,10 +1,27 @@
 import { privateKeyToAccount } from "viem/accounts";
+import type { LocalAccount } from "viem/accounts";
 import { x402Client } from "@x402/core/client";
 import { wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import type { AgentConfig, SpendingPolicy } from "@pincerpay/core";
+
+/** Adapt a viem LocalAccount into the ClientEvmSigner shape required by @x402/evm 2.6+ */
+function toEvmSigner(account: LocalAccount) {
+  return {
+    address: account.address,
+    signTypedData: (msg: {
+      domain: Record<string, unknown>;
+      types: Record<string, unknown>;
+      primaryType: string;
+      message: Record<string, unknown>;
+    }) => account.signTypedData(msg as Parameters<typeof account.signTypedData>[0]),
+    readContract: () => {
+      throw new Error("readContract not available on agent signer — use a public client for on-chain reads");
+    },
+  } as const;
+}
 
 /**
  * PincerPayAgent — wraps x402/fetch with EVM + Solana wallet support and spending policies.
@@ -41,7 +58,7 @@ export class PincerPayAgent {
     // Register EVM scheme synchronously
     if (config.evmPrivateKey && !client) {
       const account = privateKeyToAccount(config.evmPrivateKey as `0x${string}`);
-      registerExactEvmScheme(x402, { signer: account });
+      registerExactEvmScheme(x402, { signer: toEvmSigner(account) });
     }
 
     // Register spending policy hooks
@@ -61,7 +78,7 @@ export class PincerPayAgent {
     // Register EVM scheme
     if (config.evmPrivateKey) {
       const account = privateKeyToAccount(config.evmPrivateKey as `0x${string}`);
-      registerExactEvmScheme(client, { signer: account });
+      registerExactEvmScheme(client, { signer: toEvmSigner(account) });
     }
 
     // Register Solana scheme (async — needs key derivation)
