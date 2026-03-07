@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "next build && node -e \"const s='https://pincerpay.com/sitemap.xml';fetch('https://www.google.com/ping?sitemap='+s).then(()=>console.log('Pinged Google sitemap')).catch(()=>{});fetch('https://www.bing.com/ping?sitemap='+s).then(()=>console.log('Pinged Bing sitemap')).catch(()=>{})\"",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
