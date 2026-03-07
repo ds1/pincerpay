@@ -28,11 +28,13 @@ export async function generateMetadata({
       description: doc.meta.description,
       url,
       type: "article",
+      images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${doc.meta.title} — PincerPay Docs`,
       description: doc.meta.description,
+      images: [`${BASE_URL}/twitter-image`],
     },
     alternates: {
       canonical: url,

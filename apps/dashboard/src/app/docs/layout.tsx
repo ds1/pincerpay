@@ -14,12 +14,14 @@ export const metadata: Metadata = {
       "Documentation for PincerPay — Merchant SDK, Agent SDK, API reference, and integration guides.",
     url: `${BASE_URL}/docs`,
     type: "website",
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "PincerPay Documentation",
     description:
       "Merchant SDK, Agent SDK, API reference, and integration guides for PincerPay.",
+    images: [`${BASE_URL}/twitter-image`],
   },
   alternates: {
     canonical: `${BASE_URL}/docs`,

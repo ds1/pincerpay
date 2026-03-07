@@ -12,12 +12,14 @@ export const metadata: Metadata = {
       "Technical deep dives, product updates, and perspectives on the agentic economy.",
     url: `${BASE_URL}/blog`,
     type: "website",
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "PincerPay Blog",
     description:
       "Technical deep dives, product updates, and perspectives on the agentic economy.",
+    images: [`${BASE_URL}/twitter-image`],
   },
   alternates: {
     canonical: `${BASE_URL}/blog`,
