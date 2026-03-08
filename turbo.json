@@ -10,7 +10,10 @@
         "DATABASE_URL",
         "NEXT_PUBLIC_SUPABASE_URL",
         "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-        "ADMIN_USER_ID"
+        "ADMIN_USER_ID",
+        "PINCERPAY_API_KEY",
+        "MERCHANT_ADDRESS",
+        "FACILITATOR_URL"
       ]
     },
     "dev": {
