@@ -31,16 +31,39 @@ const routes = {
   },
 } as const;
 
-// Apply x402 paywall middleware synchronously at module load if env vars are set.
-// Without env vars, endpoints serve data freely (simulation mode).
+// Lazy middleware initialization — avoids top-level await issues on Vercel.
+// The middleware is loaded on first request and cached for subsequent requests.
+let middlewareApplied = false;
 if (apiKey && merchantAddress) {
-  // Dynamic import at module level — runs once on cold start
-  const { pincerpayHono } = await import("@pincerpay/merchant/hono");
-  app.use(
-    "*",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hono patch version mismatch between agent-demo and @x402/hono
-    pincerpayHono({ apiKey, merchantAddress, facilitatorUrl, routes }) as any,
-  );
+  app.use("*", async (c, next) => {
+    if (!middlewareApplied) {
+      try {
+        const { pincerpayHono } = await import("@pincerpay/merchant/hono");
+        const mw = pincerpayHono({
+          apiKey,
+          merchantAddress,
+          facilitatorUrl,
+          routes,
+          syncFacilitatorOnStart: false,
+        });
+        app.use(
+          "*",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hono patch version mismatch
+          mw as any,
+        );
+        middlewareApplied = true;
+        // Re-dispatch this request through the newly added middleware
+        return (mw as any)(c, next);
+      } catch (err) {
+        console.error("[pincerpay] middleware init failed:", err);
+        return c.json(
+          { error: "Payment middleware initialization failed", detail: String(err) },
+          500,
+        );
+      }
+    }
+    return next();
+  });
 }
 
 app.get("/weather", (c) =>
