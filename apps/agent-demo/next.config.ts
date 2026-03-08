@@ -9,7 +9,7 @@ const isVercel = !!process.env.VERCEL;
 const nextConfig: NextConfig = {
   output: isVercel ? "standalone" : undefined,
   outputFileTracingRoot: isVercel ? path.join(__dirname, "../../") : undefined,
-  transpilePackages: ["@pincerpay/agent", "@pincerpay/merchant", "@pincerpay/core", "@x402/hono", "@x402/core", "@x402/evm", "@x402/svm"],
+  transpilePackages: ["@pincerpay/agent", "@pincerpay/merchant", "@pincerpay/core"],
   webpack: (config) => {
     // Prevent css-loader from resolving @import "tailwindcss" before PostCSS.
     // Tailwind v4's @tailwindcss/postcss plugin needs to handle this import.
