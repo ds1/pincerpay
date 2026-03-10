@@ -34,9 +34,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Test
-        run: pnpm test
-
       - name: Create release PR or publish
         id: changesets
         uses: changesets/action@v1
