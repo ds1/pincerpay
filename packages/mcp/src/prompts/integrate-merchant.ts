@@ -4,14 +4,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 export function registerMerchantPrompt(server: McpServer) {
   server.prompt(
     "integrate-merchant",
-    "Step-by-step guide for adding x402 USDC paywalls to your API. " +
+    "Step-by-step guide for adding x402 USDC paywalls to your Next.js API. " +
       "Generates middleware code, environment setup, and testing instructions.",
     {
-      framework: z
-        .enum(["express", "hono", "nextjs"])
-        .describe(
-          "Web framework to use. Use 'nextjs' for Next.js App Router (Hono adapter).",
-        ),
       chain: z
         .string()
         .default("solana")
@@ -23,13 +18,13 @@ export function registerMerchantPrompt(server: McpServer) {
             "'GET /api/weather:0.01, GET /api/premium:0.10'",
         ),
     },
-    ({ framework, chain, endpoints }) => ({
+    ({ chain, endpoints }) => ({
       messages: [
         {
           role: "user" as const,
           content: {
             type: "text" as const,
-            text: `I want to add PincerPay USDC paywalls to my ${framework} API.
+            text: `I want to add PincerPay USDC paywalls to my Next.js API.
 
 Chain: ${chain}
 Endpoints: ${endpoints}

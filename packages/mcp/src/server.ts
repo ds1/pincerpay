@@ -28,7 +28,7 @@ export function createPincerPayMcpServer(config: PincerPayMcpConfig = {}) {
     },
     {
       instructions:
-        "PincerPay is an on-chain USDC payment gateway for AI agents — no card rails, " +
+        "PincerPay is an on-chain USDC payment gateway for AI agents — " +
         "pure stablecoin settlement via the x402 protocol (HTTP 402). Solana is the primary " +
         "chain; Base and Polygon are optional EVM alternatives.\n\n" +
         "ROLE ROUTING: When a user wants to integrate PincerPay, first determine their role:\n" +
@@ -38,6 +38,9 @@ export function createPincerPayMcpServer(config: PincerPayMcpConfig = {}) {
         "- Debugging: use the `debug-transaction` prompt\n" +
         "- Paywall management: use the `manage-paywalls` prompt\n" +
         "- Payment monitoring: use the `monitor-payments` prompt\n\n" +
+        "MERCHANT INTEGRATION: Next.js + Hono adapter. Lightweight middleware — " +
+        "zero @x402/*/viem/@solana/kit imports, settlement via fetch() to facilitator.\n" +
+        "Install: `npm install @pincerpay/merchant hono`\n\n" +
         "OPERATIONAL TOOLS (require API key):\n" +
         "- Paywall CRUD: list-paywalls, create-paywall, update-paywall, delete-paywall\n" +
         "- Transactions: list-transactions, check-transaction-status, verify-payment\n" +

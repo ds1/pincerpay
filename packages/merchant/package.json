@@ -2,7 +2,7 @@
   "name": "@pincerpay/merchant",
   "version": "0.4.1",
   "type": "module",
-  "description": "Merchant SDK for PincerPay. Express and Hono middleware for accepting USDC payments from AI agents.",
+  "description": "Merchant SDK for PincerPay. Lightweight Next.js middleware for accepting USDC payments from AI agents via x402.",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -25,7 +25,7 @@
     "solana",
     "merchant-sdk",
     "middleware",
-    "express",
+    "nextjs",
     "hono",
     "typescript",
     "web3",
@@ -48,13 +48,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./express": {
-      "types": "./dist/middleware/express.d.ts",
-      "import": "./dist/middleware/express.js"
-    },
-    "./hono": {
-      "types": "./dist/middleware/hono.d.ts",
-      "import": "./dist/middleware/hono.js"
+    "./nextjs": {
+      "types": "./dist/middleware/nextjs.d.ts",
+      "import": "./dist/middleware/nextjs.js"
     }
   },
   "scripts": {
@@ -66,36 +62,13 @@
   },
   "dependencies": {
     "@pincerpay/core": "workspace:*",
-    "@x402/core": "^2.6.0",
-    "@x402/evm": "^2.6.0",
-    "@x402/svm": "^2.6.0",
     "zod": "^3.24"
   },
   "peerDependencies": {
-    "@x402/express": "^2.3",
-    "@x402/hono": "^2.3",
-    "express": "^4 || ^5",
     "hono": "^4"
   },
-  "peerDependenciesMeta": {
-    "@x402/express": {
-      "optional": true
-    },
-    "@x402/hono": {
-      "optional": true
-    },
-    "express": {
-      "optional": true
-    },
-    "hono": {
-      "optional": true
-    }
-  },
   "devDependencies": {
-    "@types/express": "^5",
-    "@x402/express": "^2.6.0",
-    "@x402/hono": "^2.6.0",
-    "express": "^5",
+    "@types/node": "^22",
     "hono": "^4.12.0",
     "typescript": "^5.7"
   }

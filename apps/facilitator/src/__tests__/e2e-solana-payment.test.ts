@@ -19,7 +19,7 @@ import { createVerifyRoute } from "../routes/verify.js";
 import { createSettleRoute } from "../routes/settle.js";
 import { createSupportedRoute } from "../routes/supported.js";
 import { PincerPayAgent } from "@pincerpay/agent";
-import { pincerpayHono } from "@pincerpay/merchant/hono";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 import type { AppEnv } from "../env.js";
 import type { Database } from "@pincerpay/db";
 import {
@@ -361,7 +361,7 @@ function buildSolanaMerchantApp(
 
   app.use(
     "/api/test",
-    pincerpayHono({
+    createPincerPayMiddleware({
       apiKey: TEST_API_KEY,
       merchantAddress,
       facilitatorUrl,

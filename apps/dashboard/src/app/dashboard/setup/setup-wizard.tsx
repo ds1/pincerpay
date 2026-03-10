@@ -26,19 +26,22 @@ function detectWalletType(address: string): string | null {
 }
 
 function buildSnippets(wallet: string, apiKey: string, chain: string) {
-  const install = `npm install @pincerpay/merchant`;
+  const install = `npm install @pincerpay/merchant hono`;
 
   const env = `# .env
 PINCERPAY_API_KEY=${apiKey}
 MERCHANT_ADDRESS=${wallet}`;
 
-  const express = `import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+  const nextjs = `// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono().basePath("/api");
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "${wallet}",
     routes: {
@@ -51,34 +54,10 @@ app.use(
   })
 );
 
-app.get("/api/data", (req, res) => {
-  res.json({ data: "Premium content" });
-});
+app.get("/data", (c) => c.json({ data: "Premium content" }));
 
-app.listen(3001, () => console.log("Server on :3001"));`;
-
-  const hono = `import { Hono } from "hono";
-import { pincerpayHono } from "@pincerpay/merchant";
-
-const app = new Hono();
-
-app.use(
-  pincerpayHono({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: "${wallet}",
-    routes: {
-      "GET /api/data": {
-        price: "0.01",
-        chain: "${chain}",
-        description: "API access",
-      },
-    },
-  })
-);
-
-app.get("/api/data", (c) => c.json({ data: "Premium content" }));
-
-export default app;`;
+export const GET = handle(app);
+export const POST = handle(app);`;
 
   const isSolana = chain.startsWith("solana");
   const keyParam = isSolana ? "solanaPrivateKey" : "evmPrivateKey";
@@ -95,7 +74,7 @@ const agent = await PincerPayAgent.create({
 const res = await agent.fetch("http://localhost:3001/api/data");
 console.log(await res.json());`;
 
-  return { install, env, express, hono, agent };
+  return { install, env, nextjs, agent };
 }
 
 // ─── Step 1: Merchant Profile ───
@@ -388,8 +367,7 @@ function StepIntegrate({
   const tabs = [
     { label: "Install", code: snippets.install },
     { label: ".env", code: snippets.env },
-    { label: "Express", code: snippets.express },
-    { label: "Hono", code: snippets.hono },
+    { label: "Next.js", code: snippets.nextjs },
     { label: "Test Agent", code: snippets.agent },
   ];
 

@@ -7,15 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "dev:live": "concurrently \"next dev\" \"tsx server/merchant.ts\"",
+    "dev:live": "next dev",
     "demo:cli": "tsx cli/demo.ts"
   },
   "dependencies": {
     "@pincerpay/agent": "workspace:*",
-    "@pincerpay/core": "workspace:*",
     "@pincerpay/merchant": "workspace:*",
     "chalk": "^5.4.1",
-    "express": "^5.1.0",
     "hono": "^4.12.5",
     "next": "^15.3.3",
     "ora": "^8.2.0",
@@ -26,7 +24,6 @@
     "@tailwindcss/postcss": "^4.1.7",
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.6",
-    "concurrently": "^9.1.2",
     "tailwindcss": "^4.1.7",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"

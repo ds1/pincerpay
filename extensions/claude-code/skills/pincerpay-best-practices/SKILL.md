@@ -50,9 +50,8 @@ Paywall route patterns must follow `"METHOD /path"` format — uppercase HTTP me
 
 ## Framework Support
 
-- **Express**: `import { pincerpay } from "@pincerpay/merchant/express"`
-- **Hono**: `import { pincerpayHono } from "@pincerpay/merchant/hono"`
-- **Next.js**: Use Hono as a lightweight handler in a catch-all App Router route
+- **Next.js**: `import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs"` — uses Hono as a lightweight handler in a catch-all App Router route
+- Install: `npm install @pincerpay/merchant hono`
 
 ## Role Routing
 

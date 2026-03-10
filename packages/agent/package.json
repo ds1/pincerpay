@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "@pincerpay/core": "workspace:*",
-    "@pincerpay/solana": "workspace:*",
     "@solana/kit": "^5.5.1",
     "@x402/core": "^2.6.0",
     "@x402/evm": "^2.6.0",

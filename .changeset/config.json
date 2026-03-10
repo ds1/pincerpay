@@ -7,7 +7,7 @@
   "commit": false,
   "fixed": [],
   "linked": [
-    ["@pincerpay/core", "@pincerpay/agent", "@pincerpay/merchant", "@pincerpay/solana", "@pincerpay/mcp"]
+    ["@pincerpay/core", "@pincerpay/agent", "@pincerpay/merchant", "@pincerpay/mcp"]
   ],
   "access": "public",
   "baseBranch": "master",
@@ -15,6 +15,7 @@
   "ignore": [
     "@pincerpay/db",
     "@pincerpay/program",
+    "@pincerpay/solana",
     "@pincerpay/shared",
     "@pincerpay/dashboard",
     "@pincerpay/facilitator",

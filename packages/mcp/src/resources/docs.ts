@@ -85,61 +85,19 @@ Use the \`debug-transaction\` prompt with your transaction hash, or see \`docs:/
 npm install @pincerpay/merchant
 \`\`\`
 
-Sub-path imports are available for tree-shaking: \`@pincerpay/merchant/express\` and \`@pincerpay/merchant/hono\`.
+Install with Hono as a peer dependency: \`npm install @pincerpay/merchant hono\`.
 
-## Express Middleware
-
-\`\`\`typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant/express";
-
-const app = express();
-
-app.use(
-  pincerpay({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
-    routes: {
-      "GET /api/weather": { price: "0.001", chain: "solana" },
-      "GET /api/premium": { price: "0.01", chain: "solana" },
-    },
-  })
-);
-\`\`\`
-
-## Hono Middleware
-
-\`\`\`typescript
-import { Hono } from "hono";
-import { pincerpayHono } from "@pincerpay/merchant/hono";
-
-const app = new Hono();
-
-app.use(
-  "*",
-  pincerpayHono({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
-    routes: {
-      "GET /api/weather": { price: "0.001", chain: "solana" },
-    },
-  })
-);
-\`\`\`
-
-## Next.js (Hono Adapter)
-
-Next.js doesn't have native x402 middleware. Use Hono as a lightweight handler in a catch-all App Router route:
+## Next.js Middleware
 
 \`\`\`typescript
 // app/api/[...route]/route.ts
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { pincerpayHono } from "@pincerpay/merchant/hono";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono().basePath("/api");
 
-app.use("*", pincerpayHono({
+app.use("*", createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
   routes: {
@@ -158,7 +116,7 @@ export const GET = handle(app);
 export const POST = handle(app);
 \`\`\`
 
-**Notes:** \`basePath("/api")\` must match the catch-all location. Route handlers use paths relative to basePath (\`/weather\` → \`/api/weather\`). Install: \`npm install @pincerpay/merchant hono\`.
+**Notes:** \`basePath("/api")\` must match the catch-all location. Route handlers use paths relative to basePath (\`/weather\` → \`/api/weather\`).
 
 ## Multi-Chain Routes
 
@@ -390,10 +348,9 @@ Convert: multiply human amount × 1,000,000. Or use \`toBaseUnits("0.01")\` from
 
 | Package | Key Exports |
 |---------|-------------|
-| \`@pincerpay/merchant\` | \`pincerpay\` (Express), \`pincerpayHono\` (Hono), \`PincerPayClient\` (low-level), \`toBaseUnits\`, \`resolveRouteChains\`, \`getUsdcAsset\` |
-| \`@pincerpay/merchant/express\` | \`pincerpay\` (tree-shakeable sub-path import) |
-| \`@pincerpay/merchant/hono\` | \`pincerpayHono\` (tree-shakeable sub-path import) |
-| \`@pincerpay/agent\` | \`PincerPayAgent\` (main agent class), \`SolanaSmartAgent\` (Squads session keys — advanced) |
+| \`@pincerpay/merchant\` | \`createPincerPayMiddleware\`, \`PincerPayClient\` (low-level), \`toBaseUnits\`, \`resolveRouteChains\`, \`getUsdcAsset\` |
+| \`@pincerpay/merchant/nextjs\` | \`createPincerPayMiddleware\` (sub-path import) |
+| \`@pincerpay/agent\` | \`PincerPayAgent\` (main agent class) |
 | \`@pincerpay/core\` | \`PincerPayConfig\`, \`AgentConfig\`, \`SpendingPolicy\`, \`RoutePaywallConfig\`, \`ChainConfig\` (types) |
 
 ## PincerPayClient Methods (Low-Level)
@@ -407,7 +364,7 @@ For advanced users building custom middleware:
 | \`getSupported()\` | Get supported schemes/networks from the facilitator |
 | \`getStatus(txHash)\` | Get transaction status by hash |
 
-Most users should use \`pincerpay()\` or \`pincerpayHono()\` middleware instead.
+Most users should use \`createPincerPayMiddleware()\` instead.
 
 ## PincerPayAgent Properties & Methods
 

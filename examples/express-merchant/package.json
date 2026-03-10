@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "@pincerpay/merchant": "workspace:*",
-    "express": "^5"
+    "@hono/node-server": "^1",
+    "hono": "^4"
   },
   "devDependencies": {
-    "@types/express": "^5",
     "tsx": "^4",
     "typescript": "^5.7"
   }

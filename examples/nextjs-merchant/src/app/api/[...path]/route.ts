@@ -1,15 +1,14 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { pincerpayHono } from "@pincerpay/merchant";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono().basePath("/api");
 
 app.use(
   "*",
-  pincerpayHono({
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
-    syncFacilitatorOnStart: false,
     routes: {
       "GET /api/weather": {
         price: "0.001",

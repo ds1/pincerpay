@@ -17,8 +17,8 @@ export function registerGetStartedPrompt(server: McpServer) {
 
 Please help me get started by determining which integration I need:
 
-1. **Merchant** — I have an API and want to accept USDC payments from AI agents.
-   → Ask me about my web framework (Express, Hono, or Next.js), which endpoints to paywall, and my wallet address.
+1. **Merchant** — I have a Next.js API and want to accept USDC payments from AI agents.
+   → Ask me which endpoints to paywall and my wallet address.
    → Then use the integrate-merchant workflow: scaffold-x402-middleware → validate-payment-config → generate-ucp-manifest.
 
 2. **Agent Developer** — I'm building an AI agent that needs to pay for API access with USDC.

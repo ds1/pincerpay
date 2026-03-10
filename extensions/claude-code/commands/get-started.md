@@ -9,8 +9,8 @@ Help the user get started with PincerPay by determining which integration they n
 
 If an argument is provided, skip the role selection and go directly to that flow. Otherwise, ask the user which describes their situation:
 
-1. **Merchant** — They have an API and want to accept USDC payments from AI agents.
-   - Ask about their web framework (Express, Hono, or Next.js), which endpoints to paywall, and their wallet address.
+1. **Merchant** — They have a Next.js API and want to accept USDC payments from AI agents.
+   - Ask which endpoints to paywall and their wallet address.
    - Use the integration workflow: `scaffold-x402-middleware` -> `validate-payment-config` -> `generate-ucp-manifest`.
 
 2. **Agent Developer** — They're building an AI agent that needs to pay for API access with USDC.
