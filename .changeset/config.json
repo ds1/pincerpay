@@ -19,7 +19,6 @@
     "@pincerpay/dashboard",
     "@pincerpay/facilitator",
     "@pincerpay/agent-demo",
-    "@pincerpay/marketing",
     "example-agent-weather",
     "example-express-merchant",
     "example-nextjs-merchant"
