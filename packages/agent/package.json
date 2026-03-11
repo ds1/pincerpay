@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/agent",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "description": "Agent SDK for PincerPay. Drop-in fetch wrapper that handles x402 payment flows automatically.",
   "license": "MIT",

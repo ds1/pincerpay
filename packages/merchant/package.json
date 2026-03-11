@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/merchant",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "type": "module",
   "description": "Merchant SDK for PincerPay. Lightweight Next.js middleware for accepting USDC payments from AI agents via x402.",
   "license": "MIT",
