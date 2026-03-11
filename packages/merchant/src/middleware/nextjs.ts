@@ -59,22 +59,45 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
     );
   }
 
-  // Pre-resolve chain configs at init time
+  // Fetch facilitator's supported schemes eagerly — provides correct `extra` fields
+  // (e.g., Solana feePayer = facilitator's address, EVM EIP-712 domain params)
+  const facilitatorExtraPromise: Promise<Map<string, Record<string, unknown>>> =
+    fetch(`${facilitatorUrl}${FACILITATOR_ROUTES.supported}`)
+      .then((res) => res.json())
+      .then((data: { kinds: Array<{ network: string; extra?: Record<string, unknown> }> }) => {
+        const map = new Map<string, Record<string, unknown>>();
+        for (const kind of data.kinds) {
+          if (kind.extra) map.set(kind.network, kind.extra);
+        }
+        return map;
+      })
+      .catch(() => new Map<string, Record<string, unknown>>());
+
+  // Pre-resolve chain configs at init time (extra fields filled lazily from facilitator)
+  type RouteAccept = {
+    scheme: string;
+    network: string;
+    amount: string;
+    asset: string;
+    payTo: string;
+    maxTimeoutSeconds: number;
+    extra: Record<string, unknown>;
+  };
+
   const resolvedRoutes = new Map<
     string,
     {
       description: string;
-      accepts: Array<{
-        scheme: string;
-        network: string;
-        amount: string;
-        asset: string;
-        payTo: string;
-        maxTimeoutSeconds: number;
-        extra: Record<string, unknown>;
-      }>;
+      accepts: RouteAccept[];
     }
   >();
+
+  // Default extra fields per namespace (used as fallback if facilitator fetch fails)
+  function defaultExtra(namespace: string): Record<string, unknown> {
+    return namespace === "solana"
+      ? { feePayer: config.merchantAddress }
+      : { name: "USD Coin", version: "2" };
+  }
 
   for (const [pattern, routeConfig] of Object.entries(config.routes)) {
     const chains =
@@ -85,12 +108,6 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
       const chain = resolveChain(chainShorthand);
       if (!chain) throw new Error(`Unknown chain: ${chainShorthand}`);
 
-      // Build chain-specific extra fields required by x402 agent SDKs
-      const extra: Record<string, unknown> =
-        chain.namespace === "solana"
-          ? { feePayer: config.merchantAddress }
-          : { name: "USD Coin", version: "2" };
-
       return {
         scheme: "exact" as const,
         network: chain.caip2Id,
@@ -98,7 +115,7 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
         asset: chain.usdcAddress,
         payTo: config.merchantAddress,
         maxTimeoutSeconds: 300,
-        extra,
+        extra: defaultExtra(chain.namespace),
       };
     });
 
@@ -107,6 +124,19 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
       accepts,
     });
   }
+
+  // Once facilitator responds, merge its extra fields into resolved routes
+  let facilitatorExtraResolved = false;
+  facilitatorExtraPromise.then((extraMap) => {
+    if (extraMap.size === 0) return;
+    for (const route of resolvedRoutes.values()) {
+      for (const accept of route.accepts) {
+        const extra = extraMap.get(accept.network);
+        if (extra) accept.extra = { ...accept.extra, ...extra };
+      }
+    }
+    facilitatorExtraResolved = true;
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (async (c: Context, next: Next) => {
@@ -117,6 +147,9 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
 
     // Not a paywalled route — pass through
     if (!route) return next();
+
+    // Ensure facilitator extra fields are resolved before returning 402
+    if (!facilitatorExtraResolved) await facilitatorExtraPromise;
 
     // Check for x402 v2 payment signature header
     const paymentHeader =
