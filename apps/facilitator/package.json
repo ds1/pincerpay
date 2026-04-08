@@ -12,7 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.11",
+    "@hono/node-server": "^1.19.13",
     "@logtail/pino": "^0.5",
     "@pincerpay/core": "workspace:*",
     "@pincerpay/db": "workspace:*",
@@ -23,8 +23,8 @@
     "@x402/core": "^2.6.0",
     "@x402/evm": "^2.6.0",
     "@x402/svm": "^2.6.0",
-    "drizzle-orm": "^0.38",
-    "hono": "^4.12.4",
+    "drizzle-orm": "^0.45",
+    "hono": "^4.12.12",
     "pino": "^9",
     "pino-pretty": "^13",
     "viem": "^2",
