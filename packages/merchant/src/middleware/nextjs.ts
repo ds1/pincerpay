@@ -1,4 +1,8 @@
-import type { PincerPayConfig } from "@pincerpay/core";
+import type {
+  PincerPayConfig,
+  PincerPayPaymentInfo,
+  PincerPayContextVariables,
+} from "@pincerpay/core";
 import {
   resolveChain,
   DEFAULT_FACILITATOR_URL,
@@ -6,6 +10,8 @@ import {
   FACILITATOR_ROUTES,
 } from "@pincerpay/core";
 import type { Context, Next } from "hono";
+
+export type { PincerPayPaymentInfo, PincerPayContextVariables };
 
 /**
  * Convert human-readable USDC price (e.g., "0.01") to base units (e.g., "10000").
@@ -208,6 +214,7 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
         success: boolean;
         transaction?: string;
         network?: string;
+        payer?: string;
         errorReason?: string;
         errorMessage?: string;
       };
@@ -223,12 +230,23 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
         );
       }
 
-      // Payment succeeded — attach settlement response header and serve resource
+      // Payment succeeded — surface verified payer on the request context
+      // so route handlers can attribute the action without re-decoding X-PAYMENT.
+      const paymentInfo: PincerPayPaymentInfo = {
+        payer: settle.payer ?? "",
+        transaction: settle.transaction ?? "",
+        network: settle.network ?? "",
+      };
+      c.set("pincerpay", paymentInfo);
+
+      // Attach settlement response header (clients that bypass middleware
+      // can read the canonical verified payer here too).
       const settleResponse = {
         x402Version: 2,
         success: true,
-        transaction: settle.transaction,
-        network: settle.network,
+        transaction: paymentInfo.transaction,
+        network: paymentInfo.network,
+        payer: paymentInfo.payer,
       };
       c.header("payment-response", Buffer.from(JSON.stringify(settleResponse)).toString("base64"));
 

@@ -209,6 +209,42 @@ export interface AgentConfig {
   facilitatorUrl?: string;
 }
 
+// ─── Merchant Middleware Context ───
+
+/**
+ * Verified payment information surfaced on the request context after the
+ * PincerPay middleware successfully settles a payment. The `payer` field
+ * comes from the facilitator's settle response (not the unverified
+ * X-PAYMENT request header), so it is canonical and chain-agnostic.
+ */
+export interface PincerPayPaymentInfo {
+  /** Verified payer wallet address (Solana base58 or EVM 0x-hex) */
+  payer: string;
+  /** Settlement transaction hash on the chain that processed the payment */
+  transaction: string;
+  /** CAIP-2 network identifier (e.g., "solana:devnet", "eip155:8453") */
+  network: string;
+}
+
+/**
+ * Hono `Variables` shape contributed by `createPincerPayMiddleware`.
+ *
+ * ```ts
+ * import { Hono } from "hono";
+ * import type { PincerPayContextVariables } from "@pincerpay/merchant/nextjs";
+ *
+ * const app = new Hono<{ Variables: PincerPayContextVariables }>();
+ *
+ * app.get("/api/weather", (c) => {
+ *   const { payer } = c.get("pincerpay");
+ *   return c.json({ temp: 72, paidBy: payer });
+ * });
+ * ```
+ */
+export type PincerPayContextVariables = {
+  pincerpay: PincerPayPaymentInfo;
+};
+
 // ─── Zod Schemas ───
 
 export const RoutePaywallConfigSchema = z.object({

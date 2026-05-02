@@ -5,28 +5,29 @@
 [![license](https://img.shields.io/npm/l/@pincerpay/merchant?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Merchant SDK for accepting on-chain USDC payments from AI agents via the [x402 protocol](https://x402.org). Supports Express, Hono, and Next.js.
+Merchant SDK for accepting on-chain USDC payments from AI agents via the [x402 protocol](https://x402.org). Ships a Hono middleware that runs natively in Hono apps and inside Next.js App Router via `hono/vercel`.
 
 > **ESM Required:** Your project must have `"type": "module"` in package.json. This package is ESM-only.
 
 ## Install
 
 ```bash
-npm install @pincerpay/merchant
+npm install @pincerpay/merchant hono
 ```
 
 ## Quick Start
 
-### Express
+### Hono
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant/express";
+import { Hono } from "hono";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "YOUR_SOLANA_ADDRESS",
     routes: {
@@ -44,42 +45,12 @@ app.use(
   })
 );
 
-app.get("/api/weather", (req, res) => {
-  res.json({ temp: 72, unit: "F" });
-});
-
-app.listen(3000);
-```
-
-### Hono
-
-```typescript
-import { Hono } from "hono";
-import { pincerpayHono } from "@pincerpay/merchant/hono";
-
-const app = new Hono();
-
-app.use(
-  "*",
-  pincerpayHono({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: "YOUR_SOLANA_ADDRESS",
-    routes: {
-      "GET /api/weather": {
-        price: "0.01",
-        chain: "solana",
-        description: "Current weather data",
-      },
-    },
-  })
-);
-
-app.get("/api/weather", (c) => c.json({ temp: 72 }));
+app.get("/api/weather", (c) => c.json({ temp: 72, unit: "F" }));
 
 export default app;
 ```
 
-### Next.js (Hono Adapter)
+### Next.js (App Router)
 
 Next.js doesn't have native x402 middleware support. Use Hono as a lightweight handler inside a catch-all App Router route:
 
@@ -87,13 +58,13 @@ Next.js doesn't have native x402 middleware support. Use Hono as a lightweight h
 // app/api/[...route]/route.ts
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { pincerpayHono } from "@pincerpay/merchant/hono";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono().basePath("/api");
 
 app.use(
   "*",
-  pincerpayHono({
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "YOUR_SOLANA_ADDRESS",
     syncFacilitatorOnStart: false, // Avoids build-time network call during prerendering
@@ -113,19 +84,58 @@ export const GET = handle(app);
 export const POST = handle(app);
 ```
 
-Install: `npm install @pincerpay/merchant hono`
-
 > **Note:** `basePath("/api")` must match the catch-all route location. Route handlers use paths relative to basePath (`/weather` serves `/api/weather`).
+
+### Express
+
+Express adapter is on the roadmap. Use Hono today — it runs anywhere Express does and is a drop-in for most paywall workloads. Track [the Express adapter issue](https://github.com/ds1/pincerpay/issues) for the upcoming release.
+
+## Reading the Verified Payer
+
+After successful settlement, the middleware surfaces the verified payer (and the rest of the settlement metadata) on the Hono request context under the `pincerpay` key. Your route handlers can attribute the action to the paying agent without re-decoding the `X-PAYMENT` request header.
+
+```typescript
+import { Hono } from "hono";
+import {
+  createPincerPayMiddleware,
+  type PincerPayContextVariables,
+} from "@pincerpay/merchant/nextjs";
+
+const app = new Hono<{ Variables: PincerPayContextVariables }>();
+
+app.use(
+  "*",
+  createPincerPayMiddleware({
+    apiKey: process.env.PINCERPAY_API_KEY!,
+    merchantAddress: "YOUR_SOLANA_ADDRESS",
+    routes: {
+      "POST /api/trade": { price: "0.05", chain: "solana", description: "Place trade" },
+    },
+  })
+);
+
+app.post("/api/trade", async (c) => {
+  const { payer, transaction, network } = c.get("pincerpay");
+  // payer    -> verified agent wallet (Solana base58 or EVM 0x-hex)
+  // transaction -> settlement tx hash
+  // network  -> CAIP-2 network id (e.g., "solana:5eykt4...", "eip155:8453")
+
+  await recordTrade({ agentWallet: payer, txHash: transaction });
+  return c.json({ ok: true });
+});
+```
+
+`payer` comes from the facilitator's verified settle response — not the unverified `X-PAYMENT` request header. It is canonical across schemes (EVM `authorization.from`, Solana signer, etc. are all normalized to a single string).
+
+> **Don't re-decode `X-PAYMENT` to extract the payer.** The request header carries an unverified, scheme-specific payload. The middleware already verifies, settles, and surfaces the canonical payer on `c.get("pincerpay")`. If you find yourself probing `payload.authorization.from` / `payload.from` / `payload.signer`, stop — read `c.get("pincerpay").payer` instead.
+
+The same `payer` field is also included in the base64-encoded `payment-response` response header for clients that bypass the middleware and post directly to `/v1/settle`.
 
 ## API Reference
 
-### `pincerpay(config): Express.RequestHandler`
+### `createPincerPayMiddleware(config): Hono.MiddlewareHandler`
 
-Express middleware that intercepts requests matching configured routes and returns HTTP 402 with x402 payment requirements.
-
-### `pincerpayHono(config): HonoMiddleware`
-
-Hono middleware with identical behavior. Also used for Next.js via the Hono adapter pattern (see Next.js example above).
+Hono middleware that intercepts requests matching configured routes and returns HTTP 402 with x402 payment requirements. On a successful payment, settles via the PincerPay facilitator and sets `c.set("pincerpay", { payer, transaction, network })` before passing to the next handler. Used directly in Hono apps and inside Next.js App Router via `hono/vercel`.
 
 ### `PincerPayClient`
 
@@ -163,6 +173,16 @@ interface RoutePaywallConfig {
   chains?: string[];    // Multiple chains
   description?: string; // Human-readable description
 }
+
+interface PincerPayPaymentInfo {
+  payer: string;        // Verified agent wallet (Solana base58 or EVM 0x-hex)
+  transaction: string;  // Settlement transaction hash
+  network: string;      // CAIP-2 network id
+}
+
+type PincerPayContextVariables = {
+  pincerpay: PincerPayPaymentInfo;
+};
 ```
 
 ### Utility Functions
@@ -184,7 +204,7 @@ getUsdcAsset("base");             // USDC contract address for Base
 ### Multi-chain pricing
 
 ```typescript
-pincerpay({
+createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "YOUR_ADDRESS",
   routes: {
@@ -202,7 +222,7 @@ pincerpay({
 Routes not listed in `routes` pass through without payment. Only matching `METHOD /path` patterns trigger the 402 paywall.
 
 ```typescript
-pincerpay({
+createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "YOUR_ADDRESS",
   routes: {
@@ -244,10 +264,10 @@ Your webhook secret is in the [dashboard settings](https://www.pincerpay.com/das
 
 ```typescript
 // Bad
-pincerpay({ apiKey: "pp_live_abc123...", ... });
+createPincerPayMiddleware({ apiKey: "pp_live_abc123...", ... });
 
 // Good
-pincerpay({ apiKey: process.env.PINCERPAY_API_KEY!, ... });
+createPincerPayMiddleware({ apiKey: process.env.PINCERPAY_API_KEY!, ... });
 ```
 
 ### Don't use the merchant SDK on the agent side
@@ -257,3 +277,7 @@ The merchant SDK is for servers accepting payments. Agents should use `@pincerpa
 ### Don't set price to "0"
 
 A price of "0" will still trigger the 402 flow. If a route should be free, omit it from the `routes` config.
+
+### Don't re-decode `X-PAYMENT` to find the payer
+
+The verified payer is on `c.get("pincerpay").payer` after the middleware settles. Reading it from the request header bypasses verification and forces scheme-specific shape probing — see "Reading the Verified Payer" above.
