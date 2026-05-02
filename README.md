@@ -2,6 +2,19 @@
 
 The payment gateway for the agentic economy. Accept payments from AI agents. Add a few lines of code. Settle instantly in USDC.
 
+## For merchants — sign up in 2 minutes, no browser
+
+```bash
+npx @pincerpay/cli signup
+# email + password + 6-digit code from your inbox
+
+npx @pincerpay/cli bootstrap-merchant --name "Acme Co" --chains "solana,polygon"
+# → generates non-custodial wallets, creates merchant, mints API key
+# → prints env vars ready to paste into `vercel env add`
+```
+
+That's the full onboarding flow. Terminal-only. Phantom + MetaMask compatible wallets generated locally. PincerPay never sees your keys. See [docs/onboarding](https://pincerpay.com/docs/onboarding) and [docs/cli](https://pincerpay.com/docs/cli) for full reference.
+
 ## Architecture
 
 ```
