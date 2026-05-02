@@ -2,8 +2,9 @@
 # Agents pay USDC for gas instead of SOL
 # https://github.com/solana-foundation/kora
 
-FROM rust:1.87-bookworm AS builder
+FROM rust:1.88-bookworm AS builder
 
+# `time@0.3.47` (transitive dep of kora-cli) requires rustc >= 1.88.
 RUN cargo install kora-cli --locked
 
 FROM debian:bookworm-slim

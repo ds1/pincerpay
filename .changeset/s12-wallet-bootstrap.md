@@ -1,6 +1,7 @@
 ---
 "@pincerpay/onboarding": minor
 "@pincerpay/mcp": minor
+"@pincerpay/db": patch
 ---
 
 S12: non-custodial merchant wallet bootstrap.
@@ -17,3 +18,5 @@ New package `@pincerpay/onboarding`:
 - `bootstrap-merchant`, `create-api-key`, `list-merchants` — gated on `DATABASE_URL` env var. Return helpful errors directing public users to dashboard signup; only active in self-hosted / admin contexts.
 
 Companion CLI scripts in the repo root (not published): `pnpm create-wallets`, `pnpm create-api-key`, `pnpm bootstrap-merchant`. Use these against `DATABASE_URL` to provision merchants without dashboard click-through.
+
+`@pincerpay/db` is now publishable (initial publish at 0.1.1) so that `@pincerpay/onboarding`'s workspace dependency on it resolves cleanly for npm consumers. The package contains only Drizzle schema definitions; nothing sensitive.
