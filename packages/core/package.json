@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/core",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "description": "Shared types, chain configs, and constants for PincerPay on-chain payment gateway",
   "license": "MIT",
