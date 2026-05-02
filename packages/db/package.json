@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/db",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Database schema and migrations for PincerPay. Drizzle ORM with PostgreSQL.",
   "license": "MIT",
@@ -16,8 +16,17 @@
   "bugs": {
     "url": "https://github.com/ds1/pincerpay/issues"
   },
-  "keywords": ["pincerpay", "database", "drizzle", "postgresql", "schema"],
-  "files": ["dist", "README.md"],
+  "keywords": [
+    "pincerpay",
+    "database",
+    "drizzle",
+    "postgresql",
+    "schema"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
