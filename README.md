@@ -25,7 +25,8 @@ PincerPay is a non-custodial x402 facilitator. When an AI agent hits a merchant 
 | [`packages/program`](packages/program/) | Anchor program client for Solana | [README](packages/program/README.md) |
 | [`packages/solana`](packages/solana/) | Kora gasless txns + Squads smart accounts | [README](packages/solana/README.md) |
 | [`packages/onboarding`](packages/onboarding/) | Non-custodial wallet generation + merchant bootstrap | [README](packages/onboarding/README.md) |
-| [`packages/mcp`](packages/mcp/) | MCP server for AI assistants (24 tools) | [README](packages/mcp/README.md) |
+| [`packages/cli`](packages/cli/) | Terminal-only merchant onboarding (`npx @pincerpay/cli`) | [README](packages/cli/README.md) |
+| [`packages/mcp`](packages/mcp/) | MCP server for AI assistants (26 tools) | [README](packages/mcp/README.md) |
 | `examples/` | Example merchant and agent apps | |
 
 ## Quick Start

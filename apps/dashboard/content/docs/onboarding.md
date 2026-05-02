@@ -1,161 +1,180 @@
 ---
 title: "Merchant Onboarding"
-description: "Generate wallets and provision a PincerPay merchant account from the CLI or MCP — no dashboard click-through."
+description: "Sign up for PincerPay, generate wallets, and mint API keys — entirely from the terminal. No browser required."
 order: 1.4
 section: Guides
 ---
 
-PincerPay onboarding has two paths: the dashboard wizard at [pincerpay.com/signup](https://pincerpay.com/signup), or the command-line / MCP path documented here. The CLI and MCP routes collapse the multi-step provisioning flow (create wallet, paste address, generate API key, copy values into env vars) into a single command.
+PincerPay merchants get from zero to live in three commands. The flow is **terminal-only**: signup, email verification, wallet generation, merchant creation, and API key minting all happen via CLI prompts. No browser, no dashboard click-through.
 
-> **Non-custodial.** PincerPay never sees your mnemonic or private keys. Wallet generation runs entirely on your machine. The merchant database persists only public addresses.
+> **Non-custodial.** PincerPay never sees your mnemonic or private keys. Wallet generation runs entirely on your machine. Only public addresses are persisted server-side.
 
-## When to use which path
-
-| Path             | When to use                                                              |
-|------------------|--------------------------------------------------------------------------|
-| Dashboard signup | First-time exploration, single merchant, prefer GUI                      |
-| CLI scripts      | Server provisioning, multi-environment setup (staging + production), CI  |
-| MCP tools        | LLM-driven onboarding inside Claude Code, Cursor, or any MCP client      |
-
-The CLI and MCP paths use the same `@pincerpay/onboarding` library and produce identical output. Pick whichever fits your workflow.
-
-## CLI path
-
-Three commands, all run from the [PincerPay repo](https://github.com/ds1/pincerpay):
-
-### Generate wallets only
-
-Pure client-side crypto. No database, no PincerPay account. Useful when you want to bring your own wallet to the signup flow.
+## Quick start
 
 ```bash
-pnpm create-wallets
+# 1. Create an account.
+npx @pincerpay/cli signup
+
+# 2. Generate wallets, create merchant, mint API key.
+npx @pincerpay/cli bootstrap-merchant --name "Acme Co" --chains "solana,polygon"
 ```
 
-Output:
+Done. The second command prints a paste-ready env-var block:
 
 ```
-========================================================================
-PincerPay non-custodial wallet bootstrap
-========================================================================
-
-Mnemonic (save this — recovery is impossible without it):
-  ladder weather seven gravity wagon hunt slender wash hover absent eternal artwork
-
-Solana (Phantom-compatible)
-  Address:        5kP9Z...
-  Derivation:     m/44'/501'/0'/0'
-  Private key:    3xJk...
-
-EVM (MetaMask-compatible — Polygon, Base, Ethereum)
-  Address:        0xA1b2C3...
-  Derivation:     m/44'/60'/0'/0/0
-  Private key:    0x...
+PINCERPAY_API_KEY=pp_live_...
+PINCERPAY_MERCHANT_ADDRESS_SOLANA=...
+PINCERPAY_MERCHANT_ADDRESS_POLYGON=0x...
 ```
 
-Flags:
+Pipe those into `vercel env add` (or your env manager) and your app accepts agent payments.
 
-- `--strength 12|24` — mnemonic word count (default 12)
-- `--mnemonic "<...>"` — re-derive addresses from an existing mnemonic
-- `--json` — emit JSON instead of human-readable text
-- `--no-private-keys` — addresses + mnemonic only
+## How signup works (no browser)
 
-### End-to-end merchant bootstrap
+```
+$ npx @pincerpay/cli signup
+Email: dan@example.com
+Password (8+ chars): ••••••••
+Confirm password: ••••••••
 
-Generates wallets, inserts a merchant row, mints an API key, and prints env-var-ready output. Requires `DATABASE_URL` (Supabase Postgres connection string).
+We sent a verification code to dan@example.com.
+Check your inbox and paste the code below.
+
+Verification code: 123456
+
+✓ Verified and signed in as dan@example.com.
+  Credentials saved to /Users/dan/.pincerpay/credentials.json.
+  Token expires 2026-06-01 14:23:11.
+```
+
+The OTP is a 6-digit code delivered by email. You paste it back into the CLI. No URL clicks, no port binding, no browser tabs.
+
+After signup the CLI saves a long-lived bearer token at `~/.pincerpay/credentials.json` (with `0600` permissions on POSIX). All subsequent commands use that token automatically.
+
+## Three paths
+
+| Path | When to use |
+|------|-------------|
+| `@pincerpay/cli` (CLI) | First-time setup, server provisioning, multi-environment workflow, CI |
+| `@pincerpay/mcp` (MCP) | LLM-driven onboarding inside Claude Code, Cursor, Windsurf, etc |
+| `@pincerpay/onboarding` (library) | Custom signup flows you build yourself |
+
+All three sit on top of the same authenticated facilitator API. After running `pincerpay login`, the MCP server picks up the same `~/.pincerpay/credentials.json` automatically — one auth ceremony for everything.
+
+## CLI commands
+
+### Account lifecycle
 
 ```bash
-DATABASE_URL=postgresql://... pnpm bootstrap-merchant \
-  --name "My Merchant" \
-  --auth-user-id <supabase-auth-uuid> \
-  --label "Production"
+pincerpay signup                  # create account
+pincerpay login                   # sign in to existing account
+pincerpay logout                  # revoke this CLI session
+pincerpay whoami                  # show user + merchant info
+pincerpay recover                 # send password recovery code
+pincerpay reset-password          # use code to reset password
+pincerpay change-password         # change password while logged in
 ```
 
-Output ends with a paste-ready env block:
-
-```
-PINCERPAY_API_KEY=pp_live_a1b2c3...
-PINCERPAY_MERCHANT_ADDRESS_SOLANA=5kP9Z...
-PINCERPAY_MERCHANT_ADDRESS_POLYGON=0xA1b2C3...
-PINCERPAY_WEBHOOK_SECRET=...
-```
-
-Pipe that into `vercel env add` (or your env manager) and you're done.
-
-Flags:
-
-- `--name "<name>"` — display name for the merchant (required)
-- `--auth-user-id <uuid>` — Supabase Auth user id (required)
-- `--mnemonic "<...>"` — use an existing mnemonic instead of generating
-- `--strength 12|24` — word count when generating
-- `--webhook-url <url>` — webhook delivery URL
-- `--label "<label>"` — API key label (default "Bootstrap")
-- `--chains <list>` — comma-separated supported chains (default `solana,polygon`)
-- `--json` — machine-readable output
-- `--dry-run` — generate wallets but skip DB inserts
-
-### API key management for an existing merchant
-
-If you already have a merchant account and just need to mint additional keys (rotation, environment split, third-party integration), skip the bootstrap flow:
+### Onboarding (one-shot)
 
 ```bash
-DATABASE_URL=postgresql://... pnpm create-api-key list
-DATABASE_URL=postgresql://... pnpm create-api-key create \
-  --merchant "<id-or-name>" \
-  --label "Staging"
+pincerpay bootstrap-merchant \
+  --name "Acme Co" \
+  --chains "solana,polygon" \
+  [--webhook-url https://your-app.com/webhooks/pincerpay] \
+  [--api-key-label "production"]
 ```
 
-The merchant identifier accepts either a UUID or a case-insensitive name. Run `list` first to see ids.
+Generates non-custodial wallets, creates the merchant record (idempotent — safe to re-run), mints an initial API key, and prints the env-var block. **All in one command.**
 
-## MCP path
-
-The [PincerPay MCP server](/docs/mcp-server) exposes four onboarding tools.
-
-### Public tools (no auth)
-
-`bootstrap-wallets` runs the same wallet generator as the CLI. Available to any MCP client connected via `npx -y @pincerpay/mcp`.
-
-```
-> Generate me a non-custodial PincerPay merchant wallet set with a 12-word mnemonic.
-```
-
-Returns a JSON payload with mnemonic + Solana + EVM addresses. Set `includePrivateKeys: true` to also receive the private keys (default false).
-
-### Admin tools (require `DATABASE_URL`)
-
-`bootstrap-merchant`, `create-api-key`, and `list-merchants` write to (or read from) the PincerPay database. They're available only when the MCP server runs with `DATABASE_URL` set in its environment.
-
-In a public deployment of `@pincerpay/mcp`, these tools return a clear error directing users to the dashboard. In a self-hosted / admin deployment, they unlock the full provisioning flow.
+### Wallet-only (no signup needed)
 
 ```bash
-DATABASE_URL=postgresql://... npx @pincerpay/mcp --transport=http --port=3100
+pincerpay create-wallets [--strength 12|24] [--json] [--no-private-keys]
 ```
 
+Pure crypto — runs locally, never talks to PincerPay. Useful for previewing addresses before signup, or for any merchant who wants to bring their own wallet to the dashboard flow.
+
+### Manage existing merchant
+
+```bash
+pincerpay api-keys create [--label]
+pincerpay api-keys list
+pincerpay api-keys rotate <id>
+pincerpay api-keys revoke <id>
+
+pincerpay wallet set --solana <addr> --evm <addr>
+
+pincerpay sessions list
+pincerpay sessions revoke <id>
+
+pincerpay env                     # print env-var template
 ```
-> Bootstrap a new PincerPay merchant called "Acme Co" for auth user <uuid>, then save the env vars to .env.local
+
+## MCP commands
+
+If you've connected `@pincerpay/mcp` to your AI client, the same operations are available as MCP tools:
+
+```
+> Generate non-custodial PincerPay wallets for me.
+   → bootstrap-wallets
+
+> I just ran `pincerpay login`. Bootstrap a merchant called "Acme Co".
+   → bootstrap-merchant (public mode, uses ~/.pincerpay/credentials.json)
+
+> Show me my current PincerPay setup.
+   → whoami
+
+> I'm getting auth errors from the onboarding tools.
+   → login-instructions
 ```
 
-The LLM calls `bootstrap-merchant`, receives the wallet + key + webhook secret, and writes the env block.
+See the [MCP server docs](/docs/mcp-server) for the full tool list.
 
-## Security checklist
+## Security model
 
-Before you close the terminal:
+- **Non-custodial wallets.** BIP-39 mnemonic generation runs client-side via `@pincerpay/onboarding`. Phantom-compatible Solana derivation (`m/44'/501'/0'/0'`) and MetaMask-compatible EVM derivation (`m/44'/60'/0'/0/0`) from a single mnemonic.
+- **Email-OTP verification.** Signup verifies your email via a 6-digit code (Supabase `auth.verifyOtp`), not a click-link. The OTP is the authentication; the email address is just the delivery channel.
+- **Bearer tokens.** Successful signup or login mints a `pp_cli_*` token with a 30-day default lifetime. Stored in `~/.pincerpay/credentials.json` (`0600` perms on POSIX, current-user ACL on Windows). Tokens are HMAC-SHA256 hashed server-side with a server pepper.
+- **Audit logging.** Every signup, login, key creation, wallet change, and session revocation writes a row to `audit_events`. Surfaced via `pincerpay sessions list` and the dashboard security page.
+- **Self-revocation.** `pincerpay logout` calls the server-side revoke endpoint before deleting local credentials, so a compromised laptop can be locked out by running `pincerpay logout` from any other authenticated machine.
 
-- [ ] Saved the mnemonic in a password manager or hardware wallet
-- [ ] Saved the API key (`pp_live_...`) — it's not recoverable
-- [ ] Saved the webhook secret if you're using webhooks
-- [ ] Confirmed env vars are set in the right environment scope (preview vs production on Vercel)
-- [ ] Importing the mnemonic into Phantom (Solana) and MetaMask (EVM) reveals the same addresses, if you want a wallet UI
+## Configuration
 
-## What's next
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PINCERPAY_FACILITATOR_URL` | `https://facilitator.pincerpay.com` | Override facilitator endpoint |
 
-- [Quickstart: Merchant](/docs/quickstart-merchant) — wire the addresses + API key into a working server
-- [Merchant SDK](/docs/merchant-sdk) — multi-chain configuration reference
-- [Testing](/docs/testing) — fund devnet wallets and run an end-to-end payment
+Or pass `--facilitator-url <url>` to any command.
 
 ## Recovery
 
-If you lose access to the seed but still have the API key, you keep PincerPay-side functionality (paywalls, webhooks). But any USDC settled to the addresses is unreachable without the seed. Plan accordingly:
+If you lose access to your credentials:
 
-- For experimentation, use a fresh devnet wallet via `--strength 12` and don't fund it heavily.
-- For production, store the mnemonic offline (paper, hardware wallet, multisig).
-- For team accounts, treat the mnemonic the same way you'd treat a master signing key — split it, escrow it, or keep it in a hardware wallet.
+1. Run `pincerpay recover --email <your-email>` from any machine.
+2. Check inbox for a recovery code.
+3. Run `pincerpay reset-password --email <your-email>` and paste the code.
+4. Run `pincerpay login` with the new password.
+
+If you lose your **mnemonic**, USDC sent to those wallet addresses is unrecoverable. Save the mnemonic in a password manager when `bootstrap-merchant` prints it.
+
+## Troubleshooting
+
+**"Not logged in. Run `pincerpay login` first."**
+Your credentials file is missing or expired. Run `pincerpay login` (or `pincerpay signup`).
+
+**"token_checksum_invalid" or "token_format_invalid"**
+The credentials file is corrupted. Delete `~/.pincerpay/credentials.json` and re-authenticate.
+
+**"email_not_verified"**
+You haven't completed the OTP step. Run `pincerpay signup` again with the same email — Supabase will email a fresh code.
+
+**Email never arrives**
+Check spam. Recovery emails come from `noreply@<your-supabase-project>.supabase.co`. Production deployments configure a custom email sender in the Supabase dashboard.
+
+## Companion docs
+
+- [@pincerpay/cli](/docs/cli) — full CLI reference
+- [MCP server](/docs/mcp-server) — onboarding via LLM tools
+- [Merchant SDK](/docs/merchant-sdk) — using your API key + addresses to accept payments
+- [Quickstart: Merchant](/docs/quickstart-merchant) — end-to-end first-payment walkthrough

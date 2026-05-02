@@ -79,9 +79,9 @@ Run as a standalone HTTP server for remote or shared environments:
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-## Tools (24)
+## Tools (26)
 
-The MCP server exposes 24 tools covering the full developer lifecycle: onboarding, setup, configure, deploy, monitor, and debug.
+The MCP server exposes 26 tools covering the full developer lifecycle: onboarding, setup, configure, deploy, monitor, and debug.
 
 ### Monitoring & Discovery
 
@@ -140,14 +140,23 @@ The MCP server exposes 24 tools covering the full developer lifecycle: onboardin
 
 ### Onboarding
 
+Onboarding tools support **two auth modes**, resolved at each tool call:
+
+- **Public mode** — `~/.pincerpay/credentials.json` is present (created by `npx @pincerpay/cli signup` or `login`). Tools call the authenticated facilitator API.
+- **Admin mode** — `DATABASE_URL` is set on the MCP server. Tools write directly to the database. Use for self-hosted deployments or operator workflows.
+
+If neither is available, the tools return guidance pointing at `login-instructions`.
+
 | Tool | Description | Auth |
 |------|-------------|:---:|
-| `bootstrap-wallets` | Generate non-custodial Solana + EVM wallets from one BIP-39 mnemonic | No |
-| `bootstrap-merchant` | End-to-end: generate wallets, create merchant row, mint API key | DB |
-| `create-api-key` | Mint a new API key for an existing merchant | DB |
-| `list-merchants` | List all merchants in the database | DB |
+| `bootstrap-wallets` | Generate non-custodial Solana + EVM wallets from one BIP-39 mnemonic | None |
+| `bootstrap-merchant` | End-to-end: generate wallets, create merchant, mint API key | Public or Admin |
+| `create-api-key` | Mint a new pp_live_* API key | Public or Admin |
+| `list-merchants` | Public: own merchant only. Admin: all merchants. | Public or Admin |
+| `whoami` | Diagnostic — current auth mode, user, merchant | None |
+| `login-instructions` | Returns terminal commands to authenticate | None |
 
-The "DB" auth tier requires the MCP server to run with a `DATABASE_URL` environment variable set — these tools write to (or read from) the PincerPay database directly. Public deployments of `@pincerpay/mcp` (via `npx`) only expose `bootstrap-wallets`; the other three return a clear error directing users to dashboard signup. Self-hosted / admin deployments can unlock all four. See [Merchant Onboarding](/docs/onboarding) for the full workflow.
+**Public mode workflow** (recommended): a user runs `npx @pincerpay/cli signup` (or `login`) once in any terminal. The MCP server picks up the credentials automatically on the next tool call — no restart needed. See [Merchant Onboarding](/docs/onboarding) and the [@pincerpay/cli docs](/docs/cli) for the full workflow.
 
 ## Resources
 

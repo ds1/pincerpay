@@ -17,6 +17,7 @@ pincerpay/
 │   ├── agent/           # Agent SDK (fetch wrapper with auto x402 payment)
 │   ├── merchant/        # Merchant SDK (Express + Hono + Next.js middleware)
 │   ├── onboarding/      # Non-custodial wallet generation + merchant bootstrap helpers
+│   ├── cli/             # Terminal-only merchant onboarding (`npx @pincerpay/cli`)
 │   └── mcp/             # MCP server for AI agent tool integration
 ├── examples/
 │   ├── express-merchant/ # Express merchant demo
@@ -34,6 +35,7 @@ pincerpay/
   ├── @pincerpay/agent       (core, solana)
   ├── @pincerpay/merchant    (core)
   ├── @pincerpay/onboarding  (core, db)
+  ├── @pincerpay/cli         (onboarding)
   └── @pincerpay/mcp         (core, onboarding)
 ```
 
