@@ -15,6 +15,13 @@
       "when": 1772921006070,
       "tag": "0001_messy_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777752693696,
+      "tag": "0002_demonic_wild_pack",
+      "breakpoints": true
     }
   ]
 }

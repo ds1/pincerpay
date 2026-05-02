@@ -5,3 +5,5 @@ export { transactions } from "./transactions.js";
 export { agents } from "./agents.js";
 export { webhookDeliveries } from "./webhook-deliveries.js";
 export { complianceEvents } from "./compliance-events.js";
+export { cliSessions } from "./cli-sessions.js";
+export { auditEvents } from "./audit-events.js";
