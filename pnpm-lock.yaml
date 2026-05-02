@@ -440,6 +440,25 @@ importers:
         specifier: ^5.7
         version: 5.9.3
 
+  packages/cli:
+    dependencies:
+      '@pincerpay/onboarding':
+        specifier: workspace:*
+        version: link:../onboarding
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.19.11
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/core:
     dependencies:
       zod:

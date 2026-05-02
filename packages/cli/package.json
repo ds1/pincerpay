@@ -1,0 +1,59 @@
+{
+  "name": "@pincerpay/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Frictionless CLI for PincerPay merchant onboarding. Sign up, verify email, mint API keys, manage wallets — all from the terminal, no browser required.",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://pincerpay.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ds1/pincerpay.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/ds1/pincerpay/issues"
+  },
+  "keywords": [
+    "pincerpay",
+    "cli",
+    "x402",
+    "usdc",
+    "payments",
+    "ai-agents",
+    "merchant",
+    "onboarding",
+    "non-custodial",
+    "wallet-bootstrap",
+    "stablecoin",
+    "typescript"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "dist/cli.js",
+  "types": "dist/cli.d.ts",
+  "bin": {
+    "pincerpay": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"import('node:fs').then(fs => { const path = './dist/cli.js'; const content = fs.readFileSync(path, 'utf8'); if (!content.startsWith('#!/usr/bin/env node')) fs.writeFileSync(path, '#!/usr/bin/env node\\n' + content); })\"",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@pincerpay/onboarding": "workspace:*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.11",
+    "typescript": "^5.7",
+    "vitest": "^4.0.18"
+  }
+}
