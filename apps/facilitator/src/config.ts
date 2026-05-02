@@ -48,6 +48,13 @@ const envSchema = z.object({
   OFAC_ENABLED: z.coerce.boolean().default(false),
   /** OFAC SDN list refresh interval in milliseconds (default: 24 hours) */
   OFAC_REFRESH_INTERVAL_MS: z.coerce.number().default(86_400_000),
+
+  /** HMAC pepper for CLI bearer tokens. At least 32 chars. Generate with `openssl rand -base64 48`. */
+  TOKEN_PEPPER: z.string().min(32).optional(),
+  /** Supabase project URL (e.g. https://xxxx.supabase.co). Required for CLI onboarding. */
+  SUPABASE_URL: z.string().url().optional(),
+  /** Supabase publishable / anon key. Required for CLI onboarding. */
+  SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
 }).refine(
   (data) => data.SOLANA_PRIVATE_KEY || data.KORA_RPC_URL,
   { message: "At least one of SOLANA_PRIVATE_KEY or KORA_RPC_URL is required", path: ["SOLANA_PRIVATE_KEY"] },

@@ -22,6 +22,13 @@ import { createTransactionListRoute } from "./routes/transactions-list.js";
 import { createAgentRoutes } from "./routes/agents.js";
 import { createWebhookRoutes } from "./routes/webhooks.js";
 import { createMerchantRoute } from "./routes/merchant.js";
+import { createAuthRoute } from "./routes/onboarding/auth.js";
+import { createMerchantOnboardingRoute } from "./routes/onboarding/merchant.js";
+import { createApiKeysOnboardingRoute } from "./routes/onboarding/api-keys.js";
+import { createSessionsOnboardingRoute } from "./routes/onboarding/sessions.js";
+import { createOnboardingHealthRoute } from "./routes/onboarding/health.js";
+import { cliAuthMiddleware } from "./middleware/cli-auth.js";
+import { startCleanup } from "./lib/cleanup.js";
 import { Metrics } from "./metrics.js";
 import { serve } from "@hono/node-server";
 import { startConfirmationWorker } from "./workers/confirmation.js";
@@ -36,6 +43,12 @@ import type { AppEnv } from "./env.js";
 const config = loadConfig();
 const logger = createLogger(config.LOG_LEVEL, config.LOGTAIL_SOURCE_TOKEN);
 const metrics = new Metrics();
+
+const onboardingEnabled = !!(
+  config.SUPABASE_URL &&
+  config.SUPABASE_PUBLISHABLE_KEY &&
+  config.TOKEN_PEPPER
+);
 
 if (config.NODE_ENV === "production" && !config.CORS_ORIGINS) {
   logger.warn({ msg: "CORS_ORIGINS not set — defaulting to wildcard (*). Set this in production." });
@@ -153,6 +166,9 @@ const confirmationWorker = startConfirmationWorker(db, {
 
 const webhookRetryWorker = startWebhookRetryWorker(db, { logger });
 
+// Periodic cleanup: expired/revoked CLI sessions, rate-limit buckets.
+const cleanupHandle = onboardingEnabled ? startCleanup(db, logger) : null;
+
 let onChainRecorderWorker: ReturnType<typeof startOnChainRecorderWorker> | undefined;
 if (anchorIntegration) {
   onChainRecorderWorker = startOnChainRecorderWorker(db, {
@@ -203,6 +219,18 @@ app.route("/", createHealthRoute({
 app.route("/", createSupportedRoute(facilitator));
 app.route("/", createMetricsRoute(metrics));
 app.route("/", createOpenApiRoute());
+
+// CLI onboarding — public auth endpoints (signup, verify, login, recover, reset).
+// Each route is IP-rate-limited internally. Only mounts when Supabase + token
+// pepper config is present; otherwise the warning above already fired.
+if (onboardingEnabled) {
+  app.route("/", createAuthRoute(db));
+} else {
+  logger.warn({
+    msg: "onboarding_disabled_missing_config",
+    hint: "Set SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, TOKEN_PEPPER to enable CLI onboarding.",
+  });
+}
 
 // Authenticated endpoints
 const authenticated = new Hono<AppEnv>();
@@ -266,6 +294,26 @@ authenticated.route("/", createMerchantRoute(db));
 
 app.route("/", authenticated);
 
+// CLI onboarding — authenticated endpoints (merchant management, api keys, sessions).
+// Mounted under a separate sub-app so the cliAuthMiddleware is scoped to these
+// routes and does not apply to the existing pp_live_* api-key paths.
+if (onboardingEnabled) {
+  const cliAuthenticated = new Hono<AppEnv>();
+  cliAuthenticated.use("*", async (c, next) => {
+    if (shuttingDown) {
+      c.header("Retry-After", "1");
+      return c.json({ error: "Service is shutting down, retry on another instance" }, 503);
+    }
+    return next();
+  });
+  cliAuthenticated.use("*", cliAuthMiddleware(db));
+  cliAuthenticated.route("/", createMerchantOnboardingRoute(db));
+  cliAuthenticated.route("/", createApiKeysOnboardingRoute(db));
+  cliAuthenticated.route("/", createSessionsOnboardingRoute(db));
+  cliAuthenticated.route("/", createOnboardingHealthRoute(db));
+  app.route("/", cliAuthenticated);
+}
+
 // ─── Start Server ───
 const port = config.PORT;
 
@@ -311,8 +359,9 @@ async function shutdown(signal: string) {
     onChainRecorderWorker?.stop(),
   ]);
 
-  // 2b. Stop OFAC provider refresh timer
+  // 2b. Stop OFAC provider refresh timer + cleanup interval
   ofacProvider?.stop();
+  cleanupHandle?.stop();
 
   // 3. Race workers + server close against timeout
   const timeout = new Promise<"timeout">((resolve) =>
