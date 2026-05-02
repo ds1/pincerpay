@@ -23,6 +23,8 @@ import { registerGetMerchantProfile } from "./get-merchant-profile.js";
 import { registerBootstrapWallets } from "./bootstrap-wallets.js";
 import { registerBootstrapMerchant } from "./bootstrap-merchant.js";
 import { registerCreateApiKey, registerListMerchants } from "./create-api-key.js";
+import { registerWhoami } from "./whoami.js";
+import { registerLoginInstructions } from "./login-instructions.js";
 
 export function registerTools(server: McpServer, client: FacilitatorClient) {
   // Monitoring tools (no auth)
@@ -62,11 +64,15 @@ export function registerTools(server: McpServer, client: FacilitatorClient) {
   registerGenerateUcp(server);
 
   // Onboarding tools
-  // bootstrap-wallets: pure client-side crypto, no auth required
-  // bootstrap-merchant / create-api-key / list-merchants: require DATABASE_URL
-  // env var on the MCP server (admin / self-hosted context)
+  // - bootstrap-wallets: pure client-side crypto, always available
+  // - bootstrap-merchant / create-api-key / list-merchants: dual auth mode —
+  //   admin via DATABASE_URL, OR public via ~/.pincerpay/credentials.json
+  //   (created by `npx @pincerpay/cli signup` or `login`).
+  // - whoami / login-instructions: helper tools for diagnosing auth state.
   registerBootstrapWallets(server);
   registerBootstrapMerchant(server);
   registerCreateApiKey(server);
   registerListMerchants(server);
+  registerWhoami(server);
+  registerLoginInstructions(server);
 }

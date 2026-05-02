@@ -77,7 +77,7 @@ Add via the Cascade MCP panel or `mcp.json`:
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-## Tools (24)
+## Tools (26)
 
 ### Monitoring & Discovery
 
@@ -136,14 +136,25 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 
 ### Onboarding
 
-| Tool | Description | Auth Required |
-|------|-------------|:---:|
-| `bootstrap-wallets` | Generate non-custodial Solana + EVM wallets from one BIP-39 mnemonic. Phantom + MetaMask compatible. | No |
-| `bootstrap-merchant` | End-to-end: generate wallets, insert merchant row, mint API key. | DATABASE_URL |
-| `create-api-key` | Mint a new API key for an existing merchant. | DATABASE_URL |
-| `list-merchants` | List all merchants in the database. | DATABASE_URL |
+Onboarding tools support **two auth modes**:
 
-`bootstrap-wallets` is pure client-side crypto and works in any deployment. The other three tools write to (or read from) the PincerPay database directly — they're available only when the MCP server runs with `DATABASE_URL` set in its environment. Public deployments via `npx -y @pincerpay/mcp` only expose `bootstrap-wallets`; the rest return a clear error directing users to dashboard signup. Self-hosted / admin deployments unlock all four. See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) for the full workflow.
+- **Admin mode** — `DATABASE_URL` is set on the MCP server. Tools write directly to the PincerPay database. Use for self-hosted deployments or operator workflows.
+- **Public mode** — `~/.pincerpay/credentials.json` exists. Tools call the authenticated facilitator API using the bearer token from the CLI. Use after running `npx @pincerpay/cli signup` or `login`.
+
+Tools resolve the mode at call time. If neither mode is available, `login-instructions` is the recommended next call.
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `bootstrap-wallets` | Generate non-custodial Solana + EVM wallets from one BIP-39 mnemonic. Phantom + MetaMask compatible. | None |
+| `bootstrap-merchant` | End-to-end: generate wallets, create merchant, mint API key. | Admin or Public |
+| `create-api-key` | Mint a new pp_live_* API key. | Admin or Public |
+| `list-merchants` | Admin: list all. Public: just the caller's own merchant. | Admin or Public |
+| `whoami` | Diagnostic — current auth mode, user, merchant. | None (works in any mode) |
+| `login-instructions` | Returns terminal commands to authenticate the MCP server. | None |
+
+For public mode, the recommended workflow is: install the CLI (`npm install -g @pincerpay/cli` or use `npx`), run `npx @pincerpay/cli signup` once in any terminal, then this MCP server picks up the credentials automatically on the next tool call. No restart needed.
+
+See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) and [`@pincerpay/cli`](https://www.npmjs.com/package/@pincerpay/cli) for the full workflow.
 
 ## Resources
 
