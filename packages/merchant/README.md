@@ -90,6 +90,59 @@ export const POST = handle(app);
 
 Express adapter is on the roadmap. Use Hono today — it runs anywhere Express does and is a drop-in for most paywall workloads. Track [the Express adapter issue](https://github.com/ds1/pincerpay/issues) for the upcoming release.
 
+## Multi-chain Receiving Wallets
+
+> **How routing works:** Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. **No cross-chain conversion happens.** If you accept Solana and Polygon and an agent pays on Polygon, USDC arrives in your Polygon wallet.
+
+Solana and EVM addresses are categorically different formats — a single string can't hold both. Use `merchantAddresses` to bind one wallet per chain:
+
+```typescript
+// Single-chain merchant (legacy — still supported)
+createPincerPayMiddleware({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddress: "GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm",
+  routes: {
+    "GET /api/weather": { price: "0.01", chain: "solana" },
+  },
+});
+
+// Multi-chain merchant (recommended)
+createPincerPayMiddleware({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddresses: {
+    solana:  process.env.MERCHANT_ADDRESS_SOLANA!,   // Solana base58
+    polygon: process.env.MERCHANT_ADDRESS_POLYGON!,  // EVM 0x-hex
+    base:    process.env.MERCHANT_ADDRESS_BASE!,     // EVM 0x-hex
+  },
+  routes: {
+    "POST /api/trade": {
+      price: "0.05",
+      chains: ["solana", "polygon", "base"],
+    },
+  },
+});
+```
+
+**Resolution rule.** For each route × chain combination, the middleware resolves `payTo` in this order:
+1. `merchantAddresses[chainShorthand]` (case-insensitive key match)
+2. `merchantAddress` (legacy single-string fallback)
+3. Throws at middleware construction with a chain-named error.
+
+You can have both fields set: `merchantAddresses` wins for chains in the map, `merchantAddress` covers the rest.
+
+**Format validation is fail-fast.** A Solana base58 address under a `polygon` key (or vice versa) throws at init with a chain-named error message — not at request time, not at settle time.
+
+### Troubleshooting
+
+To check which address PincerPay would actually use for a given chain in your config:
+
+```typescript
+import { resolveMerchantAddress } from "@pincerpay/core";
+
+resolveMerchantAddress(config, "polygon"); // "0x..."
+resolveMerchantAddress(config, "solana");  // "GjsW..."
+```
+
 ## Reading the Verified Payer
 
 After successful settlement, the middleware surfaces the verified payer (and the rest of the settlement metadata) on the Hono request context under the `pincerpay` key. Your route handlers can attribute the action to the paying agent without re-decoding the `X-PAYMENT` request header.
@@ -161,7 +214,10 @@ const supported = await client.getSupported();
 ```typescript
 interface PincerPayConfig {
   apiKey: string;
-  merchantAddress: string;
+  /** Single-chain receiving wallet (legacy / fallback). At least one of `merchantAddress` or `merchantAddresses` must be set. */
+  merchantAddress?: string;
+  /** Per-chain receiving wallets. Keys are chain shorthands ("solana", "polygon", "base", "solana-devnet", ...). */
+  merchantAddresses?: Record<string, string>;
   facilitatorUrl?: string;          // defaults to https://facilitator.pincerpay.com
   routes: Record<string, RoutePaywallConfig>;
   syncFacilitatorOnStart?: boolean; // defer facilitator sync to first request (default: false)

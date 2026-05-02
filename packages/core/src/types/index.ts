@@ -175,8 +175,26 @@ export interface SpendingPolicy {
 export interface PincerPayConfig {
   /** Merchant API key */
   apiKey: string;
-  /** Merchant wallet address */
-  merchantAddress: string;
+  /**
+   * Single receiving wallet address — used when the merchant accepts payments
+   * on one chain only, or as a fallback for chains not listed in
+   * `merchantAddresses`. Either `merchantAddress` or `merchantAddresses`
+   * must be set.
+   */
+  merchantAddress?: string;
+  /**
+   * Per-chain receiving wallets keyed by chain shorthand (e.g.,
+   * `{ solana: "...", polygon: "0x..." }`). Use the same shorthands as
+   * `RoutePaywallConfig.chain` and `resolveChain()` — `"solana"`,
+   * `"polygon"`, `"base"`, `"solana-devnet"`, etc. Keys are matched
+   * case-insensitively. Wins over `merchantAddress` for any chain present
+   * in the map.
+   *
+   * Agents pay on whichever chain they hold USDC; PincerPay routes
+   * settlement to your registered wallet on that chain. No cross-chain
+   * conversion happens.
+   */
+  merchantAddresses?: Record<string, string>;
   /** Facilitator URL (defaults to PincerPay hosted) */
   facilitatorUrl?: string;
   /** Route-level paywall configs */
@@ -254,12 +272,26 @@ export const RoutePaywallConfigSchema = z.object({
   description: z.string().optional(),
 });
 
-export const PincerPayConfigSchema = z.object({
-  apiKey: z.string().min(1),
-  merchantAddress: z.string().min(1),
-  facilitatorUrl: z.string().url().optional(),
-  routes: z.record(z.string(), RoutePaywallConfigSchema),
-});
+export const PincerPayConfigSchema = z
+  .object({
+    apiKey: z.string().min(1),
+    merchantAddress: z.string().min(1).optional(),
+    merchantAddresses: z.record(z.string(), z.string().min(1)).optional(),
+    facilitatorUrl: z.string().url().optional(),
+    routes: z.record(z.string(), RoutePaywallConfigSchema),
+    syncFacilitatorOnStart: z.boolean().optional(),
+  })
+  .refine(
+    (cfg) =>
+      Boolean(cfg.merchantAddress) ||
+      (cfg.merchantAddresses &&
+        Object.values(cfg.merchantAddresses).some((v) => Boolean(v))),
+    {
+      message:
+        "Set either `merchantAddress` (legacy single-chain) or `merchantAddresses` (per-chain map). At least one entry is required.",
+      path: ["merchantAddresses"],
+    },
+  );
 
 export const SpendingPolicySchema = z.object({
   maxPerTransaction: z.string().optional(),

@@ -16,12 +16,14 @@ import { resolveChain, toCAIP2 } from "@pincerpay/core";
 export class PincerPayClient {
   readonly facilitatorUrl: string;
   readonly apiKey: string;
-  readonly merchantAddress: string;
+  readonly merchantAddress?: string;
+  readonly merchantAddresses?: Record<string, string>;
 
   constructor(config: PincerPayConfig) {
     this.facilitatorUrl = config.facilitatorUrl ?? DEFAULT_FACILITATOR_URL;
     this.apiKey = config.apiKey;
     this.merchantAddress = config.merchantAddress;
+    this.merchantAddresses = config.merchantAddresses;
   }
 
   private async request<T>(path: string, body?: unknown): Promise<T> {

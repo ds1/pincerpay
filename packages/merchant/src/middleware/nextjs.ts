@@ -5,6 +5,8 @@ import type {
 } from "@pincerpay/core";
 import {
   resolveChain,
+  resolveMerchantAddress,
+  validateMerchantAddressForChain,
   DEFAULT_FACILITATOR_URL,
   API_KEY_HEADER,
   FACILITATOR_ROUTES,
@@ -98,10 +100,12 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
     }
   >();
 
-  // Default extra fields per namespace (used as fallback if facilitator fetch fails)
-  function defaultExtra(namespace: string): Record<string, unknown> {
+  // Default extra fields per namespace. `feePayer` defaults to the resolved
+  // Solana payTo and is overridden by the facilitator's `/supported` response
+  // once it lands.
+  function defaultExtra(namespace: string, payTo: string): Record<string, unknown> {
     return namespace === "solana"
-      ? { feePayer: config.merchantAddress }
+      ? { feePayer: payTo }
       : { name: "USD Coin", version: "2" };
   }
 
@@ -114,14 +118,28 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
       const chain = resolveChain(chainShorthand);
       if (!chain) throw new Error(`Unknown chain: ${chainShorthand}`);
 
+      const payTo = resolveMerchantAddress(config, chainShorthand);
+      if (!payTo) {
+        throw new Error(
+          `[pincerpay] Route ${JSON.stringify(pattern)} targets chain ${JSON.stringify(chainShorthand)} but no receiving wallet was found. Set merchantAddresses.${chainShorthand} or a legacy merchantAddress.`,
+        );
+      }
+
+      const formatError = validateMerchantAddressForChain(payTo, chainShorthand);
+      if (formatError) {
+        throw new Error(
+          `[pincerpay] Route ${JSON.stringify(pattern)} targets chain ${JSON.stringify(chainShorthand)}: ${formatError}`,
+        );
+      }
+
       return {
         scheme: "exact" as const,
         network: chain.caip2Id,
         amount: toBaseUnits(routeConfig.price),
         asset: chain.usdcAddress,
-        payTo: config.merchantAddress,
+        payTo,
         maxTimeoutSeconds: 300,
-        extra: defaultExtra(chain.namespace),
+        extra: defaultExtra(chain.namespace, payTo),
       };
     });
 
