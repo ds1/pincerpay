@@ -40,7 +40,7 @@
     "@pincerpay/db": "workspace:*",
     "@pincerpay/onboarding": "workspace:*",
     "@playwright/test": "^1.50",
-    "drizzle-orm": "^0.38",
+    "drizzle-orm": "^0.45",
     "postgres": "^3.4",
     "tsx": "^4",
     "turbo": "^2",
