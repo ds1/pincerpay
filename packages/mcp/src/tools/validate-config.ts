@@ -1,12 +1,18 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { PincerPayConfigSchema, resolveChain } from "@pincerpay/core";
+import {
+  PincerPayConfigSchema,
+  resolveChain,
+  resolveMerchantAddress,
+  validateMerchantAddressForChain,
+} from "@pincerpay/core";
 
 const inputSchema = {
   config: z.string().describe(
     "JSON string of a PincerPayConfig object to validate. " +
-      'Must include apiKey, merchantAddress, and routes. Example: ' +
-      '\'{"apiKey":"pp_live_x","merchantAddress":"addr","routes":{"GET /api":{"price":"0.01"}}}\'',
+      "Must include apiKey, routes, and at least one of merchantAddress (single-chain legacy) " +
+      "or merchantAddresses (per-chain map). Example: " +
+      '\'{"apiKey":"pp_live_x","merchantAddresses":{"solana":"...","polygon":"0x..."},"routes":{"GET /api":{"price":"0.01","chain":"solana"}}}\'',
   ),
 };
 
@@ -106,6 +112,23 @@ export function registerValidateConfig(server: McpServer) {
           allChains.add(chain);
           if (!resolveChain(chain)) {
             warnings.push(`Route "${pattern}": unknown chain "${chain}".`);
+            continue;
+          }
+
+          // Verify a receiving wallet exists for this chain — surfaces
+          // missing per-chain entries before middleware init throws at runtime.
+          const resolved = resolveMerchantAddress(data, chain);
+          if (!resolved) {
+            warnings.push(
+              `Route "${pattern}": no receiving wallet for chain "${chain}". ` +
+                `Set merchantAddresses[${JSON.stringify(chain)}] or a legacy merchantAddress.`,
+            );
+            continue;
+          }
+
+          const formatError = validateMerchantAddressForChain(resolved, chain);
+          if (formatError) {
+            warnings.push(`Route "${pattern}": ${formatError}`);
           }
         }
 

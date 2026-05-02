@@ -28,16 +28,15 @@ The facilitator URL does not change. PincerPay's facilitator automatically route
 
 Change `"solana-devnet"` to `"solana"` in your route definitions.
 
-**Express:**
-
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -56,37 +55,36 @@ app.use(
 );
 ```
 
-**Hono:**
+**Multi-chain merchants** swap `merchantAddress` for `merchantAddresses` and supply per-chain mainnet wallets:
 
 ```typescript
-import { Hono } from "hono";
-import { pincerpayHono } from "@pincerpay/merchant";
-
-const app = new Hono();
-
-app.use(
-  "*",
-  pincerpayHono({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: process.env.MERCHANT_ADDRESS!,
-    routes: {
-      "GET /api/weather": {
-        price: "0.01",
-        chain: "solana",  // was "solana-devnet"
-        description: "Current weather data",
-      },
-    },
-  })
-);
+createPincerPayMiddleware({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddresses: {
+    solana:  process.env.MERCHANT_ADDRESS_SOLANA!,
+    polygon: process.env.MERCHANT_ADDRESS_POLYGON!,
+    base:    process.env.MERCHANT_ADDRESS_BASE!,
+  },
+  routes: {
+    "POST /api/trade": { price: "0.05", chains: ["solana", "polygon", "base"] },
+  },
+});
 ```
+
+> **No cross-chain conversion.** Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. If an agent pays on Polygon, USDC arrives in your Polygon wallet — not your Solana one. See [Merchant SDK → Multi-chain Receiving Wallets](/docs/merchant-sdk#multi-chain-receiving-wallets).
 
 ### 2. Update Wallet Address
 
-Set `merchantAddress` to a Solana mainnet wallet that you control. This is the address that receives USDC payments. Devnet addresses are valid on mainnet (same key format), but verify that you have the private key backed up for the address you use.
+Set the receiving wallet(s) to mainnet wallets you control. These are the addresses that receive USDC payments. Devnet addresses are valid on mainnet (same key format), but verify that you have the private key backed up for the addresses you use.
 
 ```bash
-# .env
+# .env (single-chain)
 MERCHANT_ADDRESS=YourSolanaMainnetWalletAddress
+
+# .env (multi-chain)
+MERCHANT_ADDRESS_SOLANA=YourSolanaMainnetWalletAddress
+MERCHANT_ADDRESS_POLYGON=0xYourPolygonWalletAddress
+MERCHANT_ADDRESS_BASE=0xYourBaseWalletAddress
 ```
 
 ### 3. Verify Webhook Endpoint
@@ -122,7 +120,10 @@ PINCERPAY_API_KEY=pp_live_new_production_key_here
 | Variable | Devnet Value | Mainnet Value |
 |----------|-------------|---------------|
 | `PINCERPAY_API_KEY` | `pp_live_...` (dev key) | `pp_live_...` (fresh key recommended) |
-| `MERCHANT_ADDRESS` | Devnet wallet | Mainnet wallet (same format) |
+| `MERCHANT_ADDRESS` | Devnet wallet (single-chain only) | Mainnet wallet (single-chain only) |
+| `MERCHANT_ADDRESS_SOLANA` | Solana devnet wallet | Solana mainnet wallet |
+| `MERCHANT_ADDRESS_POLYGON` | Polygon Amoy wallet | Polygon mainnet wallet |
+| `MERCHANT_ADDRESS_BASE` | Base Sepolia wallet | Base mainnet wallet |
 
 No changes needed for `facilitatorUrl` -- the default (`https://facilitator.pincerpay.com`) handles both devnet and mainnet.
 
@@ -291,7 +292,7 @@ Set a rotation schedule for all private keys and API keys:
 ### Merchant
 
 - [ ] Change `chain` from `"solana-devnet"` to `"solana"` in all route definitions
-- [ ] Set `merchantAddress` to a Solana mainnet wallet you control
+- [ ] Set `merchantAddress` (single-chain) or `merchantAddresses` (multi-chain) to mainnet wallets you control
 - [ ] Verify private key backup exists for the mainnet wallet
 - [ ] Confirm webhook URL is publicly reachable (if configured)
 - [ ] Verify `X-PincerPay-Signature` validation is implemented on webhook endpoint

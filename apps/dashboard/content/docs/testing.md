@@ -16,7 +16,7 @@ PincerPay supports devnet and testnet chains for development. Use these to test 
 Point your paywall at a devnet chain:
 
 ```typescript
-pincerpay({
+createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "YOUR_DEVNET_WALLET",
   routes: {
@@ -61,14 +61,16 @@ After running a test payment:
 A complete test from agent to merchant:
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 import { PincerPayAgent } from "@pincerpay/agent";
 
 // 1. Start merchant
-const app = express();
+const app = new Hono();
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_WALLET!,
     routes: {
@@ -80,9 +82,9 @@ app.use(
     },
   })
 );
-app.get("/api/data", (req, res) => res.json({ result: "success" }));
+app.get("/api/data", (c) => c.json({ result: "success" }));
 
-const server = app.listen(4000);
+const server = serve({ fetch: app.fetch, port: 4000 });
 
 // 2. Create agent and pay
 const agent = await PincerPayAgent.create({

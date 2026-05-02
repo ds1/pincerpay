@@ -67,16 +67,18 @@ npm install @pincerpay/merchant
 
 ### 6. Add Middleware
 
-Three lines of Express middleware:
+Three lines of Hono middleware:
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
     routes: {
@@ -89,12 +91,12 @@ app.use(
   })
 );
 
-app.get("/api/weather", (req, res) => {
-  res.json({ temp: 72, condition: "sunny" });
-});
+app.get("/api/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
 
-app.listen(3000);
+serve({ fetch: app.fetch, port: 3000 });
 ```
+
+> **Multi-chain merchants:** swap `merchantAddress` for `merchantAddresses: { solana: "...", polygon: "0x...", base: "0x..." }` and list `chains: ["solana", "polygon"]` on each route. See [Merchant SDK](/docs/merchant-sdk#multi-chain-receiving-wallets).
 
 ### 7. Test It
 

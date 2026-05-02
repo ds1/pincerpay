@@ -5,11 +5,11 @@ order: 8.1
 section: Examples
 ---
 
-A minimal Next.js 15 app with paywalled API routes using Hono and the `pincerpayHono` middleware. Hono is mounted inside a catch-all route handler, so all `/api/*` routes run through PincerPay.
+A minimal Next.js 15 app with paywalled API routes using Hono and the `createPincerPayMiddleware` middleware. Hono is mounted inside a catch-all route handler, so all `/api/*` routes run through PincerPay.
 
 ## How it works
 
-Hono is mounted inside a Next.js catch-all route handler (`src/app/api/[...path]/route.ts`). The `pincerpayHono` middleware intercepts requests to paywalled routes and returns `402 Payment Required` with x402 payment instructions. Free routes like `/api/health` pass through normally.
+Hono is mounted inside a Next.js catch-all route handler (`src/app/api/[...path]/route.ts`). The `createPincerPayMiddleware` middleware intercepts requests to paywalled routes and returns `402 Payment Required` with x402 payment instructions. Free routes like `/api/health` pass through normally.
 
 ## Endpoints
 
@@ -25,15 +25,21 @@ Hono is mounted inside a Next.js catch-all route handler (`src/app/api/[...path]
 // src/app/api/[...path]/route.ts
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { pincerpayHono } from "@pincerpay/merchant";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
+
+// Build-safe placeholder: Solana System Program (1...1, 32 bytes of zeros).
+// Valid base58 so middleware init passes during `next build` when MERCHANT_ADDRESS
+// is unset; never receives funds at runtime — supply a real value via env.
+const PLACEHOLDER_SOLANA = "11111111111111111111111111111111";
 
 const app = new Hono().basePath("/api");
 
 app.use(
   "*",
-  pincerpayHono({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: process.env.MERCHANT_ADDRESS!,
+  createPincerPayMiddleware({
+    apiKey: process.env.PINCERPAY_API_KEY ?? "pp_test_placeholder",
+    merchantAddress: process.env.MERCHANT_ADDRESS ?? PLACEHOLDER_SOLANA,
+    syncFacilitatorOnStart: false,
     routes: {
       "GET /api/weather": {
         price: "0.001",

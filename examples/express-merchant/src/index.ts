@@ -10,12 +10,17 @@ import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono();
 
+// Build-safe placeholder: Solana System Program (1...1, 32 bytes of zeros).
+// Valid base58 so middleware init passes without env vars; never receives funds
+// at runtime — supply real values via PINCERPAY_API_KEY + MERCHANT_ADDRESS.
+const PLACEHOLDER_SOLANA = "11111111111111111111111111111111";
+
 // PincerPay middleware — wraps x402 with dead-simple config
 app.use(
   "*",
   createPincerPayMiddleware({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: process.env.MERCHANT_ADDRESS!,
+    apiKey: process.env.PINCERPAY_API_KEY ?? "pp_test_placeholder",
+    merchantAddress: process.env.MERCHANT_ADDRESS ?? PLACEHOLDER_SOLANA,
     facilitatorUrl: process.env.FACILITATOR_URL ?? "http://localhost:4402",
     routes: {
       "GET /api/weather": {

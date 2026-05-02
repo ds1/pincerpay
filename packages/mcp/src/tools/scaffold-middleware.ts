@@ -18,15 +18,38 @@ const inputSchema = {
   merchantAddress: z
     .string()
     .optional()
-    .describe("Merchant wallet address (placeholder used if omitted)."),
+    .describe(
+      "Single-chain merchant wallet address. Use this OR merchantAddresses, not both. Placeholder used if neither is set.",
+    ),
+  merchantAddresses: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe(
+      "Per-chain merchant wallets keyed by chain shorthand, e.g. { solana: '...', polygon: '0x...' }. Use this for multi-chain merchants.",
+    ),
   typescript: z
     .boolean()
     .default(true)
     .describe("Generate TypeScript (true) or JavaScript (false)."),
 };
 
+function renderAddressBlock(
+  merchantAddress: string | undefined,
+  merchantAddresses: Record<string, string> | undefined,
+  bang: string,
+): string {
+  if (merchantAddresses && Object.keys(merchantAddresses).length > 0) {
+    const entries = Object.entries(merchantAddresses)
+      .map(([chain, addr]) => `      ${JSON.stringify(chain)}: "${addr}"`)
+      .join(",\n");
+    return `    merchantAddresses: {\n${entries},\n    }`;
+  }
+  const addr = merchantAddress ?? "YOUR_WALLET_ADDRESS";
+  return `    merchantAddress: "${addr}"`;
+}
+
 function generateNextjsCode(
-  addr: string,
+  addressBlock: string,
   routesBlock: string,
   ts: boolean,
 ): string {
@@ -43,7 +66,7 @@ app.use(
   "*",
   createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY${bang},
-    merchantAddress: "${addr}",
+${addressBlock},
     routes: {
 ${routesBlock}
     },
@@ -68,10 +91,16 @@ export function registerScaffoldMiddleware(server: McpServer) {
       "Produces a complete, copy-paste-ready code snippet with PincerPay SDK setup, " +
       "route configuration, and environment variable usage. " +
       "Uses a Hono adapter in a catch-all App Router route. " +
-      "Supports Solana (primary), Base, and Polygon chains.",
+      "Supports Solana (primary), Base, and Polygon chains. " +
+      "Pass `merchantAddresses` for multi-chain merchants, `merchantAddress` for single-chain.",
     inputSchema,
-    async ({ routes, merchantAddress, typescript }) => {
-      const addr = merchantAddress ?? "YOUR_WALLET_ADDRESS";
+    async ({ routes, merchantAddress, merchantAddresses, typescript }) => {
+      const bang = typescript ? "!" : "";
+      const addressBlock = renderAddressBlock(
+        merchantAddress,
+        merchantAddresses,
+        bang,
+      );
       const routesBlock = routes
         .map((r) => {
           const desc = r.description
@@ -81,9 +110,18 @@ export function registerScaffoldMiddleware(server: McpServer) {
         })
         .join(",\n");
 
-      const code = generateNextjsCode(addr, routesBlock, typescript);
+      const code = generateNextjsCode(addressBlock, routesBlock, typescript);
       const installCmd = "npm install @pincerpay/merchant hono";
       const lang = typescript ? "typescript" : "javascript";
+
+      const isMulti =
+        merchantAddresses && Object.keys(merchantAddresses).length > 0;
+      const envVarsBlock = isMulti
+        ? `PINCERPAY_API_KEY=pp_live_your_key_here\n` +
+          Object.keys(merchantAddresses ?? {})
+            .map((chain) => `MERCHANT_ADDRESS_${chain.toUpperCase()}=...`)
+            .join("\n")
+        : `PINCERPAY_API_KEY=pp_live_your_key_here`;
 
       return {
         content: [
@@ -96,8 +134,11 @@ export function registerScaffoldMiddleware(server: McpServer) {
               `- Place this file at \`app/api/[...route]/route.ts\`\n` +
               `- The \`basePath("/api")\` must match the catch-all route location\n` +
               `- Route handlers use paths relative to basePath (e.g., \`/weather\` serves \`/api/weather\`)\n` +
-              `- Export each HTTP method you need (GET, POST, PUT, DELETE)\n\n` +
-              `## Environment Variables\n\n\`\`\`\nPINCERPAY_API_KEY=pp_live_your_key_here\n\`\`\`\n\n` +
+              `- Export each HTTP method you need (GET, POST, PUT, DELETE)\n` +
+              (isMulti
+                ? `- Multi-chain: agents pay on whichever chain they hold USDC; settlement routes to your registered wallet on that chain. No cross-chain conversion happens.\n`
+                : ``) +
+              `\n## Environment Variables\n\n\`\`\`\n${envVarsBlock}\n\`\`\`\n\n` +
               `Get your API key from https://pincerpay.com/dashboard/settings`,
           },
         ],

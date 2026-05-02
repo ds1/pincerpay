@@ -1,11 +1,13 @@
 ---
-title: "Example: Express Merchant"
-description: Express server with free and paywalled endpoints using PincerPay middleware.
+title: "Example: Standalone Node Merchant"
+description: Standalone Node.js server with free and paywalled endpoints using PincerPay middleware on Hono + @hono/node-server.
 order: 8.2
 section: Examples
 ---
 
-A minimal Express server with PincerPay middleware protecting API endpoints. Demonstrates both free and paywalled routes with different price tiers.
+A minimal standalone Node.js server with PincerPay middleware protecting API endpoints. Uses Hono with `@hono/node-server` so it runs anywhere Node runs — no platform dependency. Demonstrates both free and paywalled routes with different price tiers.
+
+> **Folder name note.** This example lives at `examples/express-merchant/` for historical reasons; the source is Hono-based. An Express adapter for `@pincerpay/merchant` is on the roadmap — until it ships, Hono is the standalone-Node path.
 
 ## Endpoints
 
@@ -19,15 +21,18 @@ A minimal Express server with PincerPay middleware protecting API endpoints. Dem
 
 ```typescript
 // src/index.ts
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
+    facilitatorUrl: process.env.FACILITATOR_URL ?? "http://localhost:4402",
     routes: {
       "GET /api/weather": {
         price: "0.001",
@@ -40,37 +45,35 @@ app.use(
         description: "Premium analytics data",
       },
     },
-  })
+  }),
 );
 
 // Free endpoint
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
+app.get("/api/health", (c) => c.json({ status: "ok" }));
 
 // Paywalled endpoints
-app.get("/api/weather", (_req, res) => {
-  res.json({
+app.get("/api/weather", (c) =>
+  c.json({
     temperature: 72,
     conditions: "sunny",
     location: "San Francisco",
     timestamp: new Date().toISOString(),
-  });
-});
+  }),
+);
 
-app.get("/api/premium", (_req, res) => {
-  res.json({
+app.get("/api/premium", (c) =>
+  c.json({
     insights: [
       { metric: "daily_active_agents", value: 1420 },
       { metric: "avg_transaction_value", value: "$0.05" },
       { metric: "settlement_time_p99", value: "1.2s" },
     ],
-  });
-});
+  }),
+);
 
-const port = process.env.PORT ?? 3001;
-app.listen(port, () => {
-  console.log(`Merchant running at http://localhost:${port}`);
+const port = Number(process.env.PORT ?? 3001);
+serve({ fetch: app.fetch, port }, (info) => {
+  console.log(`Merchant running at http://localhost:${info.port}`);
 });
 ```
 

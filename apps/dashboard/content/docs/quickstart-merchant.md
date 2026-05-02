@@ -18,8 +18,9 @@ This tutorial walks you through creating a paywalled API endpoint that accepts U
 ```bash
 mkdir my-merchant && cd my-merchant
 npm init -y
-npm install @pincerpay/merchant express
-npm install -D tsx typescript @types/express
+npm pkg set type=module
+npm install @pincerpay/merchant hono @hono/node-server
+npm install -D tsx typescript
 ```
 
 Create a `.env` file:
@@ -34,15 +35,17 @@ MERCHANT_ADDRESS=YourSolanaWalletAddress
 Create `server.ts`:
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 // Add PincerPay middleware — this intercepts requests and returns
 // 402 Payment Required for paywalled routes
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -56,26 +59,26 @@ app.use(
 );
 
 // Free endpoint — no paywall
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
+app.get("/api/health", (c) => c.json({ status: "ok" }));
 
 // Paywalled endpoint — middleware handles 402/settlement
-app.get("/api/weather", (_req, res) => {
-  res.json({
+app.get("/api/weather", (c) =>
+  c.json({
     temperature: 72,
     conditions: "sunny",
     location: "San Francisco",
     timestamp: new Date().toISOString(),
-  });
-});
+  })
+);
 
-app.listen(3001, () => {
-  console.log("Merchant running at http://localhost:3001");
+serve({ fetch: app.fetch, port: 3001 }, (info) => {
+  console.log(`Merchant running at http://localhost:${info.port}`);
   console.log("  GET /api/health   — free");
   console.log("  GET /api/weather  — 0.001 USDC (Solana Devnet)");
 });
 ```
+
+> **Multi-chain merchants:** swap the `merchantAddress` line for `merchantAddresses: { "solana-devnet": process.env.MERCHANT_ADDRESS_SOLANA!, "polygon-amoy": process.env.MERCHANT_ADDRESS_POLYGON! }` and list `chains: ["solana-devnet", "polygon-amoy"]` on each route. See [Merchant SDK → Multi-chain Receiving Wallets](/docs/merchant-sdk#multi-chain-receiving-wallets).
 
 ## Step 3: Run the server
 
@@ -189,38 +192,35 @@ Weather data: {
 
 The agent automatically detected the 402, signed a USDC transfer, submitted it to the facilitator, and retried the request with proof of payment.
 
-## Hono Variant
+## Next.js (App Router) Variant
 
-Prefer Hono over Express? The middleware API is nearly identical:
+Drop the same middleware into a catch-all App Router route:
 
 ```typescript
+// app/api/[...route]/route.ts
 import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import { pincerpayHono } from "@pincerpay/merchant";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = new Hono();
+const app = new Hono().basePath("/api");
 
 app.use(
   "*",
-  pincerpayHono({
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
+    syncFacilitatorOnStart: false, // avoids build-time network call during prerendering
     routes: {
-      "GET /api/weather": {
-        price: "0.001",
-        chain: "solana-devnet",
-        description: "Current weather data",
-      },
+      "GET /api/weather": { price: "0.001", chain: "solana-devnet", description: "Weather data" },
     },
   })
 );
 
-app.get("/api/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
+app.get("/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
 
-serve({ fetch: app.fetch, port: 3001 });
+export const GET = handle(app);
+export const POST = handle(app);
 ```
-
-Install `hono` and `@hono/node-server` instead of `express`.
 
 ## Troubleshooting
 

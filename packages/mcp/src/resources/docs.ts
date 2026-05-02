@@ -133,12 +133,33 @@ routes: {
 
 If neither \`chain\` nor \`chains\` is specified, defaults to \`"solana"\`.
 
+## Multi-Chain Receiving Wallets
+
+Solana and EVM addresses are categorically different formats. Use \`merchantAddresses\` to bind one wallet per chain:
+
+\`\`\`typescript
+createPincerPayMiddleware({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddresses: {
+    solana:  process.env.MERCHANT_ADDRESS_SOLANA!,
+    polygon: process.env.MERCHANT_ADDRESS_POLYGON!,
+    base:    process.env.MERCHANT_ADDRESS_BASE!,
+  },
+  routes: {
+    "POST /api/trade": { price: "0.05", chains: ["solana", "polygon", "base"] },
+  },
+});
+\`\`\`
+
+Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. **No cross-chain conversion happens.** Format validation is fail-fast at middleware init with chain-named errors.
+
 ## Configuration
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | apiKey | Yes | Your PincerPay API key (\`pp_live_...\` or \`pp_test_...\`) |
-| merchantAddress | Yes | Your USDC wallet address |
+| merchantAddress | If \`merchantAddresses\` not set | Single-chain receiving wallet (legacy / fallback) |
+| merchantAddresses | If \`merchantAddress\` not set | Per-chain wallets keyed by chain shorthand (\`solana\`, \`polygon\`, \`base\`, ...) |
 | facilitatorUrl | No | Custom facilitator URL (defaults to PincerPay hosted) |
 | routes | Yes | Map of route patterns to paywall configs |
 
