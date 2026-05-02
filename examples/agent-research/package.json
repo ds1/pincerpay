@@ -1,0 +1,20 @@
+{
+  "name": "example-agent-research",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/merchant-server.ts",
+    "start:agent": "tsx src/agent.ts",
+    "dev": "tsx watch src/merchant-server.ts"
+  },
+  "dependencies": {
+    "@pincerpay/agent": "workspace:*",
+    "@pincerpay/merchant": "workspace:*",
+    "hono": "^4"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "typescript": "^5.7"
+  }
+}
