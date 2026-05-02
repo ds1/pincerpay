@@ -52,6 +52,8 @@ Go to **Settings** and fill in:
 
 In **Settings**, scroll to API Keys and click **Generate Key**. Copy it — it's shown only once. The key format is `pp_live_xxxxxxxxxxxx...`.
 
+> **Skip the dashboard?** The [Merchant Onboarding](/docs/onboarding) guide covers the CLI and MCP paths that bundle wallet generation + merchant creation + API key into a single command.
+
 ### 4. Create a Paywall
 
 Go to **Paywalls** and click **New Paywall**:

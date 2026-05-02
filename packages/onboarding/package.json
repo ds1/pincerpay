@@ -1,0 +1,73 @@
+{
+  "name": "@pincerpay/onboarding",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Non-custodial merchant onboarding utilities for PincerPay. Generate wallets, create merchant records, provision API keys.",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://pincerpay.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ds1/pincerpay.git",
+    "directory": "packages/onboarding"
+  },
+  "bugs": {
+    "url": "https://github.com/ds1/pincerpay/issues"
+  },
+  "keywords": [
+    "pincerpay",
+    "onboarding",
+    "wallet-bootstrap",
+    "non-custodial",
+    "bip39",
+    "solana",
+    "evm",
+    "merchant"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./wallets": {
+      "types": "./dist/wallets.d.ts",
+      "import": "./dist/wallets.js"
+    },
+    "./merchant": {
+      "types": "./dist/merchant.d.ts",
+      "import": "./dist/merchant.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@pincerpay/core": "workspace:*",
+    "@pincerpay/db": "workspace:*",
+    "@scure/bip32": "^1.5.0",
+    "@scure/bip39": "^1.5.0",
+    "bs58": "^6.0.0",
+    "drizzle-orm": "^0.38",
+    "ed25519-hd-key": "^1.3.0",
+    "tweetnacl": "^1.0.3",
+    "viem": "^2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.11",
+    "typescript": "^5.7",
+    "vitest": "^4.0.18"
+  }
+}

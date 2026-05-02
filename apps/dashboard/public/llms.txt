@@ -16,6 +16,7 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ### Guides
 
+- [Merchant Onboarding](https://pincerpay.com/docs/onboarding): Generate wallets and provision a PincerPay merchant from the CLI or MCP — non-custodial, no dashboard click-through
 - [Quickstart: Merchant](https://pincerpay.com/docs/quickstart-merchant): Accept your first USDC payment from an AI agent in under 10 minutes
 - [Quickstart: Agent](https://pincerpay.com/docs/quickstart-agent): Give your AI agent a wallet and make its first autonomous payment
 
@@ -67,9 +68,10 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 - npm: @pincerpay/merchant (Express/Hono/Next.js middleware)
 - npm: @pincerpay/agent (fetch wrapper with auto-payment)
-- npm: @pincerpay/mcp (MCP server — 20 tools, 3 resources, 6 prompts, 5 doc topics)
+- npm: @pincerpay/mcp (MCP server — 24 tools, 3 resources, 6 prompts, 5 doc topics)
 - npm: @pincerpay/core (shared types, chain configs, constants)
 - npm: @pincerpay/solana (Solana integration — Kora gasless txns, Squads smart accounts)
+- npm: @pincerpay/onboarding (non-custodial wallet generation + merchant bootstrap helpers)
 - Facilitator API: https://facilitator.pincerpay.com
 - OpenAPI spec: https://facilitator.pincerpay.com/openapi.json
 - Supported chains: Solana (primary), Base, Polygon

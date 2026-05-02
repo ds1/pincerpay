@@ -16,6 +16,7 @@ pincerpay/
 │   ├── program/         # Anchor program client for on-chain settlement
 │   ├── agent/           # Agent SDK (fetch wrapper with auto x402 payment)
 │   ├── merchant/        # Merchant SDK (Express + Hono + Next.js middleware)
+│   ├── onboarding/      # Non-custodial wallet generation + merchant bootstrap helpers
 │   └── mcp/             # MCP server for AI agent tool integration
 ├── examples/
 │   ├── express-merchant/ # Express merchant demo
@@ -27,12 +28,13 @@ pincerpay/
 
 ```
 @pincerpay/core          (no internal deps)
-  ├── @pincerpay/db      (core)
-  ├── @pincerpay/solana  (core)
-  ├── @pincerpay/program (core)
-  ├── @pincerpay/agent   (core, solana)
-  ├── @pincerpay/merchant(core)
-  └── @pincerpay/mcp     (core)
+  ├── @pincerpay/db          (core)
+  ├── @pincerpay/solana      (core)
+  ├── @pincerpay/program     (core)
+  ├── @pincerpay/agent       (core, solana)
+  ├── @pincerpay/merchant    (core)
+  ├── @pincerpay/onboarding  (core, db)
+  └── @pincerpay/mcp         (core, onboarding)
 ```
 
 ## Quick Start
@@ -138,3 +140,8 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 - `packages/db/src/schema/` - Database table definitions
 - `packages/solana/src/squads/` - Squads smart account integration
 - `packages/solana/src/kora/` - Kora gasless transaction integration
+- `packages/onboarding/src/wallets.ts` - Non-custodial BIP-39 wallet generation (Phantom + MetaMask compatible)
+- `packages/onboarding/src/merchant.ts` - Merchant + API key creation helpers
+- `scripts/bootstrap-merchant.mts` - End-to-end CLI: wallet generation + merchant row + API key
+- `scripts/create-wallets.mts` - Wallet generation only (no DB)
+- `scripts/create-api-key.mts` - Mint a key for an existing merchant

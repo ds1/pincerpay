@@ -39,6 +39,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26",
     "@pincerpay/core": "workspace:*",
+    "@pincerpay/onboarding": "workspace:*",
     "zod": "^3.24"
   },
   "devDependencies": {

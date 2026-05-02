@@ -89,6 +89,89 @@ console.log(data); // { temp: 72, condition: "sunny" }
 
 ---
 
+## Merchant Onboarding
+
+Generate wallets and provision a PincerPay merchant from the CLI or MCP — non-custodial, no dashboard click-through.
+
+### Three paths
+
+- **Dashboard signup** at https://pincerpay.com/signup. GUI, single merchant, first-time exploration.
+- **CLI scripts** in the PincerPay repo. `pnpm bootstrap-merchant`, `pnpm create-wallets`, `pnpm create-api-key`. Best for server provisioning, multi-environment setup, CI.
+- **MCP tools** via `@pincerpay/mcp`. `bootstrap-wallets`, `bootstrap-merchant`, `create-api-key`, `list-merchants`. Best for LLM-driven onboarding inside Claude Code, Cursor, etc.
+
+All three paths use the same `@pincerpay/onboarding` library and produce identical output.
+
+### Non-custodial security model
+
+PincerPay never sees your mnemonic or private keys. Wallet generation runs entirely on the merchant's machine.
+
+- BIP-39 mnemonic generated locally with @scure/bip39 (audited)
+- Solana keys derived via ed25519-hd-key at the Phantom-standard path m/44'/501'/0'/0'
+- EVM keys derived via @scure/bip32 at the MetaMask-standard path m/44'/60'/0'/0/0
+- The merchant database persists only public addresses
+
+If you lose the mnemonic, any USDC sent to those addresses is unrecoverable.
+
+### CLI: end-to-end bootstrap
+
+```bash
+DATABASE_URL=postgresql://... pnpm bootstrap-merchant \
+  --name "My Merchant" \
+  --auth-user-id <supabase-auth-uuid> \
+  --label "Production"
+```
+
+Output ends with a paste-ready env block:
+
+```
+PINCERPAY_API_KEY=pp_live_...
+PINCERPAY_MERCHANT_ADDRESS_SOLANA=...
+PINCERPAY_MERCHANT_ADDRESS_POLYGON=0x...
+PINCERPAY_WEBHOOK_SECRET=...
+```
+
+Pipe into `vercel env add` (or your env manager).
+
+### MCP tools
+
+The MCP server exposes four onboarding tools:
+
+| Tool | Auth |
+|------|------|
+| `bootstrap-wallets` | None (pure crypto) |
+| `bootstrap-merchant` | DATABASE_URL on server |
+| `create-api-key` | DATABASE_URL on server |
+| `list-merchants` | DATABASE_URL on server |
+
+Public deployments of `@pincerpay/mcp` (running via `npx`) only expose `bootstrap-wallets`. The DB-backed tools return helpful errors directing users to dashboard signup. Self-hosted / admin deployments unlock the full set when `DATABASE_URL` is set.
+
+Example prompts:
+
+- "Generate a non-custodial wallet set with a 12-word mnemonic"
+- "Bootstrap a new PincerPay merchant for me"
+
+### Library API
+
+```typescript
+import { generateMerchantWallets, bootstrapMerchant } from "@pincerpay/onboarding";
+
+const wallets = await generateMerchantWallets();
+// wallets.mnemonic, wallets.solana.{address,privateKey}, wallets.evm.{address,privateKey}
+
+const result = await bootstrapMerchant({
+  databaseUrl: process.env.DATABASE_URL!,
+  name: "My Merchant",
+  authUserId: "<uuid>",
+  wallets,
+  walletAddresses: { solana: wallets.solana.address, evm: wallets.evm.address },
+  supportedChains: ["solana", "polygon"],
+  apiKeyLabel: "Production",
+});
+// result.merchantId, result.apiKey.rawKey, result.webhookSecret
+```
+
+---
+
 ## Quickstart: Merchant
 
 Accept your first USDC payment from an AI agent in under 10 minutes.
@@ -96,7 +179,7 @@ Accept your first USDC payment from an AI agent in under 10 minutes.
 ### Prerequisites
 
 - Node.js 22+
-- A Solana wallet with a devnet address
+- A Solana wallet with a devnet address (or run `pnpm create-wallets` from the PincerPay repo to generate one)
 - A PincerPay account with an API key (https://pincerpay.com/signup)
 
 ### Step 1: Create the project

@@ -79,9 +79,9 @@ Run as a standalone HTTP server for remote or shared environments:
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-## Tools (20)
+## Tools (24)
 
-The MCP server exposes 20 tools covering the full developer lifecycle: setup, configure, deploy, monitor, and debug.
+The MCP server exposes 24 tools covering the full developer lifecycle: onboarding, setup, configure, deploy, monitor, and debug.
 
 ### Monitoring & Discovery
 
@@ -138,6 +138,17 @@ The MCP server exposes 20 tools covering the full developer lifecycle: setup, co
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies | No |
 | `generate-ucp-manifest` | Create commerce discovery manifest | No |
 
+### Onboarding
+
+| Tool | Description | Auth |
+|------|-------------|:---:|
+| `bootstrap-wallets` | Generate non-custodial Solana + EVM wallets from one BIP-39 mnemonic | No |
+| `bootstrap-merchant` | End-to-end: generate wallets, create merchant row, mint API key | DB |
+| `create-api-key` | Mint a new API key for an existing merchant | DB |
+| `list-merchants` | List all merchants in the database | DB |
+
+The "DB" auth tier requires the MCP server to run with a `DATABASE_URL` environment variable set — these tools write to (or read from) the PincerPay database directly. Public deployments of `@pincerpay/mcp` (via `npx`) only expose `bootstrap-wallets`; the other three return a clear error directing users to dashboard signup. Self-hosted / admin deployments can unlock all four. See [Merchant Onboarding](/docs/onboarding) for the full workflow.
+
 ## Resources
 
 | Resource | URI | Description |
@@ -175,6 +186,8 @@ Interactive prompts guide your assistant through common workflows:
 
 After connecting, paste any of these into your AI assistant:
 
+- "Bootstrap a new PincerPay merchant for me — generate wallets and an API key"
+- "Generate a non-custodial wallet set with a 12-word mnemonic"
 - "Set up PincerPay merchant middleware for my Express app"
 - "Scaffold an agent client with a $5/day spending limit on Solana"
 - "What chains does PincerPay support? Show me gas costs for each"

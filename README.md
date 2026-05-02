@@ -24,6 +24,8 @@ PincerPay is a non-custodial x402 facilitator. When an AI agent hits a merchant 
 | [`packages/db`](packages/db/) | Drizzle ORM schema + migrations | [README](packages/db/README.md) |
 | [`packages/program`](packages/program/) | Anchor program client for Solana | [README](packages/program/README.md) |
 | [`packages/solana`](packages/solana/) | Kora gasless txns + Squads smart accounts | [README](packages/solana/README.md) |
+| [`packages/onboarding`](packages/onboarding/) | Non-custodial wallet generation + merchant bootstrap | [README](packages/onboarding/README.md) |
+| [`packages/mcp`](packages/mcp/) | MCP server for AI assistants (24 tools) | [README](packages/mcp/README.md) |
 | `examples/` | Example merchant and agent apps | |
 
 ## Quick Start
@@ -66,6 +68,25 @@ pnpm db:generate
 # Push schema to database
 pnpm db:push
 ```
+
+### Onboarding scripts
+
+Provision a merchant from the command line — no dashboard click-through.
+
+```bash
+# Generate non-custodial wallets only (no DB)
+pnpm create-wallets
+
+# End-to-end: generate wallets, create merchant, mint API key
+DATABASE_URL=postgresql://... pnpm bootstrap-merchant \
+  --name "My Merchant" --auth-user-id <supabase-uuid>
+
+# Mint a key for an existing merchant
+DATABASE_URL=postgresql://... pnpm create-api-key list
+DATABASE_URL=postgresql://... pnpm create-api-key create --merchant <id|name> --label "Production"
+```
+
+The same flows are exposed as MCP tools (`bootstrap-wallets`, `bootstrap-merchant`, `create-api-key`, `list-merchants`) in `@pincerpay/mcp`. See [Merchant Onboarding](https://pincerpay.com/docs/onboarding).
 
 ## Merchant SDK
 

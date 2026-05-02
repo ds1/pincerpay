@@ -32,6 +32,7 @@ export function createPincerPayMcpServer(config: PincerPayMcpConfig = {}) {
         "pure stablecoin settlement via the x402 protocol (HTTP 402). Solana is the primary " +
         "chain; Base and Polygon are optional EVM alternatives.\n\n" +
         "ROLE ROUTING: When a user wants to integrate PincerPay, first determine their role:\n" +
+        "- New merchant (no account yet): use bootstrap-wallets → bootstrap-merchant for the full non-custodial onboarding in one shot, OR direct them to https://pincerpay.com/signup if they prefer the dashboard.\n" +
         "- Merchant (accept payments): use the `integrate-merchant` prompt → scaffold-x402-middleware → validate-payment-config → generate-ucp-manifest\n" +
         "- Agent developer (make payments): use the `integrate-agent` prompt → scaffold-agent-client → estimate-gas-cost\n" +
         "- Unclear: use the `get-started` prompt to triage\n" +
@@ -41,6 +42,9 @@ export function createPincerPayMcpServer(config: PincerPayMcpConfig = {}) {
         "MERCHANT INTEGRATION: Next.js + Hono adapter. Lightweight middleware — " +
         "zero @x402/*/viem/@solana/kit imports, settlement via fetch() to facilitator.\n" +
         "Install: `npm install @pincerpay/merchant hono`\n\n" +
+        "ONBOARDING TOOLS:\n" +
+        "- bootstrap-wallets: pure client-side BIP-39 wallet generation (Solana + EVM). Always available. Phantom and MetaMask compatible.\n" +
+        "- bootstrap-merchant / create-api-key / list-merchants: write to (or read from) the PincerPay database. Available only when DATABASE_URL is set on the MCP server (admin / self-hosted context). In public deployments, return a clear error directing users to https://pincerpay.com/signup.\n\n" +
         "OPERATIONAL TOOLS (require API key):\n" +
         "- Paywall CRUD: list-paywalls, create-paywall, update-paywall, delete-paywall\n" +
         "- Transactions: list-transactions, check-transaction-status, verify-payment\n" +
@@ -51,7 +55,7 @@ export function createPincerPayMcpServer(config: PincerPayMcpConfig = {}) {
         "KEY GOTCHAS to always warn about:\n" +
         "1. Route `price` uses human-readable USDC (\"0.01\"), but spending `policies` use base units with 6 decimals (\"10000\" = $0.01). Using \"0.10\" in a policy causes BigInt() to throw.\n" +
         "2. ESM required: \"type\": \"module\" in package.json — SDKs are ESM-only.\n" +
-        "3. Security: .gitignore must include .env* — never commit API keys or private keys.\n" +
+        "3. Security: .gitignore must include .env* — never commit API keys or private keys. The mnemonic and private keys returned by bootstrap-wallets/bootstrap-merchant are returned ONCE and PincerPay never persists them — display + discard.\n" +
         "4. Use devnet chains for testing (solana-devnet, base-sepolia).\n\n" +
         "Docs resources: docs://pincerpay/getting-started, docs://pincerpay/merchant, " +
         "docs://pincerpay/agent, docs://pincerpay/troubleshooting, docs://pincerpay/reference.",

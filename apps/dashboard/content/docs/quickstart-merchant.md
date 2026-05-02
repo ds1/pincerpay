@@ -13,6 +13,8 @@ This tutorial walks you through creating a paywalled API endpoint that accepts U
 - **A Solana wallet** with a devnet address (Phantom, Solflare, or `solana-keygen`)
 - **A PincerPay account** with an API key ([sign up](https://pincerpay.com/signup))
 
+> **Don't have a wallet yet?** Run `pnpm create-wallets` from the [PincerPay repo](https://github.com/ds1/pincerpay) to generate Phantom + MetaMask compatible keys non-custodially. Or run `pnpm bootstrap-merchant` to do wallet generation + account creation + API key in one command. See [Merchant Onboarding](/docs/onboarding).
+
 ## Step 1: Create the project
 
 ```bash

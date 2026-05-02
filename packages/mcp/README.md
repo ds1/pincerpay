@@ -77,7 +77,7 @@ Add via the Cascade MCP panel or `mcp.json`:
 npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 ```
 
-## Tools (20)
+## Tools (24)
 
 ### Monitoring & Discovery
 
@@ -133,6 +133,17 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 | `scaffold-x402-middleware` | Generate Express/Hono/Next.js middleware | No |
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies | No |
 | `generate-ucp-manifest` | Create commerce discovery manifest | No |
+
+### Onboarding
+
+| Tool | Description | Auth Required |
+|------|-------------|:---:|
+| `bootstrap-wallets` | Generate non-custodial Solana + EVM wallets from one BIP-39 mnemonic. Phantom + MetaMask compatible. | No |
+| `bootstrap-merchant` | End-to-end: generate wallets, insert merchant row, mint API key. | DATABASE_URL |
+| `create-api-key` | Mint a new API key for an existing merchant. | DATABASE_URL |
+| `list-merchants` | List all merchants in the database. | DATABASE_URL |
+
+`bootstrap-wallets` is pure client-side crypto and works in any deployment. The other three tools write to (or read from) the PincerPay database directly — they're available only when the MCP server runs with `DATABASE_URL` set in its environment. Public deployments via `npx -y @pincerpay/mcp` only expose `bootstrap-wallets`; the rest return a clear error directing users to dashboard signup. Self-hosted / admin deployments unlock all four. See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) for the full workflow.
 
 ## Resources
 

@@ -17,6 +17,9 @@
     "deploy:agent-demo": "source apps/agent-demo/.vercel/env.sh && vercel --prod",
     "deploy:facilitator": "railway up",
     "screenshots": "tsx scripts/screenshots.ts",
+    "create-api-key": "tsx scripts/create-api-key.mts",
+    "create-wallets": "tsx scripts/create-wallets.mts",
+    "bootstrap-merchant": "tsx scripts/bootstrap-merchant.mts",
     "changeset": "changeset",
     "version-packages": "changeset version && node scripts/sync-plugin-version.mjs",
     "release": "pnpm build && pnpm test && changeset publish"
@@ -33,7 +36,13 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
+    "@pincerpay/core": "workspace:*",
+    "@pincerpay/db": "workspace:*",
+    "@pincerpay/onboarding": "workspace:*",
     "@playwright/test": "^1.50",
+    "drizzle-orm": "^0.38",
+    "postgres": "^3.4",
+    "tsx": "^4",
     "turbo": "^2",
     "typescript": "^5.7",
     "vitest": "^4.0.18"

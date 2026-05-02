@@ -20,6 +20,9 @@ import { registerUpdateAgent } from "./update-agent.js";
 import { registerListWebhooks } from "./list-webhooks.js";
 import { registerRetryWebhook } from "./retry-webhook.js";
 import { registerGetMerchantProfile } from "./get-merchant-profile.js";
+import { registerBootstrapWallets } from "./bootstrap-wallets.js";
+import { registerBootstrapMerchant } from "./bootstrap-merchant.js";
+import { registerCreateApiKey, registerListMerchants } from "./create-api-key.js";
 
 export function registerTools(server: McpServer, client: FacilitatorClient) {
   // Monitoring tools (no auth)
@@ -57,4 +60,13 @@ export function registerTools(server: McpServer, client: FacilitatorClient) {
   registerScaffoldMiddleware(server);
   registerScaffoldAgent(server);
   registerGenerateUcp(server);
+
+  // Onboarding tools
+  // bootstrap-wallets: pure client-side crypto, no auth required
+  // bootstrap-merchant / create-api-key / list-merchants: require DATABASE_URL
+  // env var on the MCP server (admin / self-hosted context)
+  registerBootstrapWallets(server);
+  registerBootstrapMerchant(server);
+  registerCreateApiKey(server);
+  registerListMerchants(server);
 }
