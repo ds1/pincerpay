@@ -23,7 +23,7 @@
     "@supabase/supabase-js": "^2",
     "drizzle-orm": "^0.45.2",
     "gray-matter": "^4.0.3",
-    "next": "^15.5.15",
+    "next": "^16.2.4",
     "postgres": "^3.4",
     "react": "^19",
     "react-dom": "^19",
