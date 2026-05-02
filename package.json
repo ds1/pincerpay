@@ -28,9 +28,22 @@
     "overrides": {
       "bn.js@>=5 <5.2.3": "5.2.3",
       "minimatch@<10.2.3": "10.2.3",
-      "hono@<4.12.4": "4.12.4",
+      "hono@<4.12.14": "4.12.14",
       "rollup@>=4 <4.59.0": "4.59.0",
-      "express-rate-limit@>=8.2.0 <8.2.2": "8.2.2"
+      "express-rate-limit@>=8.2.0 <8.2.2": "8.2.2",
+      "undici@<6.24.0": "6.24.0",
+      "axios@<1.15.0": "1.15.0",
+      "protobufjs@<7.5.5": "7.5.5",
+      "vite@<7.3.2": "7.3.2",
+      "path-to-regexp@<8.4.0": "8.4.0",
+      "picomatch@<4.0.4": "4.0.4",
+      "h3@<1.15.9": "1.15.9",
+      "socket.io-parser@<4.2.6": "4.2.6",
+      "defu@<6.1.5": "6.1.5",
+      "brace-expansion@<5.0.5": "5.0.5",
+      "postcss@<8.5.10": "8.5.10",
+      "follow-redirects@<1.16.0": "1.16.0",
+      "@hono/node-server@<1.19.13": "1.19.13"
     }
   },
   "devDependencies": {
@@ -40,7 +53,7 @@
     "@pincerpay/db": "workspace:*",
     "@pincerpay/onboarding": "workspace:*",
     "@playwright/test": "^1.50",
-    "drizzle-orm": "^0.38",
+    "drizzle-orm": "^0.45.2",
     "postgres": "^3.4",
     "tsx": "^4",
     "turbo": "^2",
