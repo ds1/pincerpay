@@ -267,6 +267,7 @@ export function startWebhookRetryWorker(
       }
 
       status.consecutiveErrors = 0;
+      status.lastError = null;
       status.cycleCount++;
       status.lastCycleAt = new Date().toISOString();
     } catch (err) {

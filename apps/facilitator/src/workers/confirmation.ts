@@ -265,6 +265,7 @@ export function startConfirmationWorker(
         currentInterval = Math.min(currentInterval * 2, maxIntervalMs);
         scheduleNext();
         status.consecutiveErrors = 0;
+        status.lastError = null;
         status.cycleCount++;
         status.lastCycleAt = new Date().toISOString();
         running = false;
@@ -318,6 +319,7 @@ export function startConfirmationWorker(
       }
 
       status.consecutiveErrors = 0;
+      status.lastError = null;
       status.cycleCount++;
       status.lastCycleAt = new Date().toISOString();
     } catch (err) {

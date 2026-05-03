@@ -86,6 +86,7 @@ export function startOnChainRecorderWorker(
         // No work — back off
         currentInterval = Math.min(currentInterval * 2, maxIntervalMs);
         status.consecutiveErrors = 0;
+        status.lastError = null;
         status.cycleCount++;
         status.lastCycleAt = new Date().toISOString();
         running = false;
@@ -163,6 +164,7 @@ export function startOnChainRecorderWorker(
         }
       }
       status.consecutiveErrors = 0;
+      status.lastError = null;
       status.cycleCount++;
       status.lastCycleAt = new Date().toISOString();
     } catch (err) {
