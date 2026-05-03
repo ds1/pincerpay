@@ -156,6 +156,7 @@ function createMockDb(): { db: Database; inserts: CapturedInsert[] } {
                   prefix: TEST_API_KEY.slice(0, 12),
                   label: "Test",
                   isActive: true,
+                  environment: "live",
                   createdAt: new Date(),
                   lastUsedAt: null,
                 },

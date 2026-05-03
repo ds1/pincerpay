@@ -3,7 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { merchants, apiKeys } from "@pincerpay/db";
+import { merchants, apiKeys, type Environment } from "@pincerpay/db";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
@@ -17,7 +17,8 @@ export async function saveMerchantProfile(formData: FormData) {
   const name = formData.get("name") as string;
   const walletAddress = formData.get("walletAddress") as string;
   const chains = formData.getAll("chains") as string[];
-  const webhookUrl = (formData.get("webhookUrl") as string) || null;
+  const webhookUrlLive = (formData.get("webhookUrlLive") as string) || null;
+  const webhookUrlTest = (formData.get("webhookUrlTest") as string) || null;
 
   // Validate wallet address (EVM or Solana)
   if (walletAddress) {
@@ -42,19 +43,24 @@ export async function saveMerchantProfile(formData: FormData) {
         name,
         walletAddress,
         supportedChains: chains,
-        webhookUrl,
+        webhookUrlLive,
+        webhookUrlTest,
         updatedAt: new Date(),
       })
       .where(eq(merchants.id, existing.id));
   } else {
-    // Generate webhook signing secret on merchant creation
-    const webhookSecret = randomBytes(32).toString("hex");
+    // Generate webhook signing secret on merchant creation. Test secret is
+    // minted only when a test URL is configured.
+    const webhookSecretLive = randomBytes(32).toString("hex");
+    const webhookSecretTest = webhookUrlTest ? randomBytes(32).toString("hex") : null;
     await db.insert(merchants).values({
       name,
       walletAddress,
       supportedChains: chains,
-      webhookUrl,
-      webhookSecret,
+      webhookUrlLive,
+      webhookSecretLive,
+      webhookUrlTest,
+      webhookSecretTest,
       authUserId: user.id,
     });
   }
@@ -64,7 +70,7 @@ export async function saveMerchantProfile(formData: FormData) {
   return { success: true };
 }
 
-export async function createApiKey(label: string) {
+export async function createApiKey(label: string, environment: Environment = "live") {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
@@ -78,8 +84,8 @@ export async function createApiKey(label: string) {
 
   if (!merchant) return { success: false, error: "No merchant profile" };
 
-  // Generate API key: pp_live_ + 32 random hex chars
-  const rawKey = `pp_live_${randomBytes(32).toString("hex")}`;
+  const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
+  const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
   const keyHash = createHash("sha256").update(rawKey).digest("hex");
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
 
@@ -88,13 +94,14 @@ export async function createApiKey(label: string) {
     keyHash,
     prefix,
     label,
+    environment,
   });
 
   revalidatePath("/dashboard/settings");
   return { success: true, key: rawKey };
 }
 
-export async function regenerateWebhookSecret() {
+export async function regenerateWebhookSecret(environment: Environment = "live") {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
@@ -109,9 +116,12 @@ export async function regenerateWebhookSecret() {
   if (!merchant) return { success: false, error: "No merchant profile" };
 
   const webhookSecret = randomBytes(32).toString("hex");
+  const setPatch = environment === "test"
+    ? { webhookSecretTest: webhookSecret, updatedAt: new Date() }
+    : { webhookSecretLive: webhookSecret, updatedAt: new Date() };
   await db
     .update(merchants)
-    .set({ webhookSecret, updatedAt: new Date() })
+    .set(setPatch)
     .where(eq(merchants.id, merchant.id));
 
   revalidatePath("/dashboard/settings");

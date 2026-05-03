@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { merchants, webhookDeliveries } from "@pincerpay/db";
-import { eq, desc, count } from "drizzle-orm";
+import { getEnvFromRequest } from "@/lib/env";
+import { merchants, webhookDeliveries, type Environment } from "@pincerpay/db";
+import { eq, and, desc, count } from "drizzle-orm";
 import Link from "next/link";
 import { RetryButton } from "./retry-button";
 
@@ -10,30 +11,40 @@ export const dynamic = "force-dynamic";
 async function getMerchant(authUserId: string) {
   const db = getDb();
   const [merchant] = await db
-    .select({ id: merchants.id, webhookUrl: merchants.webhookUrl })
+    .select({
+      id: merchants.id,
+      webhookUrlLive: merchants.webhookUrlLive,
+      webhookUrlTest: merchants.webhookUrlTest,
+    })
     .from(merchants)
     .where(eq(merchants.authUserId, authUserId))
     .limit(1);
   return merchant ?? null;
 }
 
-async function getDeliveries(merchantId: string, offset: number, limit: number) {
+async function getDeliveries(merchantId: string, environment: Environment, offset: number, limit: number) {
   const db = getDb();
   return db
     .select()
     .from(webhookDeliveries)
-    .where(eq(webhookDeliveries.merchantId, merchantId))
+    .where(and(
+      eq(webhookDeliveries.merchantId, merchantId),
+      eq(webhookDeliveries.environment, environment),
+    ))
     .orderBy(desc(webhookDeliveries.createdAt))
     .offset(offset)
     .limit(limit);
 }
 
-async function getDeliveryStats(merchantId: string) {
+async function getDeliveryStats(merchantId: string, environment: Environment) {
   const db = getDb();
   const rows = await db
     .select({ status: webhookDeliveries.status, total: count() })
     .from(webhookDeliveries)
-    .where(eq(webhookDeliveries.merchantId, merchantId))
+    .where(and(
+      eq(webhookDeliveries.merchantId, merchantId),
+      eq(webhookDeliveries.environment, environment),
+    ))
     .groupBy(webhookDeliveries.status);
 
   const results: Record<string, number> = {};
@@ -56,12 +67,13 @@ function statusColor(status: string) {
 export default async function WebhooksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; env?: string }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const limit = 25;
   const offset = (page - 1) * limit;
+  const environment = await getEnvFromRequest(params);
 
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -72,8 +84,8 @@ export default async function WebhooksPage({
   }
 
   const [deliveries, stats] = await Promise.all([
-    getDeliveries(merchant.id, offset, limit),
-    getDeliveryStats(merchant.id),
+    getDeliveries(merchant.id, environment, offset, limit),
+    getDeliveryStats(merchant.id, environment),
   ]);
 
   const totalDeliveries = Object.values(stats).reduce((a, b) => a + b, 0);
@@ -91,19 +103,34 @@ export default async function WebhooksPage({
         </Link>
       </div>
 
-      {/* Current webhook URL */}
-      <div className="mb-6 p-4 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-        <div className="text-sm text-[var(--muted-foreground)] mb-1">Webhook URL</div>
-        {merchant.webhookUrl ? (
-          <code className="text-sm font-mono">{merchant.webhookUrl}</code>
-        ) : (
-          <span className="text-sm text-[var(--muted-foreground)]">
-            Not configured.{" "}
-            <Link href="/dashboard/settings" className="text-[var(--primary)] hover:underline">
-              Set one in Settings
-            </Link>
-          </span>
-        )}
+      {/* Current webhook URLs */}
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="p-4 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+          <div className="text-xs uppercase tracking-wider text-[var(--muted-foreground)] mb-1">Live URL</div>
+          {merchant.webhookUrlLive ? (
+            <code className="text-sm font-mono break-all">{merchant.webhookUrlLive}</code>
+          ) : (
+            <span className="text-sm text-[var(--muted-foreground)]">
+              Not configured.{" "}
+              <Link href="/dashboard/settings" className="text-[var(--primary)] hover:underline">
+                Set in Settings
+              </Link>
+            </span>
+          )}
+        </div>
+        <div className="p-4 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+          <div className="text-xs uppercase tracking-wider text-[var(--muted-foreground)] mb-1">Test URL</div>
+          {merchant.webhookUrlTest ? (
+            <code className="text-sm font-mono break-all">{merchant.webhookUrlTest}</code>
+          ) : (
+            <span className="text-sm text-[var(--muted-foreground)]">
+              Not configured.{" "}
+              <Link href="/dashboard/settings" className="text-[var(--primary)] hover:underline">
+                Set in Settings
+              </Link>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -118,7 +145,7 @@ export default async function WebhooksPage({
 
       {/* Delivery history */}
       {deliveries.length === 0 ? (
-        <p className="text-[var(--muted-foreground)]">No webhook deliveries yet.</p>
+        <p className="text-[var(--muted-foreground)]">No {environment} webhook deliveries yet.</p>
       ) : (
         <>
           <div className="overflow-x-auto">

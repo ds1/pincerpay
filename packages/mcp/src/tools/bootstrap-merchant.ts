@@ -18,7 +18,8 @@ const inputSchema = {
     .string()
     .optional()
     .describe("Optional existing BIP-39 mnemonic. If omitted, a fresh 12-word mnemonic is generated."),
-  webhookUrl: z.string().url().optional().describe("Webhook delivery URL."),
+  webhookUrlLive: z.string().url().optional().describe("Live-mode webhook delivery URL."),
+  webhookUrlTest: z.string().url().optional().describe("Test-mode webhook delivery URL."),
   apiKeyLabel: z.string().default("Bootstrap").describe("Label for the API key."),
   supportedChains: z
     .array(z.string())
@@ -68,7 +69,8 @@ export function registerBootstrapMerchant(server: McpServer) {
             wallets,
             walletAddresses: { solana: wallets.solana.address, evm: wallets.evm.address },
             supportedChains: args.supportedChains,
-            webhookUrl: args.webhookUrl,
+            webhookUrlLive: args.webhookUrlLive,
+            webhookUrlTest: args.webhookUrlTest,
             apiKeyLabel: args.apiKeyLabel,
           });
 
@@ -110,7 +112,8 @@ export function registerBootstrapMerchant(server: McpServer) {
             evm: wallets.evm.address,
           },
           supportedChains: args.supportedChains,
-          webhookUrl: args.webhookUrl,
+          webhookUrlLive: args.webhookUrlLive,
+          webhookUrlTest: args.webhookUrlTest,
         });
 
         const apiKey = await client.request<{

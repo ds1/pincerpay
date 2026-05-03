@@ -120,13 +120,15 @@ program
 const apiKeys = program.command("api-keys").description("Manage merchant API keys.");
 apiKeys
   .command("create")
-  .description("Mint a new API key.")
+  .description("Mint a new API key. Use --test to mint a pp_test_* key restricted to testnet chains.")
   .option("--label <label>", "Label for the key", "default")
-  .action(async (opts) => { await runCreateApiKey(opts.label); });
+  .option("--test", "Mint a test-mode key (pp_test_*) instead of a live key")
+  .action(async (opts) => { await runCreateApiKey(opts.label, { isTest: !!opts.test }); });
 apiKeys
   .command("list")
   .description("List all API keys for the current merchant.")
-  .action(async () => { await runListApiKeys(); });
+  .option("--env <env>", "Filter by environment: live | test")
+  .action(async (opts) => { await runListApiKeys({ env: opts.env }); });
 apiKeys
   .command("rotate <id>")
   .description("Atomically mint a new key and revoke the old one.")

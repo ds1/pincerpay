@@ -1,6 +1,7 @@
 import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { transactions } from "./transactions.js";
 import { merchants } from "./merchants.js";
+import { environmentEnum } from "./enums.js";
 
 export const webhookDeliveries = pgTable(
   "webhook_deliveries",
@@ -11,6 +12,8 @@ export const webhookDeliveries = pgTable(
       .references(() => merchants.id, { onDelete: "cascade" }),
     transactionId: uuid("transaction_id")
       .references(() => transactions.id, { onDelete: "set null" }),
+    /** Live or test. Inherited from the originating transaction; retry worker filters per env. */
+    environment: environmentEnum("environment").notNull().default("live"),
     /** The event type (e.g., "payment.settled", "payment.confirmed", "payment.failed") */
     event: text("event").notNull(),
     /** The webhook URL that was called */
@@ -38,5 +41,11 @@ export const webhookDeliveries = pgTable(
     index("webhook_deliveries_transaction_id_idx").on(table.transactionId),
     index("webhook_deliveries_status_idx").on(table.status),
     index("webhook_deliveries_next_retry_idx").on(table.status, table.nextRetryAt),
+    index("webhook_deliveries_merchant_env_status_retry_idx").on(
+      table.merchantId,
+      table.environment,
+      table.status,
+      table.nextRetryAt,
+    ),
   ],
 );

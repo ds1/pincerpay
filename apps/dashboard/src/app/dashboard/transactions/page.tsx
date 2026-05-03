@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { merchants, transactions } from "@pincerpay/db";
-import { eq, desc, count } from "drizzle-orm";
+import { getEnvFromRequest } from "@/lib/env";
+import { merchants, transactions, type Environment } from "@pincerpay/db";
+import { eq, and, desc, count } from "drizzle-orm";
 import Link from "next/link";
 import { CHAINS_BY_CAIP2 } from "@pincerpay/core/chains";
 
@@ -15,23 +16,23 @@ async function getMerchantId(authUserId: string): Promise<string | null> {
   return merchant?.id ?? null;
 }
 
-async function getTransactions(merchantId: string, offset: number, limit: number) {
+async function getTransactions(merchantId: string, environment: Environment, offset: number, limit: number) {
   const db = getDb();
   return db
     .select()
     .from(transactions)
-    .where(eq(transactions.merchantId, merchantId))
+    .where(and(eq(transactions.merchantId, merchantId), eq(transactions.environment, environment)))
     .orderBy(desc(transactions.createdAt))
     .offset(offset)
     .limit(limit);
 }
 
-async function getTransactionCount(merchantId: string): Promise<number> {
+async function getTransactionCount(merchantId: string, environment: Environment): Promise<number> {
   const db = getDb();
   const [result] = await db
     .select({ total: count() })
     .from(transactions)
-    .where(eq(transactions.merchantId, merchantId));
+    .where(and(eq(transactions.merchantId, merchantId), eq(transactions.environment, environment)));
   return result?.total ?? 0;
 }
 
@@ -53,12 +54,13 @@ function statusBadge(status: string) {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; limit?: string }>;
+  searchParams: Promise<{ page?: string; limit?: string; env?: string }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const limit = Math.min(100, Math.max(10, parseInt(params.limit ?? "50", 10)));
   const offset = (page - 1) * limit;
+  const environment = await getEnvFromRequest(params);
 
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -69,8 +71,8 @@ export default async function TransactionsPage({
   }
 
   const [txns, total] = await Promise.all([
-    getTransactions(merchantId, offset, limit),
-    getTransactionCount(merchantId),
+    getTransactions(merchantId, environment, offset, limit),
+    getTransactionCount(merchantId, environment),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -101,7 +103,7 @@ export default async function TransactionsPage({
       </div>
 
       {txns.length === 0 ? (
-        <p className="text-[var(--muted-foreground)]">No transactions yet.</p>
+        <p className="text-[var(--muted-foreground)]">No {environment} transactions yet.</p>
       ) : (
         <>
           <div className="overflow-x-auto">

@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import type { x402Facilitator } from "@x402/core/facilitator";
 import type { Address } from "@solana/kit";
 import { createSolanaRpc } from "@solana/kit";
+import { resolveChain } from "@pincerpay/core";
 import type { Database } from "@pincerpay/db";
 import { transactions, agents } from "@pincerpay/db";
 import { deriveSmartAccountPda, deriveSettingsPda, deriveSpendingLimitPda } from "@pincerpay/solana/squads";
@@ -48,6 +49,26 @@ export function createSettleRoute(
       // Use the original body for x402 (preserves full types), Zod just validates structure
       const { paymentPayload, paymentRequirements } = body;
 
+      // Test keys cannot operate on mainnet chains. Reject before reaching x402.
+      const environment = c.get("environment");
+      if (environment === "test") {
+        const chain = resolveChain(String(paymentRequirements.network));
+        if (chain && !chain.testnet) {
+          logger.warn({
+            msg: "settle_rejected_test_key_mainnet",
+            requestId,
+            network: paymentRequirements.network,
+          });
+          return c.json(
+            {
+              error: "test_key_chain_forbidden",
+              message: `Test API keys cannot settle on ${chain.shorthand}. Use a testnet chain (e.g. solana-devnet) or a live key.`,
+            },
+            403,
+          );
+        }
+      }
+
       logger.info({
         msg: "settle_request",
         requestId,
@@ -55,6 +76,7 @@ export function createSettleRoute(
         scheme: paymentRequirements.scheme,
         amount: paymentRequirements.amount,
         payTo: paymentRequirements.payTo,
+        environment,
       });
 
       const settleStart = performance.now();
@@ -120,10 +142,13 @@ export function createSettleRoute(
               .catch(() => null)
           : Promise.resolve(null);
 
+        const apiKeyId = c.get("apiKeyId");
         agentUpsert.then((agentId) => {
           return db.insert(transactions)
             .values({
               merchantId,
+              apiKeyId,
+              environment,
               chainId: result.network,
               txHash: result.transaction,
               fromAddress,
@@ -148,6 +173,7 @@ export function createSettleRoute(
             if (webhookUrl) {
               dispatchWebhook(db, {
                 merchantId,
+                environment,
                 transactionId: undefined, // transaction ID not returned by insert
                 webhookUrl,
                 webhookSecret: c.get("webhookSecret"),

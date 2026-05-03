@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { eq, and, lte } from "drizzle-orm";
-import type { Database } from "@pincerpay/db";
+import type { Database, Environment } from "@pincerpay/db";
 import { webhookDeliveries, merchants } from "@pincerpay/db";
 import type { Logger } from "../middleware/logging.js";
 import type { WorkerStatus } from "../workers/confirmation.js";
@@ -43,6 +43,8 @@ export async function dispatchWebhook(
   db: Database,
   opts: {
     merchantId: string;
+    /** Environment of the originating transaction (live or test). Stored on the delivery row. */
+    environment: Environment;
     transactionId?: string;
     webhookUrl: string;
     payload: WebhookPayload;
@@ -50,7 +52,7 @@ export async function dispatchWebhook(
     logger: Logger;
   },
 ): Promise<void> {
-  const { merchantId, transactionId, webhookUrl, payload, webhookSecret, logger } = opts;
+  const { merchantId, environment, transactionId, webhookUrl, payload, webhookSecret, logger } = opts;
   const payloadJson = JSON.stringify(payload);
 
   // Insert delivery record
@@ -58,6 +60,7 @@ export async function dispatchWebhook(
     .insert(webhookDeliveries)
     .values({
       merchantId,
+      environment,
       transactionId,
       event: payload.event,
       url: webhookUrl,
@@ -241,13 +244,14 @@ export function startWebhookRetryWorker(
         // Work found — reset to base interval
         currentInterval = pollIntervalMs;
 
-        // Cache merchant webhook secrets for this batch
+        // Cache merchant webhook secrets per (merchant, environment).
         const secretCache = new Map<string, string | null>();
 
         for (const delivery of pending) {
-          if (!secretCache.has(delivery.merchantId)) {
-            const config = await getWebhookConfig(db, delivery.merchantId);
-            secretCache.set(delivery.merchantId, config?.webhookSecret ?? null);
+          const cacheKey = `${delivery.merchantId}::${delivery.environment}`;
+          if (!secretCache.has(cacheKey)) {
+            const config = await getWebhookConfig(db, delivery.merchantId, delivery.environment);
+            secretCache.set(cacheKey, config?.webhookSecret ?? null);
           }
 
           await attemptDelivery(
@@ -257,7 +261,7 @@ export function startWebhookRetryWorker(
             delivery.payload,
             delivery.attempts,
             logger,
-            secretCache.get(delivery.merchantId) ?? undefined,
+            secretCache.get(cacheKey) ?? undefined,
           );
         }
       }
@@ -330,23 +334,43 @@ export interface WebhookConfig {
 }
 
 /**
- * Look up webhook URL for a merchant (used by confirmation worker).
+ * Look up webhook URL for a merchant in a given environment (used by confirmation worker).
  */
-export async function getWebhookUrl(db: Database, merchantId: string): Promise<string | null> {
-  const config = await getWebhookConfig(db, merchantId);
+export async function getWebhookUrl(
+  db: Database,
+  merchantId: string,
+  environment: Environment,
+): Promise<string | null> {
+  const config = await getWebhookConfig(db, merchantId, environment);
   return config?.webhookUrl ?? null;
 }
 
 /**
- * Look up webhook URL and signing secret for a merchant.
+ * Look up the env-appropriate webhook URL and signing secret for a merchant.
+ *
+ * Live deliveries read webhook_url_live + webhook_secret_live; test deliveries
+ * read webhook_url_test + webhook_secret_test. Returns null if the URL for the
+ * requested environment isn't configured.
  */
-export async function getWebhookConfig(db: Database, merchantId: string): Promise<WebhookConfig | null> {
+export async function getWebhookConfig(
+  db: Database,
+  merchantId: string,
+  environment: Environment,
+): Promise<WebhookConfig | null> {
   const [row] = await db
-    .select({ webhookUrl: merchants.webhookUrl, webhookSecret: merchants.webhookSecret })
+    .select({
+      webhookUrlLive: merchants.webhookUrlLive,
+      webhookSecretLive: merchants.webhookSecretLive,
+      webhookUrlTest: merchants.webhookUrlTest,
+      webhookSecretTest: merchants.webhookSecretTest,
+    })
     .from(merchants)
     .where(eq(merchants.id, merchantId))
     .limit(1);
 
-  if (!row?.webhookUrl) return null;
-  return { webhookUrl: row.webhookUrl, webhookSecret: row.webhookSecret };
+  if (!row) return null;
+  const webhookUrl = environment === "test" ? row.webhookUrlTest : row.webhookUrlLive;
+  const webhookSecret = environment === "test" ? row.webhookSecretTest : row.webhookSecretLive;
+  if (!webhookUrl) return null;
+  return { webhookUrl, webhookSecret };
 }

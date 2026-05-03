@@ -16,6 +16,7 @@ export function createPaywallRoutes(db: Database) {
   // List paywalls
   app.get("/v1/paywalls", async (c) => {
     const merchantId = c.get("merchantId");
+    const environment = c.get("environment");
     const query = paginationSchema
       .extend({
         active: z.coerce.boolean().optional(),
@@ -27,12 +28,15 @@ export function createPaywallRoutes(db: Database) {
     }
 
     const { limit, offset, active } = query.data;
-    const conditions = [eq(paywalls.merchantId, merchantId)];
+    const conditions = [
+      eq(paywalls.merchantId, merchantId),
+      eq(paywalls.environment, environment),
+    ];
     if (active !== undefined) {
       conditions.push(eq(paywalls.isActive, active));
     }
 
-    const where = conditions.length === 1 ? conditions[0] : and(...conditions);
+    const where = and(...conditions);
 
     const [items, [{ total }]] = await Promise.all([
       db
@@ -54,6 +58,7 @@ export function createPaywallRoutes(db: Database) {
   // Create paywall
   app.post("/v1/paywalls", async (c) => {
     const merchantId = c.get("merchantId");
+    const environment = c.get("environment");
     const body = await c.req.json();
     const parsed = createPaywallSchema.safeParse(body);
 
@@ -66,6 +71,7 @@ export function createPaywallRoutes(db: Database) {
         .insert(paywalls)
         .values({
           merchantId,
+          environment,
           endpointPattern: parsed.data.endpointPattern,
           amount: parsed.data.amount,
           description: parsed.data.description ?? "",
@@ -82,9 +88,10 @@ export function createPaywallRoutes(db: Database) {
     }
   });
 
-  // Update paywall
+  // Update paywall (scoped to active env)
   app.put("/v1/paywalls/:id", async (c) => {
     const merchantId = c.get("merchantId");
+    const environment = c.get("environment");
     const id = c.req.param("id");
     const body = await c.req.json();
     const parsed = updatePaywallSchema.safeParse(body);
@@ -102,7 +109,11 @@ export function createPaywallRoutes(db: Database) {
     const [updated] = await db
       .update(paywalls)
       .set(updates)
-      .where(and(eq(paywalls.id, id), eq(paywalls.merchantId, merchantId)))
+      .where(and(
+        eq(paywalls.id, id),
+        eq(paywalls.merchantId, merchantId),
+        eq(paywalls.environment, environment),
+      ))
       .returning();
 
     if (!updated) {
@@ -112,14 +123,19 @@ export function createPaywallRoutes(db: Database) {
     return c.json(updated);
   });
 
-  // Delete paywall
+  // Delete paywall (scoped to active env)
   app.delete("/v1/paywalls/:id", async (c) => {
     const merchantId = c.get("merchantId");
+    const environment = c.get("environment");
     const id = c.req.param("id");
 
     const [deleted] = await db
       .delete(paywalls)
-      .where(and(eq(paywalls.id, id), eq(paywalls.merchantId, merchantId)))
+      .where(and(
+        eq(paywalls.id, id),
+        eq(paywalls.merchantId, merchantId),
+        eq(paywalls.environment, environment),
+      ))
       .returning({ id: paywalls.id });
 
     if (!deleted) {

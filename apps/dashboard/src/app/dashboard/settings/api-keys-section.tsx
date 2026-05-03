@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Environment } from "@pincerpay/db";
 import { createApiKey, revokeApiKey } from "./actions";
 
 interface ApiKey {
@@ -8,21 +9,22 @@ interface ApiKey {
   prefix: string;
   label: string;
   isActive: boolean;
+  environment: Environment;
   createdAt: Date;
   lastUsedAt: Date | null;
 }
 
 export function ApiKeysSection({ keys }: { keys: ApiKey[] }) {
   const [newKey, setNewKey] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<Environment | null>(null);
 
-  async function handleCreate() {
-    setCreating(true);
-    const result = await createApiKey("Default");
+  async function handleCreate(environment: Environment) {
+    setCreating(environment);
+    const result = await createApiKey(environment === "test" ? "Test" : "Default", environment);
     if (result.key) {
       setNewKey(result.key);
     }
-    setCreating(false);
+    setCreating(null);
   }
 
   async function handleRevoke(keyId: string) {
@@ -51,11 +53,20 @@ export function ApiKeysSection({ keys }: { keys: ApiKey[] }) {
             key={key.id}
             className="p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] flex items-center justify-between"
           >
-            <div>
+            <div className="flex items-center gap-2">
               <span className="font-mono text-sm">{key.prefix}...</span>
-              <span className="ml-2 text-sm text-[var(--muted-foreground)]">{key.label}</span>
+              <span
+                className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                  key.environment === "test"
+                    ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                }`}
+              >
+                {key.environment}
+              </span>
+              <span className="text-sm text-[var(--muted-foreground)]">{key.label}</span>
               {!key.isActive && (
-                <span className="ml-2 text-xs text-[var(--destructive)]">Revoked</span>
+                <span className="text-xs text-[var(--destructive)]">Revoked</span>
               )}
             </div>
             {key.isActive && (
@@ -70,13 +81,22 @@ export function ApiKeysSection({ keys }: { keys: ApiKey[] }) {
         ))}
       </div>
 
-      <button
-        onClick={handleCreate}
-        disabled={creating}
-        className="px-4 py-2 border border-[var(--border)] rounded-lg text-sm font-medium hover:bg-[var(--muted)] transition-colors disabled:opacity-50"
-      >
-        {creating ? "Creating..." : "Create API Key"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleCreate("live")}
+          disabled={creating !== null}
+          className="px-4 py-2 border border-[var(--border)] rounded-lg text-sm font-medium hover:bg-[var(--muted)] transition-colors disabled:opacity-50"
+        >
+          {creating === "live" ? "Creating..." : "Create live key"}
+        </button>
+        <button
+          onClick={() => handleCreate("test")}
+          disabled={creating !== null}
+          className="px-4 py-2 border border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400 rounded-lg text-sm font-medium hover:bg-amber-500/15 transition-colors disabled:opacity-50"
+        >
+          {creating === "test" ? "Creating..." : "Create test key"}
+        </button>
+      </div>
     </div>
   );
 }

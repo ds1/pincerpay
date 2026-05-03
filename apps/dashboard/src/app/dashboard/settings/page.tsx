@@ -23,6 +23,7 @@ async function getApiKeys(merchantId: string) {
       id: apiKeys.id,
       prefix: apiKeys.prefix,
       label: apiKeys.label,
+      environment: apiKeys.environment,
       isActive: apiKeys.isActive,
       createdAt: apiKeys.createdAt,
       lastUsedAt: apiKeys.lastUsedAt,
@@ -51,7 +52,8 @@ export default async function SettingsPage() {
             name: merchant.name,
             walletAddress: merchant.walletAddress,
             supportedChains: merchant.supportedChains,
-            webhookUrl: merchant.webhookUrl,
+            webhookUrlLive: merchant.webhookUrlLive,
+            webhookUrlTest: merchant.webhookUrlTest,
           } : undefined}
         />
       </section>
@@ -82,8 +84,11 @@ export default async function SettingsPage() {
 
       {merchant && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Webhook Signing Secret</h2>
-          <WebhookSecretSection hasSecret={!!merchant.webhookSecret} />
+          <h2 className="text-lg font-semibold mb-4">Webhook Signing Secrets</h2>
+          <WebhookSecretSection
+            hasSecretLive={!!merchant.webhookSecretLive}
+            hasSecretTest={!!merchant.webhookSecretTest}
+          />
         </section>
       )}
 

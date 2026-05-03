@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { merchants, paywalls } from "@pincerpay/db";
-import { eq, desc, count } from "drizzle-orm";
+import { getEnvFromRequest } from "@/lib/env";
+import { merchants, paywalls, type Environment } from "@pincerpay/db";
+import { eq, and, desc, count } from "drizzle-orm";
 import Link from "next/link";
 import { PaywallForm, PaywallList } from "./paywall-form";
 
@@ -15,35 +16,36 @@ async function getMerchantId(authUserId: string): Promise<string | null> {
   return merchant?.id ?? null;
 }
 
-async function getPaywalls(merchantId: string, offset: number, limit: number) {
+async function getPaywalls(merchantId: string, environment: Environment, offset: number, limit: number) {
   const db = getDb();
   return db
     .select()
     .from(paywalls)
-    .where(eq(paywalls.merchantId, merchantId))
+    .where(and(eq(paywalls.merchantId, merchantId), eq(paywalls.environment, environment)))
     .orderBy(desc(paywalls.createdAt))
     .offset(offset)
     .limit(limit);
 }
 
-async function getPaywallCount(merchantId: string): Promise<number> {
+async function getPaywallCount(merchantId: string, environment: Environment): Promise<number> {
   const db = getDb();
   const [result] = await db
     .select({ total: count() })
     .from(paywalls)
-    .where(eq(paywalls.merchantId, merchantId));
+    .where(and(eq(paywalls.merchantId, merchantId), eq(paywalls.environment, environment)));
   return result?.total ?? 0;
 }
 
 export default async function PaywallsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; env?: string }>;
 }) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10));
   const limit = 50;
   const offset = (page - 1) * limit;
+  const environment = await getEnvFromRequest(params);
 
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -54,8 +56,8 @@ export default async function PaywallsPage({
   }
 
   const [walls, total] = await Promise.all([
-    getPaywalls(merchantId, offset, limit),
-    getPaywallCount(merchantId),
+    getPaywalls(merchantId, environment, offset, limit),
+    getPaywallCount(merchantId, environment),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));

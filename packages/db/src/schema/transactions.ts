@@ -1,6 +1,8 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { merchants } from "./merchants.js";
 import { agents } from "./agents.js";
+import { apiKeys } from "./api-keys.js";
+import { environmentEnum } from "./enums.js";
 
 export const transactions = pgTable(
   "transactions",
@@ -9,6 +11,10 @@ export const transactions = pgTable(
     merchantId: uuid("merchant_id")
       .notNull()
       .references(() => merchants.id, { onDelete: "cascade" }),
+    /** API key that authorized this transaction. Required for environment integrity check. */
+    apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "set null" }),
+    /** Live or test. Must match the originating api_key's environment (DB trigger enforced). */
+    environment: environmentEnum("environment").notNull().default("live"),
     /** CAIP-2 chain ID (e.g., "eip155:8453") */
     chainId: text("chain_id").notNull(),
     txHash: text("tx_hash").notNull(),
@@ -47,5 +53,7 @@ export const transactions = pgTable(
     index("transactions_status_idx").on(table.status),
     index("transactions_created_at_idx").on(table.createdAt),
     index("transactions_merchant_chain_created_idx").on(table.merchantId, table.chainId, table.createdAt),
+    index("transactions_merchant_env_created_idx").on(table.merchantId, table.environment, table.createdAt),
+    index("transactions_api_key_id_idx").on(table.apiKeyId),
   ],
 );

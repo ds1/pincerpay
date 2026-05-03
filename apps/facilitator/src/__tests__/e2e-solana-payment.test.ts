@@ -230,13 +230,21 @@ function createMockDb(webhookReceiverUrl: string): {
                   prefix: TEST_API_KEY.slice(0, 12),
                   label: "Test",
                   isActive: true,
+                  environment: "live",
                   createdAt: new Date(),
                   lastUsedAt: null,
                 },
               ]);
             }
             if (table === merchants) {
-              return thenable([{ webhookUrl: webhookReceiverUrl }]);
+              return thenable([
+                {
+                  webhookUrlLive: webhookReceiverUrl,
+                  webhookSecretLive: null,
+                  webhookUrlTest: null,
+                  webhookSecretTest: null,
+                },
+              ]);
             }
             if (table === agents) {
               return thenable([]); // Agent not found → triggers auto-register

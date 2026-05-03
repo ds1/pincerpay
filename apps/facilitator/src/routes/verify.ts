@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { x402Facilitator } from "@x402/core/facilitator";
+import { resolveChain } from "@pincerpay/core";
 import type { AppEnv } from "../env.js";
 import type { Metrics } from "../metrics.js";
 import { paymentRequestSchema } from "./schemas.js";
@@ -29,12 +30,33 @@ export function createVerifyRoute(facilitator: x402Facilitator, options?: Verify
       // Use the original body for x402 (preserves full types), Zod just validates structure
       const { paymentPayload, paymentRequirements } = body;
 
+      // Test keys cannot operate on mainnet chains. Reject before any work.
+      const environment = c.get("environment");
+      if (environment === "test") {
+        const chain = resolveChain(String(paymentRequirements.network));
+        if (chain && !chain.testnet) {
+          logger.warn({
+            msg: "verify_rejected_test_key_mainnet",
+            requestId,
+            network: paymentRequirements.network,
+          });
+          return c.json(
+            {
+              error: "test_key_chain_forbidden",
+              message: `Test API keys cannot settle on ${chain.shorthand}. Use a testnet chain (e.g. solana-devnet) or a live key.`,
+            },
+            403,
+          );
+        }
+      }
+
       logger.info({
         msg: "verify_request",
         requestId,
         network: paymentRequirements.network,
         scheme: paymentRequirements.scheme,
         amount: paymentRequirements.amount,
+        environment,
       });
 
       const verifyStart = performance.now();

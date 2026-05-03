@@ -394,13 +394,14 @@ async function dispatchConfirmationWebhook(
   logger: Logger,
 ): Promise<void> {
   try {
-    const config = await getWebhookConfig(db, tx.merchantId);
+    const config = await getWebhookConfig(db, tx.merchantId, tx.environment);
     if (!config) return;
 
     const event = newStatus === "confirmed" ? "payment.confirmed" : "payment.failed";
 
     await dispatchWebhook(db, {
       merchantId: tx.merchantId,
+      environment: tx.environment,
       transactionId: tx.id,
       webhookUrl: config.webhookUrl,
       webhookSecret: config.webhookSecret ?? undefined,

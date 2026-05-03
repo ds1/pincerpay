@@ -1,5 +1,6 @@
 import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { merchants } from "./merchants.js";
+import { environmentEnum } from "./enums.js";
 
 export const paywalls = pgTable(
   "paywalls",
@@ -8,6 +9,8 @@ export const paywalls = pgTable(
     merchantId: uuid("merchant_id")
       .notNull()
       .references(() => merchants.id, { onDelete: "cascade" }),
+    /** Live or test. Same endpoint pattern can exist with different prices in each environment. */
+    environment: environmentEnum("environment").notNull().default("live"),
     /** HTTP method + path pattern (e.g., "GET /api/weather") */
     endpointPattern: text("endpoint_pattern").notNull(),
     /** USDC amount as string (e.g., "0.01") */
@@ -21,6 +24,10 @@ export const paywalls = pgTable(
   },
   (table) => [
     index("paywalls_merchant_id_idx").on(table.merchantId),
-    uniqueIndex("paywalls_merchant_endpoint_uniq").on(table.merchantId, table.endpointPattern),
+    uniqueIndex("paywalls_merchant_env_endpoint_uniq").on(
+      table.merchantId,
+      table.environment,
+      table.endpointPattern,
+    ),
   ],
 );

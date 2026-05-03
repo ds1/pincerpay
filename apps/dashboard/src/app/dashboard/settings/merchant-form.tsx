@@ -8,7 +8,8 @@ interface MerchantFormProps {
     name: string;
     walletAddress: string;
     supportedChains: string[];
-    webhookUrl: string | null;
+    webhookUrlLive: string | null;
+    webhookUrlTest: string | null;
   };
 }
 
@@ -76,13 +77,28 @@ export function MerchantForm({ merchant }: MerchantFormProps) {
         </div>
       </div>
       <div>
-        <label className="block text-sm text-[var(--muted-foreground)] mb-1">Webhook URL (optional)</label>
+        <label className="block text-sm text-[var(--muted-foreground)] mb-1">Live webhook URL (optional)</label>
         <input
-          name="webhookUrl"
-          defaultValue={merchant?.webhookUrl ?? ""}
+          name="webhookUrlLive"
+          defaultValue={merchant?.webhookUrlLive ?? ""}
           placeholder="https://..."
           className="w-full px-3 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] focus:border-[var(--primary)] outline-none text-sm"
         />
+        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+          Receives deliveries from pp_live_* keys.
+        </p>
+      </div>
+      <div>
+        <label className="block text-sm text-[var(--muted-foreground)] mb-1">Test webhook URL (optional)</label>
+        <input
+          name="webhookUrlTest"
+          defaultValue={merchant?.webhookUrlTest ?? ""}
+          placeholder="https://staging..."
+          className="w-full px-3 py-2 rounded-lg bg-[var(--card)] border border-[var(--border)] focus:border-[var(--primary)] outline-none text-sm"
+        />
+        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+          Receives deliveries from pp_test_* keys. Never paged on-call.
+        </p>
       </div>
       {message && (
         <p className={`text-sm ${message.includes("saved") ? "text-[var(--success)]" : "text-[var(--destructive)]"}`}>

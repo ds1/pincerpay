@@ -52,20 +52,26 @@ export function authMiddleware(db: Database): MiddlewareHandler<AppEnv> {
 
     c.set("merchantId", key.merchantId);
     c.set("apiKeyId", key.id);
+    c.set("environment", key.environment);
 
-    // Look up merchant webhook config for downstream webhook dispatch
+    // Look up merchant webhook config for downstream webhook dispatch.
+    // Resolve to the env-appropriate URL/secret pair so test deliveries never
+    // hit a live endpoint.
     try {
       const [merchant] = await db
-        .select({ webhookUrl: merchants.webhookUrl, webhookSecret: merchants.webhookSecret })
+        .select({
+          webhookUrlLive: merchants.webhookUrlLive,
+          webhookSecretLive: merchants.webhookSecretLive,
+          webhookUrlTest: merchants.webhookUrlTest,
+          webhookSecretTest: merchants.webhookSecretTest,
+        })
         .from(merchants)
         .where(eq(merchants.id, key.merchantId))
         .limit(1);
-      if (merchant?.webhookUrl) {
-        c.set("webhookUrl", merchant.webhookUrl);
-      }
-      if (merchant?.webhookSecret) {
-        c.set("webhookSecret", merchant.webhookSecret);
-      }
+      const webhookUrl = key.environment === "test" ? merchant?.webhookUrlTest : merchant?.webhookUrlLive;
+      const webhookSecret = key.environment === "test" ? merchant?.webhookSecretTest : merchant?.webhookSecretLive;
+      if (webhookUrl) c.set("webhookUrl", webhookUrl);
+      if (webhookSecret) c.set("webhookSecret", webhookSecret);
     } catch {
       // Non-critical — webhook config lookup failure shouldn't block requests
     }

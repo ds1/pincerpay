@@ -16,7 +16,8 @@ export function createMerchantRoute(db: Database) {
         name: merchants.name,
         walletAddress: merchants.walletAddress,
         supportedChains: merchants.supportedChains,
-        webhookUrl: merchants.webhookUrl,
+        webhookUrlLive: merchants.webhookUrlLive,
+        webhookUrlTest: merchants.webhookUrlTest,
         onChainRegistered: merchants.onChainRegistered,
         createdAt: merchants.createdAt,
       })

@@ -64,7 +64,10 @@ export const bootstrapMerchantSchema = z.object({
   /** Single-chain fallback. Required if walletAddresses omitted. */
   walletAddress: walletAddress.optional(),
   supportedChains: z.array(z.string().min(1)).default(["solana", "polygon"]),
-  webhookUrl: z.string().url().optional(),
+  /** Live-mode webhook URL. */
+  webhookUrlLive: z.string().url().optional(),
+  /** Test-mode webhook URL. */
+  webhookUrlTest: z.string().url().optional(),
 });
 
 export const patchMerchantSchema = z.object({
@@ -72,13 +75,16 @@ export const patchMerchantSchema = z.object({
   walletAddress: walletAddress.optional(),
   walletAddresses: z.record(z.string().min(1), walletAddress).optional(),
   supportedChains: z.array(z.string().min(1)).optional(),
-  webhookUrl: z.string().url().nullable().optional(),
+  webhookUrlLive: z.string().url().nullable().optional(),
+  webhookUrlTest: z.string().url().nullable().optional(),
 });
 
 // ─── API keys ───
 
 export const createApiKeySchema = z.object({
   label: apiKeyLabel.default("default"),
+  /** Mint a test-mode key with prefix pp_test_*. Test keys cannot settle on mainnet chains. */
+  isTest: z.boolean().optional().default(false),
   /** Optional ISO timestamp. If omitted, key never expires. */
   expiresAt: z.string().datetime().optional(),
 });

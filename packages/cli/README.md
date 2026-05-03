@@ -76,8 +76,8 @@ The OTP is delivered by email; you paste it back into the CLI. No URL clicks. No
 | Command | Description |
 |---------|-------------|
 | `pincerpay bootstrap-merchant --name <name> [--chains solana,polygon]` | End-to-end: generate wallets, create merchant, mint API key. Outputs env-var block. |
-| `pincerpay api-keys create [--label]` | Mint a new API key. |
-| `pincerpay api-keys list` | List API keys for the current merchant. |
+| `pincerpay api-keys create [--label] [--test]` | Mint a new API key. With `--test` the prefix is `pp_test_*`; test keys cannot settle on mainnet chains. |
+| `pincerpay api-keys list [--env live\|test]` | List API keys. Filter to a single environment with `--env`. |
 | `pincerpay api-keys rotate <id>` | Atomically mint a new key and revoke the old one. |
 | `pincerpay api-keys revoke <id>` | Revoke an API key. |
 | `pincerpay wallet set --solana <addr> --evm <addr>` | Update merchant wallet addresses. Confirms before committing. |

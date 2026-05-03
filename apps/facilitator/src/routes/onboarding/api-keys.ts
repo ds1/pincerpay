@@ -2,8 +2,8 @@ import { Hono, type Context } from "hono";
 import { randomBytes } from "node:crypto";
 import { and, count, eq } from "drizzle-orm";
 import { apiKeys, merchants } from "@pincerpay/db";
+import type { Database, Environment } from "@pincerpay/db";
 import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
-import type { Database } from "@pincerpay/db";
 import type { AppEnv } from "../../env.js";
 import { audit } from "../../lib/audit.js";
 import { sha256Hex } from "../../lib/tokens.js";
@@ -28,8 +28,9 @@ function clientIp(c: Context<AppEnv>): string | null {
   );
 }
 
-function newApiKey() {
-  const rawKey = `pp_live_${randomBytes(32).toString("hex")}`;
+function newApiKey(environment: Environment) {
+  const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
+  const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
   const keyHash = sha256Hex(rawKey);
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
   return { rawKey, keyHash, prefix };
@@ -73,7 +74,8 @@ export function createApiKeysOnboardingRoute(db: Database) {
       );
     }
 
-    const { rawKey, keyHash, prefix } = newApiKey();
+    const environment: Environment = parsed.data.isTest ? "test" : "live";
+    const { rawKey, keyHash, prefix } = newApiKey(environment);
     const [created] = await db
       .insert(apiKeys)
       .values({
@@ -81,11 +83,13 @@ export function createApiKeysOnboardingRoute(db: Database) {
         keyHash,
         prefix,
         label: parsed.data.label,
+        environment,
       })
       .returning({
         id: apiKeys.id,
         prefix: apiKeys.prefix,
         label: apiKeys.label,
+        environment: apiKeys.environment,
         createdAt: apiKeys.createdAt,
       });
 
@@ -97,6 +101,7 @@ export function createApiKeysOnboardingRoute(db: Database) {
         keyId: created.id,
         prefix: created.prefix,
         label: created.label,
+        environment: created.environment,
         expiresAt: parsed.data.expiresAt ?? null,
       },
       clientIp: clientIp(c),
@@ -108,6 +113,7 @@ export function createApiKeysOnboardingRoute(db: Database) {
       rawKey,
       prefix: created.prefix,
       label: created.label,
+      environment: created.environment,
       createdAt: created.createdAt.toISOString(),
       expiresAt: parsed.data.expiresAt ?? null,
       message: "Save this key now. It is never shown again.",
@@ -128,6 +134,7 @@ export function createApiKeysOnboardingRoute(db: Database) {
         id: apiKeys.id,
         prefix: apiKeys.prefix,
         label: apiKeys.label,
+        environment: apiKeys.environment,
         isActive: apiKeys.isActive,
         createdAt: apiKeys.createdAt,
         lastUsedAt: apiKeys.lastUsedAt,
@@ -164,7 +171,8 @@ export function createApiKeysOnboardingRoute(db: Database) {
       .limit(1);
     if (!target) return c.json({ error: "api_key_not_found" }, 404);
 
-    const { rawKey, keyHash, prefix } = newApiKey();
+    // Rotation preserves environment: rotating a test key produces a test key.
+    const { rawKey, keyHash, prefix } = newApiKey(target.environment);
     const [created] = await db
       .insert(apiKeys)
       .values({
@@ -172,11 +180,13 @@ export function createApiKeysOnboardingRoute(db: Database) {
         keyHash,
         prefix,
         label: target.label,
+        environment: target.environment,
       })
       .returning({
         id: apiKeys.id,
         prefix: apiKeys.prefix,
         label: apiKeys.label,
+        environment: apiKeys.environment,
         createdAt: apiKeys.createdAt,
       });
 
@@ -193,6 +203,7 @@ export function createApiKeysOnboardingRoute(db: Database) {
         oldKeyId: target.id,
         newKeyId: created.id,
         prefix: created.prefix,
+        environment: created.environment,
       },
       clientIp: clientIp(c),
       clientName: c.req.header("user-agent") ?? "unknown",
@@ -203,6 +214,7 @@ export function createApiKeysOnboardingRoute(db: Database) {
       rawKey,
       prefix: created.prefix,
       label: created.label,
+      environment: created.environment,
       createdAt: created.createdAt.toISOString(),
       revokedKeyId: target.id,
       message: "Save this key now. It is never shown again.",

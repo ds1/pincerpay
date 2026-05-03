@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { eq } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 import { merchants } from "@pincerpay/db";
 import type { Database } from "@pincerpay/db";
 import type { AppEnv } from "../../env.js";
@@ -68,7 +69,8 @@ export function createMerchantOnboardingRoute(db: Database) {
         name: existing.name,
         walletAddress: existing.walletAddress,
         supportedChains: existing.supportedChains,
-        webhookUrl: existing.webhookUrl,
+        webhookUrlLive: existing.webhookUrlLive,
+        webhookUrlTest: existing.webhookUrlTest,
         isNew: false,
       });
     }
@@ -76,13 +78,20 @@ export function createMerchantOnboardingRoute(db: Database) {
     // Create — race-safe via unique constraint on auth_user_id. If a parallel
     // request already inserted, the catch falls through to the find again.
     try {
+      const webhookSecretLive = randomBytes(32).toString("hex");
+      const webhookSecretTest = parsed.data.webhookUrlTest
+        ? randomBytes(32).toString("hex")
+        : null;
       const [created] = await db
         .insert(merchants)
         .values({
           name: parsed.data.name,
           walletAddress: primary,
           supportedChains: parsed.data.supportedChains,
-          webhookUrl: parsed.data.webhookUrl ?? null,
+          webhookUrlLive: parsed.data.webhookUrlLive ?? null,
+          webhookSecretLive,
+          webhookUrlTest: parsed.data.webhookUrlTest ?? null,
+          webhookSecretTest,
           authUserId,
         })
         .returning({
@@ -90,7 +99,8 @@ export function createMerchantOnboardingRoute(db: Database) {
           name: merchants.name,
           walletAddress: merchants.walletAddress,
           supportedChains: merchants.supportedChains,
-          webhookUrl: merchants.webhookUrl,
+          webhookUrlLive: merchants.webhookUrlLive,
+          webhookUrlTest: merchants.webhookUrlTest,
         });
 
       await audit(db, {
@@ -111,7 +121,8 @@ export function createMerchantOnboardingRoute(db: Database) {
         name: created.name,
         walletAddress: created.walletAddress,
         supportedChains: created.supportedChains,
-        webhookUrl: created.webhookUrl,
+        webhookUrlLive: created.webhookUrlLive,
+        webhookUrlTest: created.webhookUrlTest,
         isNew: true,
       });
     } catch (err) {
@@ -127,7 +138,8 @@ export function createMerchantOnboardingRoute(db: Database) {
           name: retry.name,
           walletAddress: retry.walletAddress,
           supportedChains: retry.supportedChains,
-          webhookUrl: retry.webhookUrl,
+          webhookUrlLive: retry.webhookUrlLive,
+          webhookUrlTest: retry.webhookUrlTest,
           isNew: false,
         });
       }
@@ -154,7 +166,8 @@ export function createMerchantOnboardingRoute(db: Database) {
       name: row.name,
       walletAddress: row.walletAddress,
       supportedChains: row.supportedChains,
-      webhookUrl: row.webhookUrl,
+      webhookUrlLive: row.webhookUrlLive,
+      webhookUrlTest: row.webhookUrlTest,
       onChainRegistered: row.onChainRegistered,
       createdAt: row.createdAt.toISOString(),
     });
@@ -184,8 +197,15 @@ export function createMerchantOnboardingRoute(db: Database) {
     if (parsed.data.supportedChains !== undefined) {
       updates.supportedChains = parsed.data.supportedChains;
     }
-    if (parsed.data.webhookUrl !== undefined) {
-      updates.webhookUrl = parsed.data.webhookUrl;
+    if (parsed.data.webhookUrlLive !== undefined) {
+      updates.webhookUrlLive = parsed.data.webhookUrlLive;
+    }
+    if (parsed.data.webhookUrlTest !== undefined) {
+      updates.webhookUrlTest = parsed.data.webhookUrlTest;
+      // Mint a test secret on first activation if none exists.
+      if (parsed.data.webhookUrlTest && !existing.webhookSecretTest) {
+        updates.webhookSecretTest = randomBytes(32).toString("hex");
+      }
     }
     const newWallet = pickPrimaryWallet(
       parsed.data.walletAddresses,

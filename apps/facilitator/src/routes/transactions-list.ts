@@ -16,8 +16,12 @@ export function createTransactionListRoute(db: Database) {
       return c.json({ error: "Invalid query parameters", details: query.error.issues }, 400);
     }
 
+    const environment = c.get("environment");
     const { limit, offset, status, chain, from, to, agent } = query.data;
-    const conditions = [eq(transactions.merchantId, merchantId)];
+    const conditions = [
+      eq(transactions.merchantId, merchantId),
+      eq(transactions.environment, environment),
+    ];
 
     if (status) conditions.push(eq(transactions.status, status));
     if (chain) conditions.push(eq(transactions.chainId, chain));
@@ -25,7 +29,7 @@ export function createTransactionListRoute(db: Database) {
     if (to) conditions.push(eq(transactions.toAddress, to));
     if (agent) conditions.push(eq(transactions.agentId, agent));
 
-    const where = conditions.length === 1 ? conditions[0] : and(...conditions);
+    const where = and(...conditions);
 
     const [items, [{ total }]] = await Promise.all([
       db

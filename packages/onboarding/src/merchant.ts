@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { eq, ilike } from "drizzle-orm";
-import { createDb, merchants, apiKeys } from "@pincerpay/db";
+import { createDb, merchants, apiKeys, type Environment } from "@pincerpay/db";
 import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
 import type { MerchantWallets } from "./wallets.js";
 
@@ -31,6 +31,7 @@ export interface BootstrapResult {
   /** Returned only when wallets were generated. Caller is responsible for displaying + discarding. */
   wallets?: MerchantWallets;
   apiKey: CreatedKey;
+  /** Live-mode webhook secret. Test secret is minted only when a test webhook URL is set. */
   webhookSecret: string;
 }
 
@@ -44,7 +45,10 @@ export interface BootstrapOptions {
   walletAddress?: string;
   walletAddresses?: Record<string, string>;
   supportedChains?: string[];
-  webhookUrl?: string;
+  /** Live-mode webhook URL. */
+  webhookUrlLive?: string;
+  /** Test-mode webhook URL. */
+  webhookUrlTest?: string;
   apiKeyLabel?: string;
 }
 
@@ -81,7 +85,10 @@ export async function bootstrapMerchant(
 
   const { db, close } = createDb(options.databaseUrl);
   try {
-    const webhookSecret = randomBytes(32).toString("hex");
+    const webhookSecretLive = randomBytes(32).toString("hex");
+    const webhookSecretTest = options.webhookUrlTest
+      ? randomBytes(32).toString("hex")
+      : null;
 
     const [inserted] = await db
       .insert(merchants)
@@ -89,13 +96,15 @@ export async function bootstrapMerchant(
         name: options.name,
         walletAddress,
         supportedChains,
-        webhookUrl: options.webhookUrl ?? null,
-        webhookSecret,
+        webhookUrlLive: options.webhookUrlLive ?? null,
+        webhookSecretLive,
+        webhookUrlTest: options.webhookUrlTest ?? null,
+        webhookSecretTest,
         authUserId: options.authUserId,
       })
       .returning({ id: merchants.id });
 
-    const apiKey = await mintApiKey(db, inserted.id, options.apiKeyLabel ?? "Bootstrap");
+    const apiKey = await mintApiKey(db, inserted.id, options.apiKeyLabel ?? "Bootstrap", "live");
 
     if (walletAddresses) {
       // Persist per-chain map opportunistically. Schema may add a JSONB column
@@ -108,7 +117,7 @@ export async function bootstrapMerchant(
       walletsGenerated: !!wallets,
       wallets,
       apiKey,
-      webhookSecret,
+      webhookSecret: webhookSecretLive,
     };
   } finally {
     await close();
@@ -120,6 +129,8 @@ export interface CreateApiKeyOptions {
   /** Either merchant UUID or name (case-insensitive). */
   merchant: string;
   label?: string;
+  /** Live (default) or test. Test keys cannot settle on mainnet chains. */
+  environment?: Environment;
 }
 
 /**
@@ -128,12 +139,13 @@ export interface CreateApiKeyOptions {
  */
 export async function createApiKey(
   options: CreateApiKeyOptions,
-): Promise<CreatedKey & { merchantId: string; merchantName: string }> {
+): Promise<CreatedKey & { merchantId: string; merchantName: string; environment: Environment }> {
   const { db, close } = createDb(options.databaseUrl);
   try {
     const merchant = await resolveMerchant(db, options.merchant);
-    const key = await mintApiKey(db, merchant.id, options.label ?? "CLI");
-    return { ...key, merchantId: merchant.id, merchantName: merchant.name };
+    const env = options.environment ?? "live";
+    const key = await mintApiKey(db, merchant.id, options.label ?? "CLI", env);
+    return { ...key, merchantId: merchant.id, merchantName: merchant.name, environment: env };
   } finally {
     await close();
   }
@@ -165,8 +177,10 @@ async function mintApiKey(
   db: ReturnType<typeof createDb>["db"],
   merchantId: string,
   label: string,
+  environment: Environment,
 ): Promise<CreatedKey> {
-  const rawKey = `pp_live_${randomBytes(32).toString("hex")}`;
+  const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
+  const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
   const keyHash = createHash("sha256").update(rawKey).digest("hex");
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
 
@@ -175,6 +189,7 @@ async function mintApiKey(
     keyHash,
     prefix,
     label,
+    environment,
   });
 
   return { rawKey, prefix, label };

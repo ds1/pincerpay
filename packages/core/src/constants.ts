@@ -25,8 +25,14 @@ export const USDC_DECIMALS = 6;
 /** Optimistic finality threshold in USDC base units (1 USDC = 1_000_000) */
 export const OPTIMISTIC_THRESHOLD = "1000000";
 
-/** API key prefix length (shown to users, e.g., "pp_live_abc...") */
+/** API key prefix length (shown to users, e.g., "pp_live_abc..." / "pp_test_abc...") */
 export const API_KEY_PREFIX_LENGTH = 12;
+
+/** Live-mode API key word prefix. */
+export const API_KEY_LIVE_PREFIX = "pp_live_";
+
+/** Test-mode API key word prefix. Test keys cannot settle on mainnet chains. */
+export const API_KEY_TEST_PREFIX = "pp_test_";
 
 /** API key header name */
 export const API_KEY_HEADER = "x-pincerpay-api-key";
