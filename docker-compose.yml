@@ -1,12 +1,15 @@
+# LOCAL DEVELOPMENT ONLY. Do not deploy this compose file to production —
+# the postgres credentials below are intentional defaults for local stacks.
+# Production runs the facilitator on Railway against Supabase Postgres.
 services:
   postgres:
     image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pincerpay
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-pincerpay}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

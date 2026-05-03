@@ -1,0 +1,10 @@
+# Allowlist for gitleaks. Each line is a fingerprint:
+#   <commit-sha>:<file-path>:<rule-id>:<line-number>
+# OR a secret value (legacy form, less precise).
+
+# Hardhat default test account #0 — publicly distributed in every Hardhat install.
+# Used in EVM e2e tests to sign mock transactions on a mock RPC.
+0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# Hardhat default test account #1 — same as above.
+0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d

@@ -24,11 +24,14 @@ If you discover a security vulnerability in PincerPay, please report it using [G
 ## Scope
 
 **In scope:**
-- Facilitator server (`apps/facilitator/`)
-- SDK packages (`@pincerpay/core`, `@pincerpay/solana`, `@pincerpay/merchant`, `@pincerpay/agent`, `@pincerpay/mcp`)
-- Anchor program (`packages/solana-program/`)
-- Dashboard authentication and authorization (`apps/dashboard/`)
+- Facilitator server (`apps/facilitator/`) — auth, settlement, env-scoping enforcement, OFAC, webhook signing
+- SDK packages (`@pincerpay/core`, `@pincerpay/solana`, `@pincerpay/merchant`, `@pincerpay/agent`, `@pincerpay/mcp`, `@pincerpay/cli`, `@pincerpay/onboarding`)
+- Database schemas + migrations (`@pincerpay/db`) — RLS, environment integrity trigger
+- Anchor program (`packages/program/`)
+- Dashboard authentication, authorization, and admin surface (`apps/dashboard/`)
+- Self-serve onboarding endpoints (`/v1/onboarding/*`) — Supabase Auth integration, CLI bearer-token issuance, audit log
 - Payment verification and settlement logic
+- Webhook signature verification (HMAC-SHA256) and delivery integrity
 
 **Out of scope:**
 - Social engineering attacks

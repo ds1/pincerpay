@@ -51,7 +51,12 @@ const onboardingEnabled = !!(
 );
 
 if (config.NODE_ENV === "production" && !config.CORS_ORIGINS) {
-  logger.warn({ msg: "CORS_ORIGINS not set — defaulting to wildcard (*). Set this in production." });
+  // Fail closed: a misconfigured production deploy with wildcard CORS exposes
+  // the facilitator to any origin. Better to refuse to start than to silently
+  // accept cross-origin requests.
+  throw new Error(
+    "CORS_ORIGINS must be set in production. Refusing to start with wildcard CORS.",
+  );
 }
 
 // ─── Database ───
