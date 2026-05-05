@@ -297,11 +297,14 @@ authenticated.route("/", createAgentRoutes(db));
 authenticated.route("/", createWebhookRoutes(db));
 authenticated.route("/", createMerchantRoute(db));
 
-app.route("/", authenticated);
-
 // CLI onboarding — authenticated endpoints (merchant management, api keys, sessions).
 // Mounted under a separate sub-app so the cliAuthMiddleware is scoped to these
 // routes and does not apply to the existing pp_live_* api-key paths.
+//
+// IMPORTANT: must mount BEFORE `authenticated` because Hono evaluates merged
+// routes/middleware in registration order. `authenticated.use("*", authMiddleware)`
+// would otherwise intercept every onboarding request with `Missing API key`
+// before cliAuthMiddleware could see it.
 if (onboardingEnabled) {
   const cliAuthenticated = new Hono<AppEnv>();
   cliAuthenticated.use("*", async (c, next) => {
@@ -318,6 +321,8 @@ if (onboardingEnabled) {
   cliAuthenticated.route("/", createOnboardingHealthRoute(db));
   app.route("/", cliAuthenticated);
 }
+
+app.route("/", authenticated);
 
 // ─── Start Server ───
 const port = config.PORT;
