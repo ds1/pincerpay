@@ -80,7 +80,7 @@ Invalid or deactivated API key:
 }
 ```
 
-The facilitator expects the key in the `x-pincerpay-api-key` header. Keys are validated by SHA-256 hash lookup. Only active keys pass authentication -- if you have deactivated a key in the dashboard, it will return 401 even if the key string is correct.
+The facilitator expects the key in the `x-pincerpay-api-key` header. Keys are validated by a hashed lookup — HMAC-SHA256 with a server pepper, with a legacy SHA-256 fallback during the migration window — never by storing the raw key. Only active keys pass authentication -- if you have deactivated a key in the dashboard, it will return 401 even if the key string is correct.
 
 ### 402 -- Payment Required
 

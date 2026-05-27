@@ -116,11 +116,15 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 - `ANCHOR_PROGRAM_ID` - On-chain settlement program
 - `OFAC_ENABLED` - Enable OFAC compliance screening
 - `LOGTAIL_SOURCE_TOKEN` - Better Stack log aggregation
+- `TOKEN_PEPPER` - HMAC pepper (min 32 chars) for `cli_sessions` + API key hashing. See [Auth & secrets](#auth--secrets).
+- `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` - Supabase project (required for CLI onboarding)
+- `SUPABASE_SMTP_CONFIGURED` - Set `true` only once the Supabase project has a working SMTP provider; otherwise `/v1/onboarding/auth/signup` returns `503 email_delivery_unavailable` instead of falsely reporting an OTP was sent.
 
 ### Dashboard (`apps/dashboard/.env.local`)
 - `DATABASE_URL` - PostgreSQL connection string
 - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key
+- `TOKEN_PEPPER` - Required for the dashboard to mint HMAC API keys; **must be byte-for-byte identical** to the facilitator's value (see [Auth & secrets](#auth--secrets)).
 
 ## Conventions
 
@@ -133,6 +137,20 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 - **Branching**: `feat/description`, `fix/description`, `chore/description`
 - **CI**: GitHub Actions (typecheck, test, build)
 
+## Auth & secrets
+
+- **API keys** (`pp_live_*` / `pp_test_*`) and **CLI sessions** (`pp_cli_*`) are stored
+  hashed, never in plaintext. Both use **HMAC-SHA256 with the `TOKEN_PEPPER` server
+  pepper**. API keys carry a legacy **SHA-256 fallback** (`api_keys.key_hash`) for keys
+  minted before migration `0004`; verification tries HMAC first, then SHA-256.
+- **All services that mint API keys** (facilitator onboarding route, dashboard server
+  actions, `scripts/*` bootstrap/admin tools) must share the **same** `TOKEN_PEPPER`, or
+  the keys they create won't authenticate. Hashing goes through the shared helpers in
+  `@pincerpay/db` (`hashNewApiKey`, `apiKeyHashHmac`, `apiKeyHashSha256`, `getApiKeyPepper`) —
+  do not re-implement hashing at a mint site.
+- When `TOKEN_PEPPER` is unset, helpers fall back to legacy SHA-256 so key creation never
+  hard-fails (the key is still usable via the fallback lookup).
+
 ## Key Files
 
 - `apps/facilitator/src/index.ts` - Facilitator entry point
@@ -144,9 +162,11 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 - `packages/solana/src/kora/` - Kora gasless transaction integration
 - `packages/onboarding/src/wallets.ts` - Non-custodial BIP-39 wallet generation (Phantom + MetaMask compatible)
 - `packages/onboarding/src/merchant.ts` - Merchant + API key creation helpers
+- `packages/db/src/hashing.ts` - Shared API-key hashing helpers (HMAC + SHA-256 fallback)
 - `scripts/bootstrap-merchant.mts` - End-to-end CLI: wallet generation + merchant row + API key
 - `scripts/create-wallets.mts` - Wallet generation only (no DB)
 - `scripts/create-api-key.mts` - Mint a key for an existing merchant
+- `apps/facilitator/scripts/api-keys-migrate-cleanup.mts` - Revoke leftover SHA-256-only keys after the HMAC cutover window
 
 ## Surfacing work that needs @ds1
 

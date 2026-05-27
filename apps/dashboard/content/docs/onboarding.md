@@ -169,8 +169,18 @@ The credentials file is corrupted. Delete `~/.pincerpay/credentials.json` and re
 **"email_not_verified"**
 You haven't completed the OTP step. Run `pincerpay signup` again with the same email — Supabase will email a fresh code.
 
+**"email_delivery_unavailable" (503 on signup)**
+The deployment has not confirmed a working email provider, so signup fails loudly
+instead of pretending a code was sent. The operator must configure SMTP on the
+Supabase project (Resend is free up to 3k/mo) and set `SUPABASE_SMTP_CONFIGURED=true`
+on the facilitator. Until then, email verification is unavailable. (Signup also
+no longer reports `verification_email_sent` for an email that already has an
+account — it stays silent to avoid leaking account existence.)
+
 **Email never arrives**
-Check spam. Recovery emails come from `noreply@<your-supabase-project>.supabase.co`. Production deployments configure a custom email sender in the Supabase dashboard.
+Check spam. Recovery emails come from `noreply@<your-supabase-project>.supabase.co`.
+Supabase's built-in email service is rate-limited and drops most mail, so production
+deployments must configure a real SMTP sender in the Supabase dashboard.
 
 ## Companion docs
 
