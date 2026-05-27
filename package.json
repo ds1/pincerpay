@@ -44,7 +44,8 @@
       "postcss@<8.5.10": "8.5.10",
       "follow-redirects@<1.16.0": "1.16.0",
       "@hono/node-server@<1.19.13": "1.19.13",
-      "uuid@<14.0.0": "14.0.0"
+      "uuid@<14.0.0": "14.0.0",
+      "fast-uri@<3.1.2": "3.1.2"
     }
   },
   "devDependencies": {
