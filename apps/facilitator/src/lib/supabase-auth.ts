@@ -32,6 +32,12 @@ export interface SignupResult {
   autoConfirmed: boolean;
   /** Set when an OTP email was sent and verifyEmailOtp must be called next. */
   emailSent: boolean;
+  /**
+   * True when the email already has an account. Supabase returns a stub user
+   * with an empty `identities` array (its anti-enumeration behavior) and sends
+   * no email. Callers must NOT claim an OTP was sent in this case.
+   */
+  alreadyRegistered: boolean;
   authUserId: string | null;
   email: string;
 }
@@ -59,13 +65,20 @@ export async function signUpWithPassword(opts: {
   });
   if (error) throw new SupabaseAuthError(error.message, error.status ?? 400);
 
+  // Supabase's anti-enumeration behavior: signing up an email that already has
+  // an account returns a stub user with an empty `identities` array and sends
+  // no email. Detect it so the caller doesn't falsely report an OTP was sent.
+  const alreadyRegistered =
+    Array.isArray(data.user?.identities) && data.user.identities.length === 0;
+
   // user is null if email confirmation is required and we got back only the
   // server-side confirmation tracking. Otherwise user is set.
   const autoConfirmed = !!data.user?.email_confirmed_at;
-  const emailSent = !autoConfirmed;
+  const emailSent = !autoConfirmed && !alreadyRegistered;
   return {
     autoConfirmed,
     emailSent,
+    alreadyRegistered,
     authUserId: data.user?.id ?? null,
     email: opts.email,
   };

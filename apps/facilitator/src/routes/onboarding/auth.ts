@@ -73,7 +73,13 @@ async function mintSessionForUser(opts: MintForUserOptions) {
   };
 }
 
-export function createAuthRoute(db: Database) {
+export interface AuthRouteOptions {
+  /** Whether the Supabase project has a working SMTP provider. When false,
+   * /signup fails loud rather than claiming an OTP email was sent. */
+  smtpConfigured: boolean;
+}
+
+export function createAuthRoute(db: Database, opts: AuthRouteOptions) {
   const app = new Hono<AppEnv>();
 
   // Public endpoints get tighter IP rate limits than the global facilitator rate.
@@ -112,6 +118,7 @@ export function createAuthRoute(db: Database) {
       }, logger);
 
       // If auto-confirmed (email confirmation disabled), mint a session immediately.
+      // This path needs no email, so the SMTP gate below does not apply.
       if (result.autoConfirmed && result.authUserId) {
         const session = await mintSessionForUser({
           db,
@@ -136,6 +143,39 @@ export function createAuthRoute(db: Database) {
           prefix: session.prefix,
           authUserId: result.authUserId,
         });
+      }
+
+      // From here the flow depends on an OTP email actually being delivered.
+      // If no SMTP provider is configured, Supabase silently drops the mail and
+      // the caller would wait forever. Fail loud instead of lying with a 200.
+      if (!opts.smtpConfigured) {
+        logger.error({
+          msg: "signup_email_delivery_unavailable",
+          email: parsed.data.email,
+          hint: "Configure SMTP on the Supabase project and set SUPABASE_SMTP_CONFIGURED=true.",
+        });
+        return c.json(
+          {
+            error: "email_delivery_unavailable",
+            message:
+              "Email verification is temporarily unavailable on this deployment. Please try again later or contact support.",
+          },
+          503,
+        );
+      }
+
+      // Anti-enumeration: when the email already has an account, Supabase sends
+      // no email and returns a stub user. We must not reveal that the account
+      // exists, so the response is identical to a fresh signup — but we log and
+      // audit the no-op so ops can tell real sends from silent skips.
+      if (result.alreadyRegistered) {
+        logger.warn({ msg: "signup_existing_account_noop", email: parsed.data.email });
+        await audit(db, {
+          eventType: "signup.existing_account",
+          metadata: { email: parsed.data.email },
+          clientIp: ip,
+          clientName: cName,
+        }, logger);
       }
 
       return c.json({

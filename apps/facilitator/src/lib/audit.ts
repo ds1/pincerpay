@@ -4,6 +4,7 @@ import { auditEvents } from "@pincerpay/db";
 export type AuditEventType =
   | "signup.started"
   | "signup.completed"
+  | "signup.existing_account"
   | "signup.failed"
   | "email.verified"
   | "login.completed"
