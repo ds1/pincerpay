@@ -85,7 +85,7 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 
 1. Merchant adds `@pincerpay/merchant` middleware to Express/Hono routes
 2. Agent hits protected endpoint, gets HTTP 402 with payment requirements
-3. Agent signs a USDC transfer transaction using `@pincerpay/agent` (spending policies use base units with 6 decimals — $1.00 = "1000000")
+3. Agent signs a USDC transfer transaction using `@pincerpay/agent` (spending policies use base units with 6 decimals - $1.00 = "1000000")
 4. PincerPay facilitator verifies signature, broadcasts to chain, confirms settlement
 5. Merchant delivers the resource
 
@@ -146,7 +146,7 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 - **All services that mint API keys** (facilitator onboarding route, dashboard server
   actions, `scripts/*` bootstrap/admin tools) must share the **same** `TOKEN_PEPPER`, or
   the keys they create won't authenticate. Hashing goes through the shared helpers in
-  `@pincerpay/db` (`hashNewApiKey`, `apiKeyHashHmac`, `apiKeyHashSha256`, `getApiKeyPepper`) —
+  `@pincerpay/db` (`hashNewApiKey`, `apiKeyHashHmac`, `apiKeyHashSha256`, `getApiKeyPepper`) -
   do not re-implement hashing at a mint site.
 - When `TOKEN_PEPPER` is unset, helpers fall back to legacy SHA-256 so key creation never
   hard-fails (the key is still usable via the fallback lookup).
@@ -171,9 +171,9 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 ## Surfacing work that needs @ds1
 
 @ds1 may miss things buried in long chat transcripts. So whenever work is
-**blocked on @ds1** — it needs a credential/access only they have (prod
+**blocked on @ds1** - it needs a credential/access only they have (prod
 `DATABASE_URL`, npm/Vercel/Railway/CI secrets, GitHub Actions), a decision only
-they can make, or any action only they can take — do not let it live only in
+they can make, or any action only they can take - do not let it live only in
 chat. Create a GitHub issue and **assign it to `ds1`** so it shows up in their
 queue.
 
@@ -185,5 +185,5 @@ queue.
   `infra`, `security`).
 - Note inside the issue which items are being handled without them, so the
   assigned list is purely "needs @ds1".
-- Still summarize the blockers in chat too — the issue is the durable backstop,
+- Still summarize the blockers in chat too - the issue is the durable backstop,
   not a replacement for telling them.

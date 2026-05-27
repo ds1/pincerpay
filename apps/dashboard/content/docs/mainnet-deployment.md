@@ -71,7 +71,7 @@ createPincerPayMiddleware({
 });
 ```
 
-> **No cross-chain conversion.** Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. If an agent pays on Polygon, USDC arrives in your Polygon wallet — not your Solana one. See [Merchant SDK → Multi-chain Receiving Wallets](/docs/merchant-sdk#multi-chain-receiving-wallets).
+> **No cross-chain conversion.** Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. If an agent pays on Polygon, USDC arrives in your Polygon wallet - not your Solana one. See [Merchant SDK → Multi-chain Receiving Wallets](/docs/merchant-sdk#multi-chain-receiving-wallets).
 
 ### 2. Update Wallet Address
 

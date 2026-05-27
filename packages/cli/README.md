@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/npm/l/@pincerpay/cli?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Frictionless CLI for [PincerPay](https://pincerpay.com) merchant onboarding. Sign up, verify email, create your merchant, mint API keys, manage wallets — all from the terminal. **No browser required at any point.**
+Frictionless CLI for [PincerPay](https://pincerpay.com) merchant onboarding. Sign up, verify email, create your merchant, mint API keys, manage wallets - all from the terminal. **No browser required at any point.**
 
 ## Quick start
 
@@ -110,16 +110,16 @@ Your credentials file is missing or expired. Run `pincerpay login` (or `pincerpa
 The credentials file was corrupted. Delete `~/.pincerpay/credentials.json` and log in again.
 
 **"email_not_verified"**
-You haven't completed the OTP step. Run `pincerpay signup` again with the same email — Supabase will email a fresh code.
+You haven't completed the OTP step. Run `pincerpay signup` again with the same email - Supabase will email a fresh code.
 
 **Email never arrives**
 Check spam. Recovery emails come from `noreply@<your-supabase-project>.supabase.co`. Production deployments should configure a custom email sender in the Supabase dashboard.
 
 ## Companion packages
 
-- [`@pincerpay/onboarding`](https://www.npmjs.com/package/@pincerpay/onboarding) — pure crypto for wallet generation. The CLI's `create-wallets` command is a thin wrapper.
-- [`@pincerpay/mcp`](https://www.npmjs.com/package/@pincerpay/mcp) — MCP server exposing the same operations as tools to LLMs (Claude, Cursor, etc).
-- [`@pincerpay/merchant`](https://www.npmjs.com/package/@pincerpay/merchant) — Hono middleware for accepting payments after onboarding.
+- [`@pincerpay/onboarding`](https://www.npmjs.com/package/@pincerpay/onboarding) - pure crypto for wallet generation. The CLI's `create-wallets` command is a thin wrapper.
+- [`@pincerpay/mcp`](https://www.npmjs.com/package/@pincerpay/mcp) - MCP server exposing the same operations as tools to LLMs (Claude, Cursor, etc).
+- [`@pincerpay/merchant`](https://www.npmjs.com/package/@pincerpay/merchant) - Hono middleware for accepting payments after onboarding.
 
 ## License
 

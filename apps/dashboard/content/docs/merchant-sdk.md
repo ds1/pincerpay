@@ -5,7 +5,7 @@ order: 2
 section: SDKs
 ---
 
-The `@pincerpay/merchant` package provides Hono middleware that handles the full x402 payment flow — returning 402 challenges, verifying payment proofs, and confirming settlement. It runs natively in Hono apps and inside Next.js App Router via `hono/vercel`. An Express adapter is on the roadmap.
+The `@pincerpay/merchant` package provides Hono middleware that handles the full x402 payment flow - returning 402 challenges, verifying payment proofs, and confirming settlement. It runs natively in Hono apps and inside Next.js App Router via `hono/vercel`. An Express adapter is on the roadmap.
 
 ## Installation
 
@@ -82,10 +82,10 @@ export const POST = handle(app);
 
 > **How routing works:** Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. **No cross-chain conversion happens.** If you accept Solana and Polygon and an agent pays on Polygon, USDC arrives in your Polygon wallet.
 
-Solana addresses (32-byte base58) and EVM addresses (20-byte hex) are categorically different formats — a single string can't hold both. Use `merchantAddresses` to bind one wallet per chain:
+Solana addresses (32-byte base58) and EVM addresses (20-byte hex) are categorically different formats - a single string can't hold both. Use `merchantAddresses` to bind one wallet per chain:
 
 ```typescript
-// Single-chain merchant (legacy — still supported)
+// Single-chain merchant (legacy - still supported)
 createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm",
@@ -113,7 +113,7 @@ createPincerPayMiddleware({
 
 Both fields can coexist: `merchantAddresses` wins for chains in the map, `merchantAddress` covers the rest.
 
-**Format validation is fail-fast.** A Solana base58 address under a `polygon` key (or vice versa) throws at init with a chain-named error like `Route "POST /api/trade" targets chain "polygon": address "GjsW..." is not a valid EVM address.` — not at request time, not at settle time.
+**Format validation is fail-fast.** A Solana base58 address under a `polygon` key (or vice versa) throws at init with a chain-named error like `Route "POST /api/trade" targets chain "polygon": address "GjsW..." is not a valid EVM address.` - not at request time, not at settle time.
 
 To check which address PincerPay would actually use for a given chain in your config:
 
@@ -142,9 +142,9 @@ app.post("/api/trade", async (c) => {
 });
 ```
 
-`payer` comes from the facilitator's verified settle response — not the unverified `X-PAYMENT` request header. It is canonical across schemes (EVM `authorization.from`, Solana signer, etc. are all normalized to a single string).
+`payer` comes from the facilitator's verified settle response - not the unverified `X-PAYMENT` request header. It is canonical across schemes (EVM `authorization.from`, Solana signer, etc. are all normalized to a single string).
 
-> **Don't re-decode `X-PAYMENT` to extract the payer.** The request header carries an unverified, scheme-specific payload. The middleware already verifies, settles, and surfaces the canonical payer on `c.get("pincerpay")`. If you find yourself probing `payload.authorization.from` / `payload.from` / `payload.signer`, stop — read `c.get("pincerpay").payer` instead.
+> **Don't re-decode `X-PAYMENT` to extract the payer.** The request header carries an unverified, scheme-specific payload. The middleware already verifies, settles, and surfaces the canonical payer on `c.get("pincerpay")`. If you find yourself probing `payload.authorization.from` / `payload.from` / `payload.signer`, stop - read `c.get("pincerpay").payer` instead.
 
 The same `payer` field is also included in the base64-encoded `payment-response` response header for clients that bypass the middleware.
 
@@ -193,7 +193,7 @@ Each route in `routes` accepts:
 | `MERCHANT_ADDRESS_POLYGON` | Multi-chain (Polygon) | Polygon EVM receiving wallet (`0x...`) |
 | `MERCHANT_ADDRESS_BASE` | Multi-chain (Base) | Base EVM receiving wallet (`0x...`) |
 
-> **CI / build-time tip.** If your build evaluates the middleware (e.g., `next build` running route module top-level code) without env vars set, `process.env.MERCHANT_ADDRESS!` resolves to `undefined` and now fails fast at middleware init. Either gate construction on env presence, or fall back to a placeholder Solana address (`"11111111111111111111111111111111"` — System Program, valid base58, can't receive funds).
+> **CI / build-time tip.** If your build evaluates the middleware (e.g., `next build` running route module top-level code) without env vars set, `process.env.MERCHANT_ADDRESS!` resolves to `undefined` and now fails fast at middleware init. Either gate construction on env presence, or fall back to a placeholder Solana address (`"11111111111111111111111111111111"` - System Program, valid base58, can't receive funds).
 
 ## Webhook Verification
 

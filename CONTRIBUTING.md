@@ -61,11 +61,11 @@ examples/
 
 ## Conventions
 
-- **ESM everywhere** — use `.js` extensions in TypeScript imports
-- **Module resolution** — `NodeNext` in tsconfig for packages
-- **USDC amounts** — always in base units (6 decimals). 1 USDC = `1000000`
-- **Chain IDs** — CAIP-2 format (e.g., `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`)
-- **Package manager** — always `pnpm`, never npm or yarn
+- **ESM everywhere** - use `.js` extensions in TypeScript imports
+- **Module resolution** - `NodeNext` in tsconfig for packages
+- **USDC amounts** - always in base units (6 decimals). 1 USDC = `1000000`
+- **Chain IDs** - CAIP-2 format (e.g., `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`)
+- **Package manager** - always `pnpm`, never npm or yarn
 
 ## What to Contribute
 

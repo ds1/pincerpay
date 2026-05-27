@@ -5,9 +5,9 @@ order: 8.2
 section: Examples
 ---
 
-A minimal standalone Node.js server with PincerPay middleware protecting API endpoints. Uses Hono with `@hono/node-server` so it runs anywhere Node runs — no platform dependency. Demonstrates both free and paywalled routes with different price tiers.
+A minimal standalone Node.js server with PincerPay middleware protecting API endpoints. Uses Hono with `@hono/node-server` so it runs anywhere Node runs - no platform dependency. Demonstrates both free and paywalled routes with different price tiers.
 
-> **Folder name note.** This example lives at `examples/express-merchant/` for historical reasons; the source is Hono-based. An Express adapter for `@pincerpay/merchant` is on the roadmap — until it ships, Hono is the standalone-Node path.
+> **Folder name note.** This example lives at `examples/express-merchant/` for historical reasons; the source is Hono-based. An Express adapter for `@pincerpay/merchant` is on the roadmap - until it ships, Hono is the standalone-Node path.
 
 ## Endpoints
 

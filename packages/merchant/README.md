@@ -88,16 +88,16 @@ export const POST = handle(app);
 
 ### Express
 
-Express adapter is on the roadmap. Use Hono today — it runs anywhere Express does and is a drop-in for most paywall workloads. Track [the Express adapter issue](https://github.com/ds1/pincerpay/issues) for the upcoming release.
+Express adapter is on the roadmap. Use Hono today - it runs anywhere Express does and is a drop-in for most paywall workloads. Track [the Express adapter issue](https://github.com/ds1/pincerpay/issues) for the upcoming release.
 
 ## Multi-chain Receiving Wallets
 
 > **How routing works:** Agents pay on whichever chain they hold USDC; PincerPay routes settlement to your registered wallet on that chain. **No cross-chain conversion happens.** If you accept Solana and Polygon and an agent pays on Polygon, USDC arrives in your Polygon wallet.
 
-Solana and EVM addresses are categorically different formats — a single string can't hold both. Use `merchantAddresses` to bind one wallet per chain:
+Solana and EVM addresses are categorically different formats - a single string can't hold both. Use `merchantAddresses` to bind one wallet per chain:
 
 ```typescript
-// Single-chain merchant (legacy — still supported)
+// Single-chain merchant (legacy - still supported)
 createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm",
@@ -130,7 +130,7 @@ createPincerPayMiddleware({
 
 You can have both fields set: `merchantAddresses` wins for chains in the map, `merchantAddress` covers the rest.
 
-**Format validation is fail-fast.** A Solana base58 address under a `polygon` key (or vice versa) throws at init with a chain-named error message — not at request time, not at settle time.
+**Format validation is fail-fast.** A Solana base58 address under a `polygon` key (or vice versa) throws at init with a chain-named error message - not at request time, not at settle time.
 
 ### Troubleshooting
 
@@ -178,9 +178,9 @@ app.post("/api/trade", async (c) => {
 });
 ```
 
-`payer` comes from the facilitator's verified settle response — not the unverified `X-PAYMENT` request header. It is canonical across schemes (EVM `authorization.from`, Solana signer, etc. are all normalized to a single string).
+`payer` comes from the facilitator's verified settle response - not the unverified `X-PAYMENT` request header. It is canonical across schemes (EVM `authorization.from`, Solana signer, etc. are all normalized to a single string).
 
-> **Don't re-decode `X-PAYMENT` to extract the payer.** The request header carries an unverified, scheme-specific payload. The middleware already verifies, settles, and surfaces the canonical payer on `c.get("pincerpay")`. If you find yourself probing `payload.authorization.from` / `payload.from` / `payload.signer`, stop — read `c.get("pincerpay").payer` instead.
+> **Don't re-decode `X-PAYMENT` to extract the payer.** The request header carries an unverified, scheme-specific payload. The middleware already verifies, settles, and surfaces the canonical payer on `c.get("pincerpay")`. If you find yourself probing `payload.authorization.from` / `payload.from` / `payload.signer`, stop - read `c.get("pincerpay").payer` instead.
 
 The same `payer` field is also included in the base64-encoded `payment-response` response header for clients that bypass the middleware and post directly to `/v1/settle`.
 
@@ -336,4 +336,4 @@ A price of "0" will still trigger the 402 flow. If a route should be free, omit 
 
 ### Don't re-decode `X-PAYMENT` to find the payer
 
-The verified payer is on `c.get("pincerpay").payer` after the middleware settles. Reading it from the request header bypasses verification and forces scheme-specific shape probing — see "Reading the Verified Payer" above.
+The verified payer is on `c.get("pincerpay").payer` after the middleware settles. Reading it from the request header bypasses verification and forces scheme-specific shape probing - see "Reading the Verified Payer" above.
