@@ -21,6 +21,7 @@ export function registerCheckTransaction(
       "Returns chain, amount, addresses, status (pending/mempool/optimistic/confirmed/failed), " +
       "and timestamps. Requires a PincerPay API key.",
     inputSchema,
+    { title: "Check transaction status", readOnlyHint: true, openWorldHint: true },
     async ({ txHash }) => {
       try {
         client.requireAuth();

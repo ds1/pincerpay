@@ -21,6 +21,7 @@ export function registerWhoami(server: McpServer) {
     "Returns information about the currently authenticated user — auth mode (admin vs public), " +
       "auth user id, session info, and current merchant. Useful diagnostic before mutating tools.",
     {},
+    { title: "Who am I", readOnlyHint: true, openWorldHint: true },
     async () => {
       const auth = resolveAuthMode();
 

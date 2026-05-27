@@ -21,6 +21,7 @@ export function registerListAgents(
       "Shows Solana address, spending limits, Squads PDA, and status. " +
       "Agents are auto-registered on first payment. Requires a PincerPay API key.",
     inputSchema,
+    { title: "List agents", readOnlyHint: true, openWorldHint: true },
     async ({ limit, offset, status }) => {
       try {
         client.requireAuth();

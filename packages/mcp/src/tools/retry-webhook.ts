@@ -16,6 +16,7 @@ export function registerRetryWebhook(
       "Resets the delivery status and queues it for immediate retry. " +
       "Cannot retry already-delivered webhooks. Requires a PincerPay API key.",
     inputSchema,
+    { title: "Retry webhook delivery", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     async ({ id }) => {
       try {
         client.requireAuth();

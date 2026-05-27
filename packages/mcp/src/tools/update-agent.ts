@@ -32,6 +32,7 @@ export function registerUpdateAgent(
       "Set status to 'paused' or 'revoked' to block further payments. " +
       "Spending limits are in USDC base units (6 decimals). Requires a PincerPay API key.",
     inputSchema,
+    { title: "Update agent", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     async ({ id, name, status, maxPerTransaction, maxPerDay }) => {
       try {
         client.requireAuth();

@@ -148,6 +148,8 @@ app.post("/api/trade", async (c) => {
 
 The same `payer` field is also included in the base64-encoded `payment-response` response header for clients that bypass the middleware.
 
+The middleware sets **exactly one** context variable, `pincerpay` (typed as `PincerPayPaymentInfo`). There is no `agentWallet` context key: in the example above, `agentWallet` is just a field name on the caller's own `recordTrade(...)` function. Import `PincerPayContextVariables` / `PincerPayPaymentInfo` from `@pincerpay/merchant` (or `@pincerpay/merchant/nextjs`) instead of duck-typing the shape, so you fail at compile time if the contract changes. Any change to the keys set, or to `PincerPayPaymentInfo`, is called out in the merchant package CHANGELOG.
+
 ## Configuration
 
 `createPincerPayMiddleware()` accepts a `PincerPayConfig` object:

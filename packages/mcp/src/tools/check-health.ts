@@ -11,6 +11,7 @@ export function registerCheckHealth(
       "Returns database status, worker health, uptime, and Kora (gasless) status. " +
       "No API key required. Use this as the first troubleshooting step.",
     {},
+    { title: "Check facilitator health", readOnlyHint: true, openWorldHint: true },
     async () => {
       try {
         const result = await client.getHealth();

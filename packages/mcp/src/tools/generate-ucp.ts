@@ -40,6 +40,7 @@ export function registerGenerateUcp(server: McpServer) {
       "payment requirements, supported chains, and endpoint pricing. " +
       "Place the output at /.well-known/ucp on your domain.",
     inputSchema,
+    { title: "Generate UCP manifest", readOnlyHint: true, openWorldHint: false },
     async ({ merchantName, merchantUrl, walletAddress, chains, endpoints }) => {
       const errors: string[] = [];
       const chainConfigs = chains.map((c) => {

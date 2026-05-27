@@ -25,6 +25,7 @@ export function registerListWebhooks(
       "Shows event type, HTTP status code, retry count, and delivery status. " +
       "Useful for diagnosing missed webhook notifications. Requires a PincerPay API key.",
     inputSchema,
+    { title: "List webhooks", readOnlyHint: true, openWorldHint: true },
     async ({ limit, offset, status, event }) => {
       try {
         client.requireAuth();

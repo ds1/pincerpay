@@ -39,6 +39,7 @@ export function registerScaffoldAgent(server: McpServer) {
       "spending policies. The agent's fetch() is a drop-in replacement " +
       "for standard fetch that handles 402 challenges automatically.",
     inputSchema,
+    { title: "Scaffold agent client", readOnlyHint: true, openWorldHint: false },
     async ({ chain, maxPerTransaction, maxPerDay, typescript }) => {
       const isSolana = chain.startsWith("solana");
       const keyVar = isSolana ? "AGENT_SOLANA_KEY" : "AGENT_EVM_KEY";

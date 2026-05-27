@@ -27,6 +27,7 @@ export function registerVerifyPayment(
       "Checks signature validity, balance, and payment requirements. " +
       "Requires a PincerPay API key. Useful for debugging payment failures.",
     inputSchema,
+    { title: "Verify payment (dry-run)", readOnlyHint: true, openWorldHint: true },
     async ({ paymentPayload, paymentRequirements }) => {
       try {
         client.requireAuth();

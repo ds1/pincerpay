@@ -21,6 +21,7 @@ export function registerListPaywalls(
       "Returns endpoint patterns, USDC amounts, chain overrides, and active status. " +
       "Requires a PincerPay API key.",
     inputSchema,
+    { title: "List paywalls", readOnlyHint: true, openWorldHint: true },
     async ({ limit, offset, active }) => {
       try {
         client.requireAuth();

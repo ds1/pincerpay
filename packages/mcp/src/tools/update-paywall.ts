@@ -31,6 +31,7 @@ export function registerUpdatePaywall(
     "Update an existing paywall's price, description, chains, or active status. " +
       "Only provided fields are changed. Requires a PincerPay API key.",
     inputSchema,
+    { title: "Update paywall", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     async ({ id, amount, description, chains, isActive }) => {
       try {
         client.requireAuth();

@@ -21,6 +21,22 @@ Create API keys from the [dashboard](https://www.pincerpay.com/dashboard). Keys 
 
 Public endpoints (`/v1/supported`, `/health`, `/metrics`, `/openapi.json`) do not require authentication.
 
+### Test vs live keys
+
+Test/live key separation is **shipped**. Every API key carries an environment that
+determines which rails it can use:
+
+| Prefix | Environment | Settles on | Webhooks | Mint with |
+|--------|-------------|------------|----------|-----------|
+| `pp_live_` | `live` | Mainnet chains (`solana`, `base`, `polygon`) | Live-mode webhook URL | dashboard, or `pincerpay create-api-key` |
+| `pp_test_` | `test` | Testnet/devnet chains only (`solana-devnet`, `base-sepolia`, ... - any chain where `ChainConfig.testnet === true`) | Test-mode webhook URL only | dashboard, or `pincerpay create-api-key --test` |
+
+A **test key cannot settle on a mainnet chain** (the facilitator rejects it), and a
+live key is meant for real-money mainnet traffic. Test transactions never trigger
+production webhooks. There is no single key that maps to both; pick the key for the
+rail you are targeting. Mainnet vs devnet is otherwise selected per route/payment
+by the `network` (CAIP-2) you advertise.
+
 ## POST /v1/verify
 
 Verify a signed payment transaction without broadcasting it. Returns whether the payment is valid and the payer address.

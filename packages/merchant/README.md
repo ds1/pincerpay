@@ -184,6 +184,24 @@ app.post("/api/trade", async (c) => {
 
 The same `payer` field is also included in the base64-encoded `payment-response` response header for clients that bypass the middleware and post directly to `/v1/settle`.
 
+### Context contract
+
+The middleware sets **exactly one** Hono context variable: `pincerpay`, typed as
+`PincerPayPaymentInfo`. There is no `agentWallet` (or any other) context key - in
+the example above, `agentWallet` is just a field name on the caller's own
+`recordTrade(...)` function. Import the canonical type instead of duck-typing the
+shape, and you will fail at compile time if it ever changes:
+
+```typescript
+import type {
+  PincerPayContextVariables, // { pincerpay: PincerPayPaymentInfo }
+  PincerPayPaymentInfo,      // { payer: string; transaction: string; network: string }
+} from "@pincerpay/merchant"; // also re-exported from "@pincerpay/merchant/nextjs"
+```
+
+Any change to the keys the middleware sets, or to `PincerPayPaymentInfo`, will be
+called out in this package's [CHANGELOG](./CHANGELOG.md).
+
 ## API Reference
 
 ### `createPincerPayMiddleware(config): Hono.MiddlewareHandler`

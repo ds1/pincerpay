@@ -43,7 +43,6 @@ Thumbs.db
 _planning/
 CLAUDE.md
 STATUS.md
-CHANGELOG.md
 TESTS.md
 
 # Admin dashboard (private — deploy via local `vercel --prod`)

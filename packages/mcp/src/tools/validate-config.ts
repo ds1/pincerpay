@@ -24,6 +24,7 @@ export function registerValidateConfig(server: McpServer) {
       "chain names, and USDC amounts. Returns validation results " +
       "with specific error messages for each issue found.",
     inputSchema,
+    { title: "Validate payment config", readOnlyHint: true, openWorldHint: false },
     async ({ config }) => {
       let parsed: unknown;
       try {
