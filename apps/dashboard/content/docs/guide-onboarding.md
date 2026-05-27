@@ -1,15 +1,15 @@
 ---
 title: "Onboarding Functions"
-description: "Implementation guide to @pincerpay/onboarding — non-custodial wallet generation, one-call merchant bootstrap, and API key minting against your own database."
+description: "Implementation guide to @pincerpay/onboarding - non-custodial wallet generation, one-call merchant bootstrap, and API key minting against your own database."
 order: 3.9
 section: SDK Guides
 ---
 
-`@pincerpay/onboarding` is the programmatic version of what the `pincerpay` CLI does: generate non-custodial wallets, create a merchant row, and mint an API key — all against a database you control. It's for building your own signup flow or admin tooling. This guide covers each exported function and the non-custodial contract you're responsible for upholding.
+`@pincerpay/onboarding` is the programmatic version of what the `pincerpay` CLI does: generate non-custodial wallets, create a merchant row, and mint an API key - all against a database you control. It's for building your own signup flow or admin tooling. This guide covers each exported function and the non-custodial contract you're responsible for upholding.
 
 > **ESM-only.** The wallet generator runs anywhere Node crypto does; the merchant/key functions are **server-side** and open a Postgres connection. Three entry points: `@pincerpay/onboarding` (everything), `@pincerpay/onboarding/wallets`, and `@pincerpay/onboarding/merchant`.
 
-## `generateMerchantWallets(options?)` — local, non-custodial keys
+## `generateMerchantWallets(options?)` - local, non-custodial keys
 
 ```ts
 import { generateMerchantWallets } from "@pincerpay/onboarding";
@@ -29,11 +29,11 @@ interface MerchantWallets {
 }
 ```
 
-It derives a Solana key at `m/44'/501'/0'/0'` (Phantom-compatible) and an EVM key at `m/44'/60'/0'/0/0` (MetaMask-compatible) — both exported as `SOLANA_DERIVATION_PATH` / `EVM_DERIVATION_PATH`. A supplied `mnemonic` must be valid BIP-39 or it throws `"Invalid BIP-39 mnemonic"`; a degenerate EVM derivation throws `"EVM derivation produced no private key"`.
+It derives a Solana key at `m/44'/501'/0'/0'` (Phantom-compatible) and an EVM key at `m/44'/60'/0'/0/0` (MetaMask-compatible) - both exported as `SOLANA_DERIVATION_PATH` / `EVM_DERIVATION_PATH`. A supplied `mnemonic` must be valid BIP-39 or it throws `"Invalid BIP-39 mnemonic"`; a degenerate EVM derivation throws `"EVM derivation produced no private key"`.
 
-> **Non-custodial contract.** This function returns the mnemonic and private keys to *you* and PincerPay never sees them. That's the whole point — and the responsibility. Display them once to the merchant, let them save the phrase, and discard from memory. Don't log them, don't persist them server-side. Only public addresses should ever leave the process.
+> **Non-custodial contract.** This function returns the mnemonic and private keys to *you* and PincerPay never sees them. That's the whole point - and the responsibility. Display them once to the merchant, let them save the phrase, and discard from memory. Don't log them, don't persist them server-side. Only public addresses should ever leave the process.
 
-## `bootstrapMerchant(options)` — zero to merchant in one call
+## `bootstrapMerchant(options)` - zero to merchant in one call
 
 The end-to-end path: take (or generate) wallets, insert the merchant, mint a live API key, return env-ready output.
 
@@ -54,9 +54,9 @@ const result = await bootstrapMerchant({
 
 Defaults worth knowing: `walletAddress` falls back to `wallets.solana.address`; `walletAddresses` defaults to `{ solana, evm }`; `supportedChains` defaults to `["solana", "polygon"]` when wallets are present (else `[]`); `apiKeyLabel` defaults to `"Bootstrap"`. The API key is always minted in the **`live`** environment. A live webhook secret (random 32-byte hex) is always generated; a test secret only if you pass `webhookUrlTest`.
 
-You must supply **either** generated `wallets` **or** an explicit `walletAddress` — neither throws `"bootstrapMerchant: must provide either generated wallets or an explicit walletAddress"`. The function opens a DB connection via `createDb` and always `close()`s it in a `finally`, so you don't manage the pool. The returned `apiKey.rawKey` is shown **once** — surface it immediately; it isn't recoverable.
+You must supply **either** generated `wallets` **or** an explicit `walletAddress` - neither throws `"bootstrapMerchant: must provide either generated wallets or an explicit walletAddress"`. The function opens a DB connection via `createDb` and always `close()`s it in a `finally`, so you don't manage the pool. The returned `apiKey.rawKey` is shown **once** - surface it immediately; it isn't recoverable.
 
-## `createApiKey(options)` — mint a key for an existing merchant
+## `createApiKey(options)` - mint a key for an existing merchant
 
 ```ts
 import { createApiKey } from "@pincerpay/onboarding";
@@ -70,9 +70,9 @@ const key = await createApiKey({
 // → { rawKey, prefix, label, merchantId, merchantName, environment }
 ```
 
-`merchant` is resolved as a UUID first, then by case-insensitive name. Ambiguity and misses throw clear errors: `No merchant found with id ...`, `No merchant found with name "..."`, or `Name "..." matched multiple merchants. Pass --merchant <id> instead.` A **test** key cannot settle on a mainnet chain — mint `live` for production traffic. Like bootstrap, this hashes the key through the shared `@pincerpay/db` helpers, so set `TOKEN_PEPPER` in the environment to get HMAC-hashed keys (see the [Database & key hashing guide](/docs/guide-db)).
+`merchant` is resolved as a UUID first, then by case-insensitive name. Ambiguity and misses throw clear errors: `No merchant found with id ...`, `No merchant found with name "..."`, or `Name "..." matched multiple merchants. Pass --merchant <id> instead.` A **test** key cannot settle on a mainnet chain - mint `live` for production traffic. Like bootstrap, this hashes the key through the shared `@pincerpay/db` helpers, so set `TOKEN_PEPPER` in the environment to get HMAC-hashed keys (see the [Database & key hashing guide](/docs/guide-db)).
 
-## `listMerchantsAll(databaseUrl)` — admin lookup
+## `listMerchantsAll(databaseUrl)` - admin lookup
 
 ```ts
 const merchants = await listMerchantsAll(process.env.DATABASE_URL!);
