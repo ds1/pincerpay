@@ -55,6 +55,12 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url().optional(),
   /** Supabase publishable / anon key. Required for CLI onboarding. */
   SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
+  /**
+   * Set true once the Supabase project has a working SMTP provider configured.
+   * When false, /signup returns 503 instead of falsely reporting that an OTP
+   * email was sent (Supabase's built-in email service silently drops mail).
+   */
+  SUPABASE_SMTP_CONFIGURED: z.coerce.boolean().default(false),
 }).refine(
   (data) => data.SOLANA_PRIVATE_KEY || data.KORA_RPC_URL,
   { message: "At least one of SOLANA_PRIVATE_KEY or KORA_RPC_URL is required", path: ["SOLANA_PRIVATE_KEY"] },

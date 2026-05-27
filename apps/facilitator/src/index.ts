@@ -229,7 +229,7 @@ app.route("/", createOpenApiRoute());
 // Each route is IP-rate-limited internally. Only mounts when Supabase + token
 // pepper config is present; otherwise the warning above already fired.
 if (onboardingEnabled) {
-  app.route("/", createAuthRoute(db));
+  app.route("/", createAuthRoute(db, { smtpConfigured: !!config.SUPABASE_SMTP_CONFIGURED }));
 } else {
   logger.warn({
     msg: "onboarding_disabled_missing_config",

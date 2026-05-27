@@ -120,57 +120,6 @@ const { date, amount } = agent.getDailySpend();
 console.log(`Spent ${amount} base units on ${date}`);
 ```
 
-## Solana Smart Agent (Advanced)
-
-For agents using Squads Protocol smart accounts with on-chain spending limits. Smart Accounts can be created and managed from the PincerPay dashboard (connect your wallet, set limits, no external Squads configuration needed).
-
-```typescript
-import { SolanaSmartAgent } from "@pincerpay/agent";
-
-const agent = await SolanaSmartAgent.create({
-  chains: ["solana"],
-  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
-  smartAccountIndex: 0,
-  spendingLimitIndex: 0,
-});
-
-// Check on-chain spending policy before payment
-const policy = await agent.checkOnChainPolicy("100000");
-if (policy.allowed) {
-  const response = await agent.fetch("https://api.example.com/data");
-}
-
-// Direct on-chain settlement (bypasses x402 for Solana-native)
-const result = await agent.settleDirectly("MERCHANT_ID", "100000");
-```
-
-### Building Squads Instructions Programmatically
-
-If you need to manage Smart Accounts from code instead of the dashboard:
-
-```typescript
-// Build a createSmartAccount instruction
-const createIx = await agent.buildCreateSmartAccountInstruction({
-  members: [agentAddress, operatorAddress],
-  threshold: 1,
-});
-
-// Build an addSpendingLimit instruction
-const addLimitIx = await agent.buildAddSpendingLimitInstruction({
-  mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC mainnet
-  amount: 10_000_000n,  // 10 USDC
-  period: 1,            // 0=OneTime, 1=Daily, 2=Weekly, 3=Monthly
-  authority: operatorAddress,
-});
-
-// Build a revokeSpendingLimit instruction
-const revokeIx = await agent.buildRevokeSpendingLimitInstruction({
-  authority: operatorAddress,
-});
-```
-
-These return Solana instructions that you sign and send with your own transaction infrastructure.
-
 ## Environment Variables
 
 | Variable | Required | Description |

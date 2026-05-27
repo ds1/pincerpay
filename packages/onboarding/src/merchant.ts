@@ -1,6 +1,6 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { eq, ilike } from "drizzle-orm";
-import { createDb, merchants, apiKeys, type Environment } from "@pincerpay/db";
+import { createDb, merchants, apiKeys, hashNewApiKey, type Environment } from "@pincerpay/db";
 import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
 import type { MerchantWallets } from "./wallets.js";
 
@@ -181,12 +181,13 @@ async function mintApiKey(
 ): Promise<CreatedKey> {
   const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
   const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
-  const keyHash = createHash("sha256").update(rawKey).digest("hex");
+  const { keyHash, keyHashHmac } = hashNewApiKey(rawKey);
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
 
   await db.insert(apiKeys).values({
     merchantId,
     keyHash,
+    keyHashHmac,
     prefix,
     label,
     environment,

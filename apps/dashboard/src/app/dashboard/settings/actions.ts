@@ -1,9 +1,9 @@
 "use server";
 
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { createSupabaseServer } from "@/lib/supabase/server";
-import { merchants, apiKeys, type Environment } from "@pincerpay/db";
+import { merchants, apiKeys, hashNewApiKey, type Environment } from "@pincerpay/db";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
@@ -86,12 +86,13 @@ export async function createApiKey(label: string, environment: Environment = "li
 
   const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
   const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
-  const keyHash = createHash("sha256").update(rawKey).digest("hex");
+  const { keyHash, keyHashHmac } = hashNewApiKey(rawKey);
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
 
   await db.insert(apiKeys).values({
     merchantId: merchant.id,
     keyHash,
+    keyHashHmac,
     prefix,
     label,
     environment,

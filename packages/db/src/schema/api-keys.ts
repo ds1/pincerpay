@@ -10,8 +10,17 @@ export const apiKeys = pgTable(
     merchantId: uuid("merchant_id")
       .notNull()
       .references(() => merchants.id, { onDelete: "cascade" }),
-    /** SHA-256 hash of the full API key */
-    keyHash: text("key_hash").notNull().unique(),
+    /**
+     * Legacy plain SHA-256 hash of the full API key. Nullable: keys minted
+     * after the #124 migration store {@link keyHashHmac} instead and leave this
+     * null. Retained for verifying pre-migration keys until the cutover cleanup.
+     */
+    keyHash: text("key_hash").unique(),
+    /**
+     * HMAC-SHA256(TOKEN_PEPPER, raw_key) — parity with cli_sessions.token_hash.
+     * Null for legacy keys that predate the migration.
+     */
+    keyHashHmac: text("key_hash_hmac").unique(),
     /** First 12 chars shown to user (e.g., "pp_live_abc1" or "pp_test_abc1") */
     prefix: text("prefix").notNull(),
     label: text("label").notNull().default("Default"),
@@ -24,6 +33,7 @@ export const apiKeys = pgTable(
   (table) => [
     index("api_keys_merchant_id_idx").on(table.merchantId),
     index("api_keys_key_hash_idx").on(table.keyHash),
+    index("api_keys_key_hash_hmac_idx").on(table.keyHashHmac),
     index("api_keys_merchant_env_active_idx")
       .on(table.merchantId, table.environment, table.isActive)
       .where(sql`${table.isActive} = true`),

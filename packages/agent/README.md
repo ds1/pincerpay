@@ -56,54 +56,6 @@ class PincerPayAgent {
 }
 ```
 
-### `SolanaSmartAgent`
-
-Extended agent with Squads SPN smart account support, on-chain spending policies, and direct settlement via the Anchor program.
-
-```typescript
-class SolanaSmartAgent extends PincerPayAgent {
-  static override async create(config: SolanaSmartAgentConfig): Promise<SolanaSmartAgent>;
-
-  // Squads PDAs (derived automatically from config)
-  get smartAccountPda(): string | undefined;
-  get settingsPda(): string | undefined;
-  get spendingLimitPda(): string | undefined;
-
-  // Direct settlement (bypasses x402, settles via Anchor program)
-  async settleDirectly(
-    merchantId: string,
-    amountBaseUnits: string,
-    options?: { facilitatorUrl?: string; apiKey?: string; network?: string }
-  ): Promise<{ success: boolean; transactionId?: string; accounts?: Record<string, string>; error?: string }>;
-
-  // On-chain policy check (optimistic pre-check against Squads spending limit)
-  async checkOnChainPolicy(
-    amountBaseUnits: string,
-    rpcUrl?: string
-  ): Promise<{ allowed: boolean; reason?: string; remainingAmount?: bigint }>;
-
-  // Instruction builders (returns Instruction, caller signs and sends)
-  async buildCreateSmartAccountInstruction(params?: {
-    members?: string[];
-    threshold?: number;
-  }): Promise<Instruction>;
-
-  async buildAddSpendingLimitInstruction(params: {
-    mint: string;
-    amount: bigint;
-    period: SpendingLimitPeriod;
-    members?: string[];
-    destinations?: string[];
-    authority: string;
-  }): Promise<Instruction>;
-
-  async buildRevokeSpendingLimitInstruction(params: {
-    authority: string;
-    rentCollector?: string;
-  }): Promise<Instruction>;
-}
-```
-
 ### Config
 
 ```typescript
@@ -113,12 +65,6 @@ interface AgentConfig {
   solanaPrivateKey?: string;       // Base58-encoded Solana keypair
   policies?: SpendingPolicy[];     // Client-side spending limits
   facilitatorUrl?: string;         // Default: https://facilitator.pincerpay.com
-}
-
-interface SolanaSmartAgentConfig extends AgentConfig {
-  settingsPda?: string;            // Override Squads Settings PDA
-  smartAccountIndex?: number;      // For PDA derivation (default: 0)
-  spendingLimitIndex?: number;     // For PDA derivation (default: 0)
 }
 
 interface SpendingPolicy {
@@ -176,49 +122,6 @@ agent.setPolicy({ maxPerTransaction: "5000000", maxPerDay: "50000000" });
 // Monitor daily spending
 const { date, amount } = agent.getDailySpend();
 console.log(`Spent ${amount} base units on ${date}`); // amount is bigint
-```
-
-### Direct settlement via Anchor program
-
-```typescript
-import { SolanaSmartAgent } from "@pincerpay/agent";
-
-const agent = await SolanaSmartAgent.create({
-  chains: ["solana"],
-  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
-  smartAccountIndex: 0,
-  spendingLimitIndex: 0,
-});
-
-// Check on-chain spending limit before payment
-const check = await agent.checkOnChainPolicy("500000");
-if (check.allowed) {
-  const result = await agent.settleDirectly("merchant-uuid", "500000", {
-    apiKey: process.env.PINCERPAY_API_KEY!,
-  });
-}
-```
-
-### Build Squads instructions for wallet signing
-
-```typescript
-const agent = await SolanaSmartAgent.create({
-  chains: ["solana"],
-  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
-  smartAccountIndex: 0,
-});
-
-// Build instructions -- sign and send with your wallet adapter
-const createIx = await agent.buildCreateSmartAccountInstruction({ threshold: 1 });
-const limitIx = await agent.buildAddSpendingLimitInstruction({
-  mint: usdcMintAddress,
-  amount: 10_000_000n, // 10 USDC
-  period: SpendingLimitPeriod.Day,
-  authority: walletAddress,
-});
-const revokeIx = await agent.buildRevokeSpendingLimitInstruction({
-  authority: walletAddress,
-});
 ```
 
 ## Anti-Patterns
