@@ -147,3 +147,23 @@ Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Bl
 - `scripts/bootstrap-merchant.mts` - End-to-end CLI: wallet generation + merchant row + API key
 - `scripts/create-wallets.mts` - Wallet generation only (no DB)
 - `scripts/create-api-key.mts` - Mint a key for an existing merchant
+
+## Surfacing work that needs @ds1
+
+@ds1 may miss things buried in long chat transcripts. So whenever work is
+**blocked on @ds1** — it needs a credential/access only they have (prod
+`DATABASE_URL`, npm/Vercel/Railway/CI secrets, GitHub Actions), a decision only
+they can make, or any action only they can take — do not let it live only in
+chat. Create a GitHub issue and **assign it to `ds1`** so it shows up in their
+queue.
+
+- One consolidated issue per batch of related blockers is fine (see #140 as the
+  template): a checklist, ordered by urgency, with enough context to act without
+  scrolling back, and links to any existing tracking issues instead of
+  duplicating them.
+- Label by area/severity using the repo's existing labels (e.g. `priority: high`,
+  `infra`, `security`).
+- Note inside the issue which items are being handled without them, so the
+  assigned list is purely "needs @ds1".
+- Still summarize the blockers in chat too — the issue is the durable backstop,
+  not a replacement for telling them.
