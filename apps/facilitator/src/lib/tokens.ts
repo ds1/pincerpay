@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 const TOKEN_PREFIX = "pp_cli_";
 const ENTROPY_BYTES = 24;
@@ -105,13 +105,4 @@ export function parseToken(rawToken: string): ParsedToken {
     hash: hashToken(rawToken),
     prefix: rawToken.slice(0, 14),
   };
-}
-
-/**
- * Plain SHA-256 hash. Reused for backwards-compat with the existing api_keys
- * table which still uses sha256(rawKey). Only use here for completeness; new
- * code should use {@link hashToken}.
- */
-export function sha256Hex(input: string): string {
-  return createHash("sha256").update(input).digest("hex");
 }

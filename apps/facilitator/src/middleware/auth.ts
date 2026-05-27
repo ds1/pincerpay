@@ -1,8 +1,13 @@
 import { type MiddlewareHandler } from "hono";
-import { createHash } from "node:crypto";
 import { eq, and } from "drizzle-orm";
 import { API_KEY_HEADER } from "@pincerpay/core";
-import { apiKeys, merchants } from "@pincerpay/db";
+import {
+  apiKeys,
+  merchants,
+  apiKeyHashHmac,
+  apiKeyHashSha256,
+  getApiKeyPepper,
+} from "@pincerpay/db";
 import type { Database } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
 
@@ -24,14 +29,31 @@ export function authMiddleware(db: Database): MiddlewareHandler<AppEnv> {
       return c.json({ error: "Missing API key" }, 401);
     }
 
-    const keyHash = createHash("sha256").update(apiKey).digest("hex");
     const keyPrefix = apiKey.slice(0, 12);
 
-    const [key] = await db
-      .select()
-      .from(apiKeys)
-      .where(and(eq(apiKeys.keyHash, keyHash), eq(apiKeys.isActive, true)))
-      .limit(1);
+    // Look up by HMAC first (current scheme, #124), then fall back to the legacy
+    // SHA-256 column so keys minted before the migration keep working until the
+    // cutover cleanup revokes them.
+    const pepper = getApiKeyPepper();
+    let key:
+      | typeof apiKeys.$inferSelect
+      | undefined;
+
+    if (pepper) {
+      [key] = await db
+        .select()
+        .from(apiKeys)
+        .where(and(eq(apiKeys.keyHashHmac, apiKeyHashHmac(apiKey, pepper)), eq(apiKeys.isActive, true)))
+        .limit(1);
+    }
+
+    if (!key) {
+      [key] = await db
+        .select()
+        .from(apiKeys)
+        .where(and(eq(apiKeys.keyHash, apiKeyHashSha256(apiKey)), eq(apiKeys.isActive, true)))
+        .limit(1);
+    }
 
     if (!key) {
       logger.warn({

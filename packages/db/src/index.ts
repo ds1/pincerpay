@@ -3,6 +3,7 @@ import postgres from "postgres";
 import * as schema from "./schema/index.js";
 
 export * from "./schema/index.js";
+export * from "./hashing.js";
 
 export type Database = ReturnType<typeof createDb>["db"];
 

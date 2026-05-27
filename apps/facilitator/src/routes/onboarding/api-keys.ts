@@ -1,12 +1,11 @@
 import { Hono, type Context } from "hono";
 import { randomBytes } from "node:crypto";
 import { and, count, eq } from "drizzle-orm";
-import { apiKeys, merchants } from "@pincerpay/db";
+import { apiKeys, merchants, hashNewApiKey } from "@pincerpay/db";
 import type { Database, Environment } from "@pincerpay/db";
 import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
 import type { AppEnv } from "../../env.js";
 import { audit } from "../../lib/audit.js";
-import { sha256Hex } from "../../lib/tokens.js";
 import { createApiKeySchema, sessionIdParamSchema } from "./schemas.js";
 
 const MAX_ACTIVE_KEYS_PER_MERCHANT = 50;
@@ -31,9 +30,9 @@ function clientIp(c: Context<AppEnv>): string | null {
 function newApiKey(environment: Environment) {
   const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
   const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
-  const keyHash = sha256Hex(rawKey);
+  const { keyHash, keyHashHmac } = hashNewApiKey(rawKey);
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
-  return { rawKey, keyHash, prefix };
+  return { rawKey, keyHash, keyHashHmac, prefix };
 }
 
 export function createApiKeysOnboardingRoute(db: Database) {
@@ -75,12 +74,13 @@ export function createApiKeysOnboardingRoute(db: Database) {
     }
 
     const environment: Environment = parsed.data.isTest ? "test" : "live";
-    const { rawKey, keyHash, prefix } = newApiKey(environment);
+    const { rawKey, keyHash, keyHashHmac, prefix } = newApiKey(environment);
     const [created] = await db
       .insert(apiKeys)
       .values({
         merchantId,
         keyHash,
+        keyHashHmac,
         prefix,
         label: parsed.data.label,
         environment,
@@ -172,12 +172,13 @@ export function createApiKeysOnboardingRoute(db: Database) {
     if (!target) return c.json({ error: "api_key_not_found" }, 404);
 
     // Rotation preserves environment: rotating a test key produces a test key.
-    const { rawKey, keyHash, prefix } = newApiKey(target.environment);
+    const { rawKey, keyHash, keyHashHmac, prefix } = newApiKey(target.environment);
     const [created] = await db
       .insert(apiKeys)
       .values({
         merchantId,
         keyHash,
+        keyHashHmac,
         prefix,
         label: target.label,
         environment: target.environment,
