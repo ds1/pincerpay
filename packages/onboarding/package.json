@@ -1,6 +1,6 @@
 {
   "name": "@pincerpay/onboarding",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "Non-custodial merchant onboarding utilities for PincerPay. Generate wallets, create merchant records, provision API keys.",
   "license": "MIT",
