@@ -85,7 +85,7 @@ MERCHANT_URL=http://localhost:3001
 # SOL (for gas)
 solana airdrop 2 <agent-address> --url devnet
 
-# USDC (for payments) - use the Circle faucet:
+# USDC (for payments): use the Circle faucet:
 # https://faucet.circle.com (select Solana, Devnet, USDC)
 ```
 

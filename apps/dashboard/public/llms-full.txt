@@ -1,6 +1,6 @@
-# PincerPay - Complete Documentation
+# PincerPay: Complete Documentation
 
-> On-chain payment gateway for the agentic economy. No card rails - pure stablecoin settlement.
+> On-chain payment gateway for the agentic economy. No card rails, just pure stablecoin settlement.
 
 PincerPay is an x402 payment gateway that lets AI agents pay for HTTP resources using USDC. Merchants add middleware to their server; agents wrap their fetch calls. The PincerPay Facilitator verifies and broadcasts transactions on-chain. Settlement is instant, non-custodial, and final.
 
@@ -27,13 +27,13 @@ Go from zero to a working PincerPay integration in 5 minutes.
 
 ### Quick Start
 
-1. Sign Up - Create an account at pincerpay.com/signup. You'll land in the merchant dashboard.
+1. Sign Up: Create an account at pincerpay.com/signup. You'll land in the merchant dashboard.
 
-2. Create Your Merchant Profile - Go to Settings and fill in: Business name, Wallet address (Solana or EVM), Supported chains (solana recommended).
+2. Create Your Merchant Profile: Go to Settings and fill in: Business name, Wallet address (Solana or EVM), Supported chains (solana recommended).
 
-3. Generate an API Key - In Settings, scroll to API Keys and click Generate Key. Copy it - it's shown only once. Key format: `pp_live_xxxxxxxxxxxx...`.
+3. Generate an API Key: In Settings, scroll to API Keys and click Generate Key. Copy it now, since it's shown only once. Key format: `pp_live_xxxxxxxxxxxx...`.
 
-4. Create a Paywall - Go to Paywalls and click New Paywall: Endpoint (e.g. `GET /api/weather`), Price (e.g. `0.01` USDC), Description.
+4. Create a Paywall: Go to Paywalls and click New Paywall: Endpoint (e.g. `GET /api/weather`), Price (e.g. `0.01` USDC), Description.
 
 5. Install the Merchant SDK:
 
@@ -91,7 +91,7 @@ console.log(data); // { temp: 72, condition: "sunny" }
 
 ## Merchant Onboarding
 
-Generate wallets and provision a PincerPay merchant from the CLI or MCP - non-custodial, no dashboard click-through.
+Generate wallets and provision a PincerPay merchant from the CLI or MCP, non-custodial with no dashboard click-through.
 
 ### Three paths
 
@@ -522,7 +522,7 @@ Route config options:
 
 ### Helpers
 
-toBaseUnits() - Convert human-readable USDC to base units (6 decimals):
+toBaseUnits() converts human-readable USDC to base units (6 decimals):
 
 ```typescript
 import { toBaseUnits } from "@pincerpay/merchant";
@@ -597,8 +597,8 @@ const agent = await PincerPayAgent.create({
 
 Spending limits are enforced at two layers:
 
-1. Client-side (SDK) - checks policies before signing. If a payment would violate a policy, the SDK throws instead of signing.
-2. Server-side (Facilitator) - enforces maxPerTransaction and maxPerDay for all registered agents, rejecting with 403.
+1. Client-side (SDK) checks policies before signing. If a payment would violate a policy, the SDK throws instead of signing.
+2. Server-side (Facilitator) enforces maxPerTransaction and maxPerDay for all registered agents, rejecting with 403.
 
 | Option | Type | Description |
 |--------|------|-------------|
@@ -716,12 +716,12 @@ Doc topics: getting-started, merchant, agent, troubleshooting, reference.
 
 | Prompt | Description |
 |--------|-------------|
-| get-started | Interactive onboarding - determines your role and guides you to the right flow |
+| get-started | Interactive onboarding: determines your role and guides you to the right flow |
 | integrate-merchant | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
 | integrate-agent | Agent SDK setup with spending policies and gas estimates |
 | debug-transaction | Transaction troubleshooting by hash/signature |
-| manage-paywalls | Paywall management - list, create, update, delete, or review configuration |
-| monitor-payments | Payment monitoring - overview, failure investigation, pending transaction analysis |
+| manage-paywalls | Paywall management: list, create, update, delete, or review configuration |
+| monitor-payments | Payment monitoring: overview, failure investigation, pending transaction analysis |
 
 ### API Key
 
@@ -775,18 +775,18 @@ HTTP status code 402 ("Payment Required") has existed since 1997. The x402 proto
 
 ### Why This Matters
 
-- No API keys to manage - agents pay per-request, no account creation needed
-- No rate limits - every request that pays gets served
-- No invoicing - settlement is instant, on-chain, final
-- Any HTTP endpoint - works with REST, GraphQL, file downloads, anything over HTTP
+- No API keys to manage: agents pay per-request, no account creation needed
+- No rate limits: every request that pays gets served
+- No invoicing: settlement is instant, on-chain, final
+- Any HTTP endpoint: works with REST, GraphQL, file downloads, anything over HTTP
 
 ### The Facilitator
 
 The PincerPay Facilitator is the intermediary that verifies and broadcasts transactions:
 
-1. Verify - checks that the signed transaction matches the payment requirements
-2. Broadcast - submits the transaction on-chain
-3. Confirm - monitors confirmation status and notifies merchants via webhooks
+1. Verify: checks that the signed transaction matches the payment requirements
+2. Broadcast: submits the transaction on-chain
+3. Confirm: monitors confirmation status and notifies merchants via webhooks
 
 ---
 
@@ -876,10 +876,10 @@ Solana-first design with optional EVM compatibility for Base and Polygon.
 
 ### Solana (Primary)
 
-- Sub-second finality - transactions confirm in ~400ms
-- Sub-cent fees - a USDC transfer costs ~$0.00025
-- Kora gasless - agents pay gas in USDC instead of SOL (live on devnet)
-- Squads SPN - on-chain Smart Accounts with spending limits, manageable from the PincerPay dashboard
+- Sub-second finality: transactions confirm in ~400ms
+- Sub-cent fees: a USDC transfer costs ~$0.00025
+- Kora gasless: agents pay gas in USDC instead of SOL (live on devnet)
+- Squads SPN: on-chain Smart Accounts with spending limits, manageable from the PincerPay dashboard
 
 ### Optimistic Finality
 
@@ -958,7 +958,7 @@ Response (200):
 }
 ```
 
-Transactions under 1 USDC are classified as optimistic - the resource is released after mempool broadcast (~200ms).
+Transactions under 1 USDC are classified as optimistic, so the resource is released after mempool broadcast (~200ms).
 
 ### POST /v1/settle-direct
 
@@ -1096,7 +1096,7 @@ const agent = await PincerPayAgent.create({
 
 | Chain | Faucet |
 |-------|--------|
-| Solana Devnet | https://faucet.circle.com - select Solana, USDC |
+| Solana Devnet | https://faucet.circle.com (select Solana, USDC) |
 | Base Sepolia | https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet |
 | Polygon Amoy | https://faucet.polygon.technology/ |
 
@@ -1294,6 +1294,6 @@ Source: https://github.com/ds1/pincerpay/tree/master/examples/agent-weather
 - Solana-first: Sub-second finality, sub-cent fees, Kora gasless (agents pay gas in USDC).
 - Open standard: Implements x402, not a proprietary protocol.
 - Micropayment-viable: $0.0001 per transaction vs $0.30+ on card rails.
-- Gas passthrough: PincerPay never subsidizes gas - agents pay via Kora (Solana) or meta-transactions (EVM).
+- Gas passthrough: PincerPay never subsidizes gas; agents pay via Kora (Solana) or meta-transactions (EVM).
 - Double-Lock: x402 payment + AP2 mandate must both validate before the facilitator broadcasts.
 - Compliance-as-a-Service: OFAC screening + reputation gating at the facilitator layer.

@@ -12,17 +12,17 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ### Overview
 
-- [Getting Started](https://pincerpay.com/docs/getting-started): 5-minute quickstart - sign up, create paywall, install SDK, test payment
+- [Getting Started](https://pincerpay.com/docs/getting-started): 5-minute quickstart: sign up, create paywall, install SDK, test payment
 
 ### Guides
 
-- [Merchant Onboarding](https://pincerpay.com/docs/onboarding): Generate wallets and provision a PincerPay merchant from the CLI or MCP - non-custodial, no dashboard click-through
+- [Merchant Onboarding](https://pincerpay.com/docs/onboarding): Generate wallets and provision a PincerPay merchant from the CLI or MCP, non-custodial with no dashboard click-through
 - [Quickstart: Merchant](https://pincerpay.com/docs/quickstart-merchant): Accept your first USDC payment from an AI agent in under 10 minutes
 - [Quickstart: Agent](https://pincerpay.com/docs/quickstart-agent): Give your AI agent a wallet and make its first autonomous payment
 
 ### SDKs
 
-- [@pincerpay/cli](https://pincerpay.com/docs/cli): Frictionless terminal-only CLI for merchant onboarding - signup, wallet generation, API keys, session management. No browser required.
+- [@pincerpay/cli](https://pincerpay.com/docs/cli): Frictionless terminal-only CLI for merchant onboarding: signup, wallet generation, API keys, session management. No browser required.
 - [Merchant SDK](https://pincerpay.com/docs/merchant-sdk): Express, Hono, and Next.js middleware for accepting USDC payments from agents
 - [Agent SDK](https://pincerpay.com/docs/agent-sdk): Drop-in fetch wrapper that handles 402 payment flows automatically
 - [MCP Server](https://pincerpay.com/docs/mcp-server): Connect PincerPay to any MCP-compatible AI assistant
@@ -36,7 +36,7 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ### Reference
 
-- [API Reference](https://pincerpay.com/docs/api-reference): Facilitator REST API - /verify, /settle, /settle-direct, /supported, /health, /metrics
+- [API Reference](https://pincerpay.com/docs/api-reference): Facilitator REST API: /verify, /settle, /settle-direct, /supported, /health, /metrics
 - [Testing](https://pincerpay.com/docs/testing): Devnet/testnet setup, faucets, end-to-end test scripts
 - [FAQ](https://pincerpay.com/docs/faq): Frequently asked questions about PincerPay integration and usage
 
@@ -52,14 +52,14 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ## Blog
 
-- [Why We Built PincerPay](https://pincerpay.com/blog/why-we-built-pincerpay): Card rails weren't designed for machines - we built infrastructure that was
+- [Why We Built PincerPay](https://pincerpay.com/blog/why-we-built-pincerpay): Card rails weren't designed for machines, so we built infrastructure that was
 
 ## Key Concepts
 
 - **x402 Protocol**: HTTP 402 Payment Required with structured payment requirements. Agent signs USDC transfer, facilitator verifies and broadcasts, merchant delivers resource.
 - **Non-custodial**: Agents hold their own keys. PincerPay verifies transactions but never controls funds.
 - **Solana-first**: Sub-second finality, sub-cent fees. Kora integration for gasless transactions (agents pay gas in USDC).
-- **Spending Policies**: Per-transaction limits, daily budgets, merchant allowlists - enforced client-side by the SDK, server-side by the facilitator, and optionally on-chain via Squads SPN.
+- **Spending Policies**: Per-transaction limits, daily budgets, merchant allowlists, enforced client-side by the SDK, server-side by the facilitator, and optionally on-chain via Squads SPN.
 - **AP2 Mandates (roadmap)**: Intent Mandates (autonomous limits), Cart Mandates (human approval), Payment Mandates (execution-level authorization). Not yet implemented; planned for a future phase.
 - **UCP Discovery**: Merchants publish a /.well-known/ucp manifest for agent-readable commerce discovery. PincerPay includes a UCP manifest generator for merchants.
 - **Optimistic Finality**: Sub-$1 payments release after mempool broadcast (~200ms) before block confirmation.
@@ -67,12 +67,12 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ## Integration
 
-- npm: @pincerpay/cli (terminal-only merchant onboarding - signup, wallets, API keys, sessions)
+- npm: @pincerpay/cli (terminal-only merchant onboarding: signup, wallets, API keys, sessions)
 - npm: @pincerpay/merchant (Express/Hono/Next.js middleware)
 - npm: @pincerpay/agent (fetch wrapper with auto-payment)
-- npm: @pincerpay/mcp (MCP server - 26 tools, 3 resources, 6 prompts, 5 doc topics; admin and public auth modes)
+- npm: @pincerpay/mcp (MCP server: 26 tools, 3 resources, 6 prompts, 5 doc topics; admin and public auth modes)
 - npm: @pincerpay/core (shared types, chain configs, constants)
-- npm: @pincerpay/solana (Solana integration - Kora gasless txns, Squads smart accounts)
+- npm: @pincerpay/solana (Solana integration: Kora gasless txns, Squads smart accounts)
 - npm: @pincerpay/onboarding (non-custodial wallet generation + merchant bootstrap helpers)
 - Facilitator API: https://facilitator.pincerpay.com
 - OpenAPI spec: https://facilitator.pincerpay.com/openapi.json
