@@ -1,11 +1,11 @@
 ---
 title: "Core: Chains, Addresses & Config"
-description: "A function-by-function guide to @pincerpay/core - chain resolution, address validation, config schemas, and the base-units rule that trips everyone up."
+description: "A function-by-function guide to @pincerpay/core: chain resolution, address validation, config schemas, and the base-units rule that trips everyone up."
 order: 3.6
 section: SDK Guides
 ---
 
-`@pincerpay/core` is the shared foundation every other PincerPay package builds on. You rarely install it alone, but understanding its functions explains how chains are named, how addresses are validated, and - most importantly - the one unit convention that causes the majority of integration bugs. This guide walks each public function in the order you'll actually meet them.
+`@pincerpay/core` is the shared foundation every other PincerPay package builds on. You rarely install it alone, but understanding its functions explains how chains are named, how addresses are validated, and (most importantly) the one unit convention that causes the majority of integration bugs. This guide walks each public function in the order you'll actually meet them.
 
 > **ESM-only.** Like every PincerPay package, `@pincerpay/core` ships ESM only. Your project needs `"type": "module"` and `.js` import specifiers.
 
@@ -13,10 +13,10 @@ section: SDK Guides
 
 USDC has **6 decimals**. Two different conventions coexist in the API, and mixing them up is the #1 source of "why did my agent pay 1,000,000 USDC" bugs:
 
-- **Base units** - integer strings where `"1000000"` = 1 USDC. Used by `Transaction.amount`, `SpendingPolicy.maxPerTransaction`/`maxPerDay`, and the agent's `checkPolicy`/`recordSpend`.
-- **Human decimals** - strings like `"0.01"`. Used only by paywall `price` fields (`RoutePaywallConfig`).
+- **Base units** are integer strings where `"1000000"` equals 1 USDC. They're used by `Transaction.amount`, `SpendingPolicy.maxPerTransaction`/`maxPerDay`, and the agent's `checkPolicy`/`recordSpend`.
+- **Human decimals** are strings like `"0.01"`. They're used only by paywall `price` fields (`RoutePaywallConfig`).
 
-`USDC_DECIMALS` (6) and `OPTIMISTIC_THRESHOLD` (`"1000000"`, the sub-1-USDC fast-release cutoff) are exported constants. When in doubt, you're probably in base units - only route pricing is human-readable, and `@pincerpay/merchant`'s `toBaseUnits` converts that for you.
+`USDC_DECIMALS` (6) and `OPTIMISTIC_THRESHOLD` (`"1000000"`, the sub-1-USDC fast-release cutoff) are exported constants. When in doubt, you're probably in base units: only route pricing is human-readable, and `@pincerpay/merchant`'s `toBaseUnits` converts that for you.
 
 ## Resolving chains
 
@@ -33,13 +33,13 @@ toCAIP2("base");               // → "eip155:8453"
 toCAIP2("dogecoin");           // throws: Unknown chain: "dogecoin". Valid chains: ...
 ```
 
-Use `resolveChain` when an unknown chain is an expected, recoverable case (you'll branch on `undefined`). Use `toCAIP2` at trust boundaries where an unknown chain is a programming error you want surfaced loudly. `getMainnetChains()` and `getTestnetChains()` return the `ChainConfig[]` for each environment - handy for building selectors or validating that a test key isn't pointed at mainnet.
+Use `resolveChain` when an unknown chain is an expected, recoverable case that you'll branch on via `undefined`. Reach for `toCAIP2` at trust boundaries where an unknown chain is a programming error you want surfaced loudly. `getMainnetChains()` and `getTestnetChains()` return the `ChainConfig[]` for each environment, which is handy for building selectors or for confirming a test key isn't pointed at mainnet.
 
 Each `ChainConfig` carries the chain's CAIP-2 ID, namespace, and USDC contract address, so you rarely hard-code an address yourself.
 
 ## Validating addresses
 
-These are **format** checks, not on-chain existence or checksum checks - cheap guards for user input before you hand an address to the facilitator:
+These are **format** checks rather than on-chain existence or checksum checks. Treat them as cheap guards for user input before you hand an address to the facilitator:
 
 ```ts
 import { isValidSolanaAddress, isValidEvmAddress } from "@pincerpay/core";
@@ -48,9 +48,9 @@ isValidSolanaAddress("11111111111111111111111111111111"); // base58, 32–44 cha
 isValidEvmAddress("0xab...40hex");                          // 0x + 40 hex, case-insensitive
 ```
 
-`isValidEvmAddress` does **not** enforce EIP-55 checksum casing, and `isValidSolanaAddress` does **not** verify the key is on-curve or a real mint - treat them as "looks plausible," not "is valid and exists."
+`isValidEvmAddress` does **not** enforce EIP-55 checksum casing, and `isValidSolanaAddress` does **not** verify the key is on-curve or a real mint, so treat them as "looks plausible," not "is valid and exists."
 
-For the chain-aware version, use `getChainNamespace(shorthand)` (returns `"eip155"` or `"solana"`, **throws** on unknown chain) and `validateMerchantAddressForChain(address, shorthand)`, which returns `null` on success or a **human-readable error string** on failure:
+For the chain-aware version, use `getChainNamespace(shorthand)` (it returns `"eip155"` or `"solana"`, and **throws** on an unknown chain) and `validateMerchantAddressForChain(address, shorthand)`, which returns `null` on success or a **human-readable error string** on failure:
 
 ```ts
 const err = validateMerchantAddressForChain(addr, "polygon");
@@ -74,9 +74,9 @@ This is the exact logic the merchant middleware runs at startup, so calling it y
 
 `@pincerpay/core` exports the Zod schemas the SDKs validate against. They live alongside the types and are worth using directly if you build your own config layer:
 
-- `PincerPayConfigSchema` - validates a merchant config. Its `.refine()` requires **either** `merchantAddress` **or** a non-empty `merchantAddresses` (error reported on the `merchantAddresses` path), and `facilitatorUrl` must be a valid URL when present.
-- `RoutePaywallConfigSchema` - `price` must match `^\d+\.?\d*$` (a human USDC decimal string like `"0.01"`); `chain`, `chains`, and `description` are optional.
-- `SpendingPolicySchema` - all fields optional; the limit fields are base-unit strings.
+- `PincerPayConfigSchema` validates a merchant config. Its `.refine()` requires **either** `merchantAddress` **or** a non-empty `merchantAddresses` (the error is reported on the `merchantAddresses` path), and `facilitatorUrl` must be a valid URL when present.
+- `RoutePaywallConfigSchema` requires `price` to match `^\d+\.?\d*$` (a human USDC decimal string like `"0.01"`); `chain`, `chains`, and `description` are optional.
+- `SpendingPolicySchema` makes all fields optional, and the limit fields are base-unit strings.
 
 ```ts
 import { PincerPayConfigSchema } from "@pincerpay/core";
@@ -89,4 +89,4 @@ const config = PincerPayConfigSchema.parse(rawConfig); // throws ZodError with a
 
 ## Where next
 
-These primitives power the [Merchant SDK guide](/docs/guide-merchant) (which calls `resolveChain`, `resolveMerchantAddress`, and `validateMerchantAddressForChain` at startup) and the [Agent SDK guide](/docs/guide-agent) (which consumes `SpendingPolicy` and base-unit amounts).
+These primitives power the [Merchant SDK guide](/docs/guide-merchant), which calls `resolveChain`, `resolveMerchantAddress`, and `validateMerchantAddressForChain` at startup, and the [Agent SDK guide](/docs/guide-agent), which consumes `SpendingPolicy` and base-unit amounts.
