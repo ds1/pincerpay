@@ -227,7 +227,7 @@ console.log(`EVM: ${agent.evmAddress}`);
 ## Next Steps
 
 - [Interactive Demo](https://demo.pincerpay.com/playground) to experiment with spending policies, error scenarios, and Smart Accounts
-- [Agent SDK Reference](/docs/agent-sdk) for the full API including `SolanaSmartAgent`
+- [Agent SDK Reference](/docs/agent-sdk) for the full API
 - [Weather Agent Example](/docs/example-agent-weather) for a complete agent with spending policies
 - [Merchant Quickstart](/docs/quickstart-merchant) to build your own paywalled API
 - [Testing Guide](/docs/testing) for devnet setup and transaction verification

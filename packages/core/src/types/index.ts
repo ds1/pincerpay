@@ -148,15 +148,6 @@ export interface AgentProfile {
   updatedAt: Date;
 }
 
-export interface SolanaSmartAgentConfig extends AgentConfig {
-  /** Squads Settings PDA */
-  settingsPda?: string;
-  /** Smart Account index for PDA derivation */
-  smartAccountIndex?: number;
-  /** Spending Limit index for PDA derivation */
-  spendingLimitIndex?: number;
-}
-
 // ─── Spending Policy ───
 
 export interface SpendingPolicy {
