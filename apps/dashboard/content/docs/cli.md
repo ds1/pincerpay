@@ -5,7 +5,7 @@ order: 3.4
 section: SDKs
 ---
 
-`@pincerpay/cli` is the terminal interface for PincerPay merchant onboarding. Sign up, verify email, generate non-custodial wallets, create merchant records, mint API keys, manage sessions — all from the command line. No browser interaction at any point.
+`@pincerpay/cli` is the terminal interface for PincerPay merchant onboarding. Sign up, verify email, generate non-custodial wallets, create merchant records, mint API keys, manage sessions, all from the command line. No browser interaction at any point.
 
 ## Install
 
@@ -96,7 +96,7 @@ pincerpay change-password
 
 ### `create-wallets`
 
-Generate non-custodial Solana + EVM wallets from a single BIP-39 mnemonic. Pure client-side crypto — no auth, never talks to PincerPay.
+Generate non-custodial Solana + EVM wallets from a single BIP-39 mnemonic. Pure client-side crypto: no auth, never talks to PincerPay.
 
 ```bash
 pincerpay create-wallets [--strength 12|24] [--mnemonic <words>] [--json] [--no-private-keys]
@@ -108,7 +108,7 @@ Phantom-compatible Solana derivation at `m/44'/501'/0'/0'`. MetaMask-compatible 
 
 ### `bootstrap-merchant`
 
-End-to-end onboarding in one command. Generates wallets, creates the merchant record, mints an initial API key. Idempotent — safe to re-run; finds an existing merchant for the account if one exists.
+End-to-end onboarding in one command. Generates wallets, creates the merchant record, mints an initial API key. Idempotent and safe to re-run; finds an existing merchant for the account if one exists.
 
 ```bash
 pincerpay bootstrap-merchant \
@@ -138,7 +138,7 @@ pincerpay api-keys revoke <id>                 # revoke a key
 pincerpay wallet set --solana <addr> --evm <addr> [--force]
 ```
 
-Updates the merchant's per-chain wallet addresses. **Confirms before committing** — wallet rotation redirects all future settlements. Audit-logged server-side.
+Updates the merchant's per-chain wallet addresses. **Confirms before committing**, since wallet rotation redirects all future settlements. Audit-logged server-side.
 
 ## Session management
 
@@ -153,7 +153,7 @@ pincerpay sessions revoke <id>                # revoke a session by id
 pincerpay env                                  # print env-var template
 ```
 
-Prints an env-var template based on the current merchant config. Uses public values (addresses, API key prefix) only — raw API keys are shown only once at creation time and must come from your password manager.
+Prints an env-var template based on the current merchant config. Uses public values (addresses, API key prefix) only. Raw API keys are shown only once at creation time and must come from your password manager.
 
 ## Configuration
 
@@ -167,12 +167,12 @@ Or pass `--facilitator-url <url>` to any command.
 
 - Tokens stored at `~/.pincerpay/credentials.json` with `0600` permissions on POSIX, current-user ACL on Windows.
 - Atomic writes (temp file + rename) prevent corruption from concurrent CLI invocations.
-- 30-day default token lifetime. Refresh-on-expiry — re-run `pincerpay login`.
+- 30-day default token lifetime. Refresh on expiry by re-running `pincerpay login`.
 - HMAC-SHA256 server-side hashing with pepper.
 - All operations audit-logged.
 
 ## Companion packages
 
-- [`@pincerpay/onboarding`](https://www.npmjs.com/package/@pincerpay/onboarding) — pure crypto for wallet generation. The CLI's `create-wallets` is a thin wrapper.
-- [`@pincerpay/mcp`](https://www.npmjs.com/package/@pincerpay/mcp) — same operations exposed as MCP tools. Picks up the same `~/.pincerpay/credentials.json` automatically.
-- [`@pincerpay/merchant`](https://www.npmjs.com/package/@pincerpay/merchant) — Hono middleware for accepting payments after onboarding.
+- [`@pincerpay/onboarding`](https://www.npmjs.com/package/@pincerpay/onboarding): pure crypto for wallet generation. The CLI's `create-wallets` is a thin wrapper.
+- [`@pincerpay/mcp`](https://www.npmjs.com/package/@pincerpay/mcp): the same operations exposed as MCP tools. Picks up the same `~/.pincerpay/credentials.json` automatically.
+- [`@pincerpay/merchant`](https://www.npmjs.com/package/@pincerpay/merchant): Hono middleware for accepting payments after onboarding.

@@ -77,8 +77,8 @@ const agent = await PincerPayAgent.create({
 
 Spending limits are enforced at two layers:
 
-1. **Client-side** (SDK) — the agent SDK checks policies before signing any transaction. If a payment would violate a policy, the SDK throws instead of signing.
-2. **Server-side** (Facilitator) — the PincerPay facilitator enforces `maxPerTransaction` and `maxPerDay` for all registered agents, rejecting payments that exceed limits with a 403 error. These limits are set in the merchant dashboard.
+1. **Client-side** (SDK): the agent SDK checks policies before signing any transaction. If a payment would violate a policy, the SDK throws instead of signing.
+2. **Server-side** (Facilitator): the PincerPay facilitator enforces `maxPerTransaction` and `maxPerDay` for all registered agents, rejecting payments that exceed limits with a 403 error. These limits are set in the merchant dashboard.
 
 | Option | Type | Description |
 |--------|------|-------------|

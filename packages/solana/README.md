@@ -57,7 +57,7 @@ function createKoraFacilitatorSvmSigner(options: {
   rpcUrls?: Record<string, string>;
 }): FacilitatorSvmSigner & { init(): Promise<void> };
 
-// Parse KORA_RPC_URL and KORA_API_KEY from env — returns null if no URL
+// Parse KORA_RPC_URL and KORA_API_KEY from env; returns null if no URL
 function parseKoraConfig(env: Record<string, string | undefined>): KoraConfig | null;
 
 // Zod schema for KoraConfig validation

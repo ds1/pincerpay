@@ -7,7 +7,7 @@ section: Guides
 
 This tutorial walks you through creating an AI agent that can autonomously pay for API resources using USDC on Solana. By the end, your agent will fetch data from a paywalled endpoint and handle payment automatically.
 
-![Agent configuration — wallet, chain, and spending limits](/docs/agent-config.png)
+![Agent configuration showing wallet, chain, and spending limits](/docs/agent-config.png)
 
 > **New to x402 payments?** Try the [interactive demo](https://demo.pincerpay.com/playground) first to see the payment flow in action before writing code.
 
@@ -113,7 +113,7 @@ Received: {
 
 Your agent just made its first autonomous payment.
 
-![x402 payment flow — from request to settlement](/docs/flow-visualizer.png)
+![x402 payment flow from request to settlement](/docs/flow-visualizer.png)
 
 ## Step 6: Add spending policies
 
@@ -166,7 +166,7 @@ const agent = await PincerPayAgent.create({
   solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
   policies: [
     {
-      maxPerTransaction: "500",  // 0.0005 USDC — lower than the 0.001 price
+      maxPerTransaction: "500",  // 0.0005 USDC, lower than the 0.001 price
     },
   ],
 });

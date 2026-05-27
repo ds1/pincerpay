@@ -44,22 +44,22 @@ Create an account at [pincerpay.com/signup](https://pincerpay.com/signup). You'l
 ### 2. Create Your Merchant Profile
 
 Go to **Settings** and fill in:
-- **Business name** — displayed to agents
-- **Wallet address** — your Solana (or EVM) address for receiving USDC
-- **Supported chains** — select `solana` (recommended), or add `base` / `polygon` for EVM
+- **Business name**: displayed to agents
+- **Wallet address**: your Solana (or EVM) address for receiving USDC
+- **Supported chains**: select `solana` (recommended), or add `base` / `polygon` for EVM
 
 ### 3. Generate an API Key
 
-In **Settings**, scroll to API Keys and click **Generate Key**. Copy it — it's shown only once. The key format is `pp_live_xxxxxxxxxxxx...`.
+In **Settings**, scroll to API Keys and click **Generate Key**. Copy it now, because it's shown only once. The key format is `pp_live_xxxxxxxxxxxx...`.
 
 > **Skip the dashboard?** The [Merchant Onboarding](/docs/onboarding) guide covers the CLI and MCP paths that bundle wallet generation + merchant creation + API key into a single command.
 
 ### 4. Create a Paywall
 
 Go to **Paywalls** and click **New Paywall**:
-- **Endpoint** — the route pattern, e.g. `GET /api/weather`
-- **Price** — amount in USDC, e.g. `0.01`
-- **Description** — what the agent gets (shown in the 402 response)
+- **Endpoint**: the route pattern, e.g. `GET /api/weather`
+- **Price**: amount in USDC, e.g. `0.01`
+- **Description**: what the agent gets (shown in the 402 response)
 
 ### 5. Install the Merchant SDK
 
@@ -129,6 +129,6 @@ Check the **Transactions** page in your dashboard to see the payment.
 
 Working examples you can clone and run locally:
 
-- [Next.js Merchant](/docs/example-nextjs-merchant) — Hono catch-all route handler with paywalled endpoints in a Next.js 15 app
-- [Express Merchant](/docs/example-express-merchant) — Express server with free and paywalled routes at different price tiers
-- [Weather Agent](/docs/example-agent-weather) — AI agent with spending policies that pays for weather data automatically
+- [Next.js Merchant](/docs/example-nextjs-merchant): Hono catch-all route handler with paywalled endpoints in a Next.js 15 app
+- [Express Merchant](/docs/example-express-merchant): Express server with free and paywalled routes at different price tiers
+- [Weather Agent](/docs/example-agent-weather): AI agent with spending policies that pays for weather data automatically

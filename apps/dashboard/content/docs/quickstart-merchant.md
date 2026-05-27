@@ -43,7 +43,7 @@ import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono();
 
-// Add PincerPay middleware — this intercepts requests and returns
+// Add PincerPay middleware. This intercepts requests and returns
 // 402 Payment Required for paywalled routes
 app.use(
   "*",
@@ -60,10 +60,10 @@ app.use(
   })
 );
 
-// Free endpoint — no paywall
+// Free endpoint with no paywall
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-// Paywalled endpoint — middleware handles 402/settlement
+// Paywalled endpoint where middleware handles 402/settlement
 app.get("/api/weather", (c) =>
   c.json({
     temperature: 72,
@@ -75,8 +75,8 @@ app.get("/api/weather", (c) =>
 
 serve({ fetch: app.fetch, port: 3001 }, (info) => {
   console.log(`Merchant running at http://localhost:${info.port}`);
-  console.log("  GET /api/health   — free");
-  console.log("  GET /api/weather  — 0.001 USDC (Solana Devnet)");
+  console.log("  GET /api/health   - free");
+  console.log("  GET /api/weather  - 0.001 USDC (Solana Devnet)");
 });
 ```
 
@@ -92,8 +92,8 @@ Expected output:
 
 ```
 Merchant running at http://localhost:3001
-  GET /api/health   — free
-  GET /api/weather  — 0.001 USDC (Solana Devnet)
+  GET /api/health   - free
+  GET /api/weather  - 0.001 USDC (Solana Devnet)
 ```
 
 ## Step 4: Test with curl

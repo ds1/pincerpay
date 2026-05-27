@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/npm/l/@pincerpay/onboarding?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Non-custodial merchant onboarding utilities for [PincerPay](https://pincerpay.com). Generate wallets, create merchant records, provision API keys — without dashboard click-through.
+Non-custodial merchant onboarding utilities for [PincerPay](https://pincerpay.com). Generate wallets, create merchant records, and provision API keys, all without dashboard click-through.
 
 ## Why this package
 
@@ -73,10 +73,10 @@ const result = await bootstrapMerchant({
   apiKeyLabel: "Production",
 });
 
-// result.merchantId      — new merchant row id
-// result.apiKey.rawKey   — pp_live_... — saved once, never recoverable
-// result.webhookSecret   — HMAC-SHA256 hex secret
-// result.wallets         — the wallets you passed in (for display)
+// result.merchantId:     new merchant row id
+// result.apiKey.rawKey:   pp_live_... (saved once, never recoverable)
+// result.webhookSecret:   HMAC-SHA256 hex secret
+// result.wallets:         the wallets you passed in (for display)
 ```
 
 ### Mint a key for an existing merchant

@@ -142,8 +142,8 @@ The MCP server exposes 26 tools covering the full developer lifecycle: onboardin
 
 Onboarding tools support **two auth modes**, resolved at each tool call:
 
-- **Public mode** — `~/.pincerpay/credentials.json` is present (created by `npx @pincerpay/cli signup` or `login`). Tools call the authenticated facilitator API.
-- **Admin mode** — `DATABASE_URL` is set on the MCP server. Tools write directly to the database. Use for self-hosted deployments or operator workflows.
+- **Public mode**, when `~/.pincerpay/credentials.json` is present (created by `npx @pincerpay/cli signup` or `login`). Tools call the authenticated facilitator API.
+- **Admin mode**, when `DATABASE_URL` is set on the MCP server. Tools write directly to the database. Use for self-hosted deployments or operator workflows.
 
 If neither is available, the tools return guidance pointing at `login-instructions`.
 
@@ -153,10 +153,10 @@ If neither is available, the tools return guidance pointing at `login-instructio
 | `bootstrap-merchant` | End-to-end: generate wallets, create merchant, mint API key | Public or Admin |
 | `create-api-key` | Mint a new pp_live_* API key | Public or Admin |
 | `list-merchants` | Public: own merchant only. Admin: all merchants. | Public or Admin |
-| `whoami` | Diagnostic — current auth mode, user, merchant | None |
+| `whoami` | Diagnostic: current auth mode, user, merchant | None |
 | `login-instructions` | Returns terminal commands to authenticate | None |
 
-**Public mode workflow** (recommended): a user runs `npx @pincerpay/cli signup` (or `login`) once in any terminal. The MCP server picks up the credentials automatically on the next tool call — no restart needed. See [Merchant Onboarding](/docs/onboarding) and the [@pincerpay/cli docs](/docs/cli) for the full workflow.
+**Public mode workflow** (recommended): a user runs `npx @pincerpay/cli signup` (or `login`) once in any terminal. The MCP server picks up the credentials automatically on the next tool call, with no restart needed. See [Merchant Onboarding](/docs/onboarding) and the [@pincerpay/cli docs](/docs/cli) for the full workflow.
 
 ## Resources
 
@@ -184,18 +184,18 @@ Interactive prompts guide your assistant through common workflows:
 
 | Prompt | Description |
 |--------|-------------|
-| `get-started` | Interactive onboarding — determines your role and guides you to the right flow |
+| `get-started` | Interactive onboarding that determines your role and guides you to the right flow |
 | `integrate-merchant` | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
 | `integrate-agent` | Agent SDK setup with spending policies and gas estimates |
 | `debug-transaction` | Transaction troubleshooting by hash/signature |
-| `manage-paywalls` | Paywall management — list, create, update, delete, or review configuration |
-| `monitor-payments` | Payment monitoring — overview, failure investigation, pending transaction analysis |
+| `manage-paywalls` | Paywall management: list, create, update, delete, or review configuration |
+| `monitor-payments` | Payment monitoring: overview, failure investigation, pending transaction analysis |
 
 ## Try It
 
 After connecting, paste any of these into your AI assistant:
 
-- "Bootstrap a new PincerPay merchant for me — generate wallets and an API key"
+- "Bootstrap a new PincerPay merchant for me, generating wallets and an API key"
 - "Generate a non-custodial wallet set with a 12-word mnemonic"
 - "Set up PincerPay merchant middleware for my Express app"
 - "Scaffold an agent client with a $5/day spending limit on Solana"

@@ -1,6 +1,6 @@
 ---
 title: "Merchant Onboarding"
-description: "Sign up for PincerPay, generate wallets, and mint API keys — entirely from the terminal. No browser required."
+description: "Sign up for PincerPay, generate wallets, and mint API keys, entirely from the terminal. No browser required."
 order: 1.4
 section: Guides
 ---
@@ -59,7 +59,7 @@ After signup the CLI saves a long-lived bearer token at `~/.pincerpay/credential
 | `@pincerpay/mcp` (MCP) | LLM-driven onboarding inside Claude Code, Cursor, Windsurf, etc |
 | `@pincerpay/onboarding` (library) | Custom signup flows you build yourself |
 
-All three sit on top of the same authenticated facilitator API. After running `pincerpay login`, the MCP server picks up the same `~/.pincerpay/credentials.json` automatically — one auth ceremony for everything.
+All three sit on top of the same authenticated facilitator API. After running `pincerpay login`, the MCP server picks up the same `~/.pincerpay/credentials.json` automatically: one auth ceremony for everything.
 
 ## CLI commands
 
@@ -85,7 +85,7 @@ pincerpay bootstrap-merchant \
   [--api-key-label "production"]
 ```
 
-Generates non-custodial wallets, creates the merchant record (idempotent — safe to re-run), mints an initial API key, and prints the env-var block. **All in one command.**
+Generates non-custodial wallets, creates the merchant record (idempotent and safe to re-run), mints an initial API key, and prints the env-var block. **All in one command.**
 
 ### Wallet-only (no signup needed)
 
@@ -93,7 +93,7 @@ Generates non-custodial wallets, creates the merchant record (idempotent — saf
 pincerpay create-wallets [--strength 12|24] [--json] [--no-private-keys]
 ```
 
-Pure crypto — runs locally, never talks to PincerPay. Useful for previewing addresses before signup, or for any merchant who wants to bring their own wallet to the dashboard flow.
+Pure crypto: runs locally, never talks to PincerPay. Useful for previewing addresses before signup, or for any merchant who wants to bring their own wallet to the dashboard flow.
 
 ### Manage existing merchant
 
@@ -167,7 +167,7 @@ Your credentials file is missing or expired. Run `pincerpay login` (or `pincerpa
 The credentials file is corrupted. Delete `~/.pincerpay/credentials.json` and re-authenticate.
 
 **"email_not_verified"**
-You haven't completed the OTP step. Run `pincerpay signup` again with the same email — Supabase will email a fresh code.
+You haven't completed the OTP step. Run `pincerpay signup` again with the same email, and Supabase will email a fresh code.
 
 **"email_delivery_unavailable" (503 on signup)**
 The deployment has not confirmed a working email provider, so signup fails loudly
@@ -175,7 +175,7 @@ instead of pretending a code was sent. The operator must configure SMTP on the
 Supabase project (Resend is free up to 3k/mo) and set `SUPABASE_SMTP_CONFIGURED=true`
 on the facilitator. Until then, email verification is unavailable. (Signup also
 no longer reports `verification_email_sent` for an email that already has an
-account — it stays silent to avoid leaking account existence.)
+account, so it stays silent to avoid leaking account existence.)
 
 **Email never arrives**
 Check spam. Recovery emails come from `noreply@<your-supabase-project>.supabase.co`.
@@ -184,7 +184,7 @@ deployments must configure a real SMTP sender in the Supabase dashboard.
 
 ## Companion docs
 
-- [@pincerpay/cli](/docs/cli) — full CLI reference
-- [MCP server](/docs/mcp-server) — onboarding via LLM tools
-- [Merchant SDK](/docs/merchant-sdk) — using your API key + addresses to accept payments
-- [Quickstart: Merchant](/docs/quickstart-merchant) — end-to-end first-payment walkthrough
+- [@pincerpay/cli](/docs/cli): full CLI reference
+- [MCP server](/docs/mcp-server): onboarding via LLM tools
+- [Merchant SDK](/docs/merchant-sdk): using your API key + addresses to accept payments
+- [Quickstart: Merchant](/docs/quickstart-merchant): end-to-end first-payment walkthrough
