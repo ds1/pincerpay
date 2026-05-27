@@ -67,10 +67,12 @@ function createDb(
 |---|---|---|
 | `id` | UUID | Primary key |
 | `merchantId` | UUID | FK → merchants |
-| `keyHash` | string | SHA-256 hash (unique) |
+| `keyHash` | string? | Legacy SHA-256 hash (unique). Null for keys minted with HMAC; see [API key hashing](#api-key-hashing) |
+| `keyHashHmac` | string? | HMAC-SHA256(`TOKEN_PEPPER`, key) (unique). Null for legacy keys |
 | `prefix` | string | First 12 chars for identification |
 | `label` | string | Human-readable label |
 | `isActive` | boolean | |
+| `environment` | enum | `live` or `test` — a `test` key cannot settle on a mainnet chain |
 | `createdAt` | timestamp | |
 | `lastUsedAt` | timestamp? | Updated on each API call |
 
@@ -110,6 +112,35 @@ function createDb(
 | `status` | string | active/paused/revoked |
 | `createdAt` | timestamp | |
 | `updatedAt` | timestamp | |
+
+## API key hashing
+
+`pp_live_*` / `pp_test_*` API keys are stored hashed, never in plaintext. Use the
+shared helpers so every minting/verification site stays consistent:
+
+```typescript
+import { hashNewApiKey, apiKeyHashHmac, apiKeyHashSha256, getApiKeyPepper } from "@pincerpay/db";
+
+// Mint: hashes with HMAC when TOKEN_PEPPER is set, else legacy SHA-256.
+const { keyHash, keyHashHmac } = hashNewApiKey(rawKey);
+await db.insert(apiKeys).values({ merchantId, keyHash, keyHashHmac, prefix, label, environment });
+
+// Verify: try HMAC first, fall back to legacy SHA-256.
+const pepper = getApiKeyPepper();           // string | null
+const row = pepper
+  ? await findByHmac(apiKeyHashHmac(rawKey, pepper)) ?? await findBySha256(apiKeyHashSha256(rawKey))
+  : await findBySha256(apiKeyHashSha256(rawKey));
+```
+
+- **`TOKEN_PEPPER`** — server pepper (min 32 chars), the same value used for `cli_sessions`.
+  Every service that mints keys (facilitator, dashboard, CLI/bootstrap scripts) must share the
+  **byte-for-byte identical** pepper, or HMAC lookups won't match. When unset, helpers fall back to
+  legacy SHA-256 so key creation never hard-fails.
+- **Migration `0004`** adds the nullable `key_hash_hmac` column and makes `key_hash` nullable. New
+  keys store one or the other; verification accepts both during the migration window.
+- **Cutover** — once every minting service has the pepper and enough time has passed,
+  `apps/facilitator/scripts/api-keys-migrate-cleanup.mts` revokes the leftover SHA-256-only keys
+  (`--dry-run` first; default 60-day window) and writes an audit event per revocation.
 
 ## Common Patterns
 
