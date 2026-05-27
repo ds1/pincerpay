@@ -5,9 +5,9 @@
 [![license](https://img.shields.io/npm/l/@pincerpay/mcp?style=flat-square)](https://github.com/ds1/pincerpay/blob/master/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-MCP server for [PincerPay](https://pincerpay.com) - on-chain USDC payment gateway for AI agents using the [x402 protocol](https://x402.org).
+MCP server for [PincerPay](https://pincerpay.com), the on-chain USDC payment gateway for AI agents using the [x402 protocol](https://x402.org).
 
-Works with any MCP-compatible client - Claude, Cursor, Windsurf, Copilot, Gemini, ChatGPT, Codex, DeepSeek, Replit, and more.
+Works with any MCP-compatible client, including Claude, Cursor, Windsurf, Copilot, Gemini, ChatGPT, Codex, DeepSeek, Replit, and more.
 
 ## Quick Start
 
@@ -138,8 +138,8 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 
 Onboarding tools support **two auth modes**:
 
-- **Admin mode** - `DATABASE_URL` is set on the MCP server. Tools write directly to the PincerPay database. Use for self-hosted deployments or operator workflows.
-- **Public mode** - `~/.pincerpay/credentials.json` exists. Tools call the authenticated facilitator API using the bearer token from the CLI. Use after running `npx @pincerpay/cli signup` or `login`.
+- **Admin mode** applies when `DATABASE_URL` is set on the MCP server. Tools write directly to the PincerPay database. Use for self-hosted deployments or operator workflows.
+- **Public mode** applies when `~/.pincerpay/credentials.json` exists. Tools call the authenticated facilitator API using the bearer token from the CLI. Use after running `npx @pincerpay/cli signup` or `login`.
 
 Tools resolve the mode at call time. If neither mode is available, `login-instructions` is the recommended next call.
 
@@ -149,7 +149,7 @@ Tools resolve the mode at call time. If neither mode is available, `login-instru
 | `bootstrap-merchant` | End-to-end: generate wallets, create merchant, mint API key. | Admin or Public |
 | `create-api-key` | Mint a new pp_live_* API key. | Admin or Public |
 | `list-merchants` | Admin: list all. Public: just the caller's own merchant. | Admin or Public |
-| `whoami` | Diagnostic - current auth mode, user, merchant. | None (works in any mode) |
+| `whoami` | Diagnostic for current auth mode, user, merchant. | None (works in any mode) |
 | `login-instructions` | Returns terminal commands to authenticate the MCP server. | None |
 
 For public mode, the recommended workflow is: install the CLI (`npm install -g @pincerpay/cli` or use `npx`), run `npx @pincerpay/cli signup` once in any terminal, then this MCP server picks up the credentials automatically on the next tool call. No restart needed.
@@ -162,7 +162,7 @@ See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) and [`@pincerpa
 |----------|-----|-------------|
 | Chain configs | `chain://{shorthand}` | Config for any of the 6 supported chains |
 | OpenAPI spec | `pincerpay://openapi` | Live facilitator OpenAPI spec |
-| Documentation | `docs://pincerpay/{topic}` | Embedded docs (5 topics - see below) |
+| Documentation | `docs://pincerpay/{topic}` | Embedded docs (5 topics; see below) |
 
 ### Doc Topics
 
@@ -178,12 +178,12 @@ See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) and [`@pincerpa
 
 | Prompt | Description |
 |--------|-------------|
-| `get-started` | Interactive onboarding - determines your role and guides you to the right flow |
+| `get-started` | Interactive onboarding that determines your role and guides you to the right flow |
 | `integrate-merchant` | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
 | `integrate-agent` | Agent SDK setup with spending policies and gas estimates |
 | `debug-transaction` | Transaction troubleshooting by hash/signature |
-| `manage-paywalls` | Paywall management - list, create, update, delete, or review configuration |
-| `monitor-payments` | Payment monitoring - overview, failure investigation, pending transaction analysis |
+| `manage-paywalls` | Paywall management: list, create, update, delete, or review configuration |
+| `monitor-payments` | Payment monitoring: overview, failure investigation, pending transaction analysis |
 
 ## CLI Options
 

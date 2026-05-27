@@ -44,7 +44,7 @@ const agent = await PincerPayAgent.create({
 
 | Chain | Faucet |
 |-------|--------|
-| Solana Devnet | [Circle faucet](https://faucet.circle.com) - select Solana, USDC |
+| Solana Devnet | [Circle faucet](https://faucet.circle.com) (select Solana, USDC) |
 | Base Sepolia | [Coinbase faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet) |
 | Polygon Amoy | [Polygon faucet](https://faucet.polygon.technology/) |
 
@@ -52,9 +52,9 @@ const agent = await PincerPayAgent.create({
 
 After running a test payment:
 
-1. **Dashboard** - check the Transactions page for status (`pending` → `confirmed`)
-2. **Solana Explorer** - paste the tx hash at [explorer.solana.com/?cluster=devnet](https://explorer.solana.com/?cluster=devnet)
-3. **Base Sepolia Explorer** - paste the tx hash at [sepolia.basescan.org](https://sepolia.basescan.org)
+1. **Dashboard**: check the Transactions page for status (`pending` → `confirmed`)
+2. **Solana Explorer**: paste the tx hash at [explorer.solana.com/?cluster=devnet](https://explorer.solana.com/?cluster=devnet)
+3. **Base Sepolia Explorer**: paste the tx hash at [sepolia.basescan.org](https://sepolia.basescan.org)
 
 ## End-to-End Test Script
 

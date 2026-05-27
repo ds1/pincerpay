@@ -41,7 +41,7 @@ function createDb(
 ): { db: Database; close: () => void };
 ```
 
-- `serverless: true` - uses connection pooling suitable for serverless environments (Vercel)
+- `serverless: true` uses connection pooling suitable for serverless environments (Vercel)
 - Returns a `close()` function to cleanly shut down the connection
 
 ### Schema Tables
@@ -72,7 +72,7 @@ function createDb(
 | `prefix` | string | First 12 chars for identification |
 | `label` | string | Human-readable label |
 | `isActive` | boolean | |
-| `environment` | enum | `live` or `test` - a `test` key cannot settle on a mainnet chain |
+| `environment` | enum | `live` or `test` (a `test` key cannot settle on a mainnet chain) |
 | `createdAt` | timestamp | |
 | `lastUsedAt` | timestamp? | Updated on each API call |
 
@@ -132,13 +132,13 @@ const row = pepper
   : await findBySha256(apiKeyHashSha256(rawKey));
 ```
 
-- **`TOKEN_PEPPER`** - server pepper (min 32 chars), the same value used for `cli_sessions`.
+- **`TOKEN_PEPPER`** is the server pepper (min 32 chars), the same value used for `cli_sessions`.
   Every service that mints keys (facilitator, dashboard, CLI/bootstrap scripts) must share the
   **byte-for-byte identical** pepper, or HMAC lookups won't match. When unset, helpers fall back to
   legacy SHA-256 so key creation never hard-fails.
 - **Migration `0004`** adds the nullable `key_hash_hmac` column and makes `key_hash` nullable. New
   keys store one or the other; verification accepts both during the migration window.
-- **Cutover** - once every minting service has the pepper and enough time has passed,
+- **Cutover:** once every minting service has the pepper and enough time has passed,
   `apps/facilitator/scripts/api-keys-migrate-cleanup.mts` revokes the leftover SHA-256-only keys
   (`--dry-run` first; default 60-day window) and writes an audit event per revocation.
 

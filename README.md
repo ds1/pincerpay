@@ -2,7 +2,7 @@
 
 The payment gateway for the agentic economy. Accept payments from AI agents. Add a few lines of code. Settle instantly in USDC.
 
-## For merchants - sign up in 2 minutes, no browser
+## For merchants: sign up in 2 minutes, no browser
 
 ```bash
 npx @pincerpay/cli signup
@@ -21,7 +21,7 @@ That's the full onboarding flow. Terminal-only. Phantom + MetaMask compatible wa
 Agent → 402 Challenge → Sign USDC Transfer → PincerPay Facilitator → Blockchain → Merchant
 ```
 
-![PincerPay Agent Playground - x402 payment flow in action](apps/dashboard/public/docs/playground-flow.png)
+![PincerPay Agent Playground showing the x402 payment flow in action](apps/dashboard/public/docs/playground-flow.png)
 
 PincerPay is a non-custodial x402 facilitator. When an AI agent hits a merchant API and gets HTTP 402, the agent signs a USDC transfer. PincerPay verifies the signature, broadcasts to the blockchain, and confirms settlement.
 
@@ -31,8 +31,8 @@ PincerPay is a non-custodial x402 facilitator. When an AI agent hits a merchant 
 |---|---|---|
 | `apps/facilitator` | x402 facilitator service (Hono + Node.js) | |
 | `apps/dashboard` | Merchant dashboard (Next.js 15) | |
-| [`packages/merchant`](packages/merchant/) | Merchant SDK - Express + Hono middleware | [README](packages/merchant/README.md) |
-| [`packages/agent`](packages/agent/) | Agent SDK - automatic x402 payment handling | [README](packages/agent/README.md) |
+| [`packages/merchant`](packages/merchant/) | Merchant SDK with Express + Hono middleware | [README](packages/merchant/README.md) |
+| [`packages/agent`](packages/agent/) | Agent SDK with automatic x402 payment handling | [README](packages/agent/README.md) |
 | [`packages/core`](packages/core/) | Shared types, chain configs, constants | [README](packages/core/README.md) |
 | [`packages/db`](packages/db/) | Drizzle ORM schema + migrations | [README](packages/db/README.md) |
 | [`packages/program`](packages/program/) | Anchor program client for Solana | [README](packages/program/README.md) |
@@ -85,7 +85,7 @@ pnpm db:push
 
 ### Onboarding scripts
 
-Provision a merchant from the command line - no dashboard click-through.
+Provision a merchant from the command line, with no dashboard click-through.
 
 ```bash
 # Generate non-custodial wallets only (no DB)

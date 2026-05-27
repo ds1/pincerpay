@@ -43,7 +43,7 @@ import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono();
 
-// Add PincerPay middleware - this intercepts requests and returns
+// Add PincerPay middleware. This intercepts requests and returns
 // 402 Payment Required for paywalled routes
 app.use(
   "*",
@@ -60,10 +60,10 @@ app.use(
   })
 );
 
-// Free endpoint - no paywall
+// Free endpoint with no paywall
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-// Paywalled endpoint - middleware handles 402/settlement
+// Paywalled endpoint where middleware handles 402/settlement
 app.get("/api/weather", (c) =>
   c.json({
     temperature: 72,

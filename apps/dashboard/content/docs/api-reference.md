@@ -1,6 +1,6 @@
 ---
 title: API Reference
-description: Facilitator REST API - payment verification, settlement, paywall CRUD, transaction listing, agent management, webhooks, and merchant profile.
+description: Facilitator REST API for payment verification, settlement, paywall CRUD, transaction listing, agent management, webhooks, and merchant profile.
 order: 5
 section: Reference
 ---
@@ -17,7 +17,7 @@ Authenticated endpoints require the `x-pincerpay-api-key` header:
 x-pincerpay-api-key: pp_live_xxxxxxxxxxxx
 ```
 
-Create API keys from the [dashboard](https://www.pincerpay.com/dashboard). Keys are SHA-256 hashed before storage - the raw key is shown only once at creation time.
+Create API keys from the [dashboard](https://www.pincerpay.com/dashboard). Keys are SHA-256 hashed before storage, so the raw key is shown only once at creation time.
 
 Public endpoints (`/v1/supported`, `/health`, `/metrics`, `/openapi.json`) do not require authentication.
 
@@ -30,7 +30,7 @@ Verify a signed payment transaction without broadcasting it. Returns whether the
 ```json
 {
   "paymentPayload": {
-    // x402 payment payload (varies by scheme - opaque to PincerPay)
+    // x402 payment payload (varies by scheme, opaque to PincerPay)
   },
   "paymentRequirements": {
     "scheme": "exact",
@@ -50,7 +50,7 @@ Verify a signed payment transaction without broadcasting it. Returns whether the
 }
 ```
 
-### Response (200 - invalid)
+### Response (200, invalid)
 
 ```json
 {
@@ -118,7 +118,7 @@ Same schema as `/v1/verify`.
 }
 ```
 
-Transactions under 1 USDC are classified as **optimistic** - the resource is released after mempool broadcast (~200ms) without waiting for block confirmation.
+Transactions under 1 USDC are classified as **optimistic**: the resource is released after mempool broadcast (~200ms) without waiting for block confirmation.
 
 ## POST /v1/settle-direct
 
@@ -304,7 +304,7 @@ List paywalled endpoints for the authenticated merchant. Supports pagination and
 |-------|------|---------|-------------|
 | `limit` | number | 50 | Max items (1-200) |
 | `offset` | number | 0 | Pagination offset |
-| `active` | boolean | - | Filter by active status |
+| `active` | boolean | none | Filter by active status |
 
 ### Response (200)
 
@@ -386,11 +386,11 @@ List transactions for the authenticated merchant. Supports pagination and filter
 |-------|------|---------|-------------|
 | `limit` | number | 50 | Max items (1-200) |
 | `offset` | number | 0 | Pagination offset |
-| `status` | string | - | Filter: pending, mempool, optimistic, confirmed, failed |
-| `chain` | string | - | Filter by CAIP-2 chain ID |
-| `from` | string | - | Filter by sender address |
-| `to` | string | - | Filter by recipient address |
-| `agent` | string | - | Filter by agent UUID |
+| `status` | string | none | Filter: pending, mempool, optimistic, confirmed, failed |
+| `chain` | string | none | Filter by CAIP-2 chain ID |
+| `from` | string | none | Filter by sender address |
+| `to` | string | none | Filter by recipient address |
+| `agent` | string | none | Filter by agent UUID |
 
 ### Response (200)
 
@@ -428,7 +428,7 @@ List agents that have interacted with the authenticated merchant. Supports pagin
 |-------|------|---------|-------------|
 | `limit` | number | 50 | Max items (1-200) |
 | `offset` | number | 0 | Pagination offset |
-| `status` | string | - | Filter: active, paused, revoked |
+| `status` | string | none | Filter: active, paused, revoked |
 
 ### Response (200)
 
@@ -478,8 +478,8 @@ List webhook delivery attempts for the authenticated merchant.
 |-------|------|---------|-------------|
 | `limit` | number | 50 | Max items (1-200) |
 | `offset` | number | 0 | Pagination offset |
-| `status` | string | - | Filter: pending, delivered, retrying, failed |
-| `event` | string | - | Filter: payment.settled, payment.confirmed, payment.failed |
+| `status` | string | none | Filter: pending, delivered, retrying, failed |
+| `event` | string | none | Filter: payment.settled, payment.confirmed, payment.failed |
 
 ### Response (200)
 
