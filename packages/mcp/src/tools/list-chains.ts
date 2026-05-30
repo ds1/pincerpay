@@ -23,6 +23,7 @@ export function registerListChains(
       "Includes Solana (primary), Base, and Polygon with mainnet/testnet variants. " +
       "Shows chain shorthand, CAIP-2 ID, USDC contract address, and block time.",
     inputSchema,
+    { title: "List supported chains", readOnlyHint: true, openWorldHint: false },
     async ({ source }) => {
       if (source === "facilitator") {
         try {

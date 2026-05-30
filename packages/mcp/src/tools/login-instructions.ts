@@ -7,6 +7,7 @@ export function registerLoginInstructions(server: McpServer) {
     "Returns instructions for authenticating the MCP server. Call this when an onboarding " +
       "tool returns an auth error to guide the user through the right flow.",
     {},
+    { title: "Login instructions", readOnlyHint: true, openWorldHint: false },
     async () => {
       const auth = resolveAuthMode();
       const status = auth.mode;

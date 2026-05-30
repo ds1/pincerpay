@@ -10,6 +10,7 @@ export function registerGetMerchantProfile(
     "Fetch your merchant profile including wallet address, supported chains, " +
       "webhook URL, and on-chain registration status. Requires a PincerPay API key.",
     {},
+    { title: "Get merchant profile", readOnlyHint: true, openWorldHint: true },
     async () => {
       try {
         client.requireAuth();

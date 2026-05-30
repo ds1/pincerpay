@@ -37,6 +37,7 @@ export function registerListTransactions(
       "Returns chain, amount, status, gas costs, and timestamps. " +
       "Requires a PincerPay API key.",
     inputSchema,
+    { title: "List transactions", readOnlyHint: true, openWorldHint: true },
     async ({ limit, offset, status, chain, from, to, agent }) => {
       try {
         client.requireAuth();

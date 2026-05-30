@@ -22,6 +22,7 @@ export function registerCreateApiKey(server: McpServer) {
       "Auth modes: (1) admin if DATABASE_URL is set, requires --merchant; (2) public if " +
       "~/.pincerpay/credentials.json exists, mints for the logged-in user's merchant.",
     createSchema,
+    { title: "Create API key", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     async ({ merchant, label }) => {
       const auth = resolveAuthMode();
 
@@ -116,6 +117,7 @@ export function registerListMerchants(server: McpServer) {
     "Admin mode (DATABASE_URL): lists all merchants in the database. " +
       "Public mode (CLI credentials): returns only the caller's own merchant.",
     {},
+    { title: "List merchants", readOnlyHint: true, openWorldHint: true },
     async () => {
       const auth = resolveAuthMode();
 

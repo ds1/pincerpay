@@ -191,6 +191,49 @@ Interactive prompts guide your assistant through common workflows:
 | `manage-paywalls` | Paywall management: list, create, update, delete, or review configuration |
 | `monitor-payments` | Payment monitoring: overview, failure investigation, pending transaction analysis |
 
+## Conventions (for building your own MCP server)
+
+If you're modeling another MCP server on `@pincerpay/mcp`, these are the
+conventions it follows so downstream servers can inherit the same safety bar:
+
+- **Server factory.** Build the server with the exported factory rather than
+  re-wiring it: `import { createPincerPayMcpServer } from "@pincerpay/mcp/server"`.
+  It registers all tools, resources, and prompts and accepts `{ apiKey?, facilitatorUrl? }`.
+- **Tool naming.** Lowercase kebab-case, `verb-noun` (`create-paywall`,
+  `check-transaction-status`, `estimate-gas-cost`). Read tools start with
+  `list-`/`get-`/`check-`; generators start with `scaffold-`/`generate-`.
+- **Safety annotations.** Every tool carries MCP
+  [`ToolAnnotations`](https://modelcontextprotocol.io). Read-only tools set
+  `readOnlyHint: true`; tools that hit the facilitator set `openWorldHint: true`;
+  mutating tools set `readOnlyHint: false` with an explicit `idempotentHint`, and
+  the one irreversible tool (`delete-paywall`) sets `destructiveHint: true`.
+- **Confirm on destructive actions.** `delete-paywall` takes `confirm: boolean`
+  and refuses to run unless `confirm: true`, pointing the caller at the
+  non-destructive alternative (`update-paywall` with `isActive=false`). Apply the
+  same `confirm` gate to any tool that spends funds or destroys data.
+- **Dry-run first.** `verify-payment` validates a payment against the facilitator
+  **without broadcasting** - the dry-run/"paper" path before anything settles on
+  chain.
+- **Cost estimate.** `estimate-gas-cost` returns per-chain fee estimates so an
+  agent can price an action before committing.
+- **Auth is per-call and degrades gracefully.** Tools call `client.requireAuth()`
+  and return a helpful, non-throwing error when no key is configured, so the
+  no-auth tools (scaffolding, chain listing, health) still work.
+- **Base units gotcha.** Route `price` is human-readable USDC (`"0.01"`), but
+  spending policies use base units with 6 decimals (`"10000"` = $0.01). Surface
+  this in tool descriptions to prevent `BigInt()` throwing at runtime.
+- **`bin` convention.** The package ships a `pincerpay-mcp` bin (`dist/cli.js`)
+  and an `mcpName` field, so it runs via `npx @pincerpay/mcp` over stdio or
+  `--transport=http`.
+
+**Not yet provided (don't assume these exist):** there is no exported
+spend-limit guard helper and no per-agent/per-session spend-cap enforcement baked
+into the server - spend limits live in agent-side `SpendingPolicy` (base units)
+and the dashboard, not as an MCP middleware. If you need a reusable guard, build
+it in your own server for now; a shared helper is a candidate for a future
+release. The PincerPay MCP server itself does not expose a money-spending tool,
+so the `confirm: true` convention currently applies to `delete-paywall`.
+
 ## Try It
 
 After connecting, paste any of these into your AI assistant:

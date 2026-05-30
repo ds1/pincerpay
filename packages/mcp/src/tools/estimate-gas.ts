@@ -59,6 +59,7 @@ export function registerEstimateGas(server: McpServer) {
       "Returns the native gas token, estimated USD cost, and notes about " +
       "Kora gasless transactions (Solana) or L2 gas optimization.",
     inputSchema,
+    { title: "Estimate gas cost", readOnlyHint: true, openWorldHint: false },
     async ({ chain, amount }) => {
       const chainConfig = resolveChain(chain);
       if (!chainConfig) {

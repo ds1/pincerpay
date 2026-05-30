@@ -30,6 +30,7 @@ export function registerCreatePaywall(
     "Create a new paywalled endpoint. Sets the USDC price and optional chain restrictions. " +
       "The endpoint pattern must be unique per merchant. Requires a PincerPay API key.",
     inputSchema,
+    { title: "Create paywall", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     async ({ endpointPattern, amount, description, chains }) => {
       try {
         client.requireAuth();

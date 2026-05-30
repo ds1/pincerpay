@@ -55,9 +55,10 @@ examples/
 
 1. Fork the repo and create a branch: `feat/description`, `fix/description`, or `chore/description`
 2. Make your changes
-3. Run `pnpm typecheck && pnpm test && pnpm build` to verify
-4. Commit using conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`
-5. Open a pull request against `master`
+3. Add a changeset (`pnpm changeset`) describing any consumer-facing change to a published package (`core`, `agent`, `merchant`, `mcp`). These four release as one linked set - see [RELEASING.md](RELEASING.md).
+4. Run `pnpm typecheck && pnpm test && pnpm build` to verify
+5. Commit using conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`
+6. Open a pull request against `master`
 
 ## Conventions
 
@@ -79,6 +80,13 @@ Larger contributions (please open an issue first):
 - New chain support
 - Protocol integrations
 - SDK features
+
+## Releasing
+
+`core`, `agent`, `merchant`, and `mcp` publish to npm as one linked set and
+always share a version (`merchant` pins `core` exact). See
+[RELEASING.md](RELEASING.md) for the coupling contract, the changeset-driven
+publish flow, and how to cut a `next` dist-tag prerelease.
 
 ## Questions?
 

@@ -11,6 +11,7 @@ export function registerGetMetrics(
       "Returns settlement counters, latency percentiles (p50/p95/p99), " +
       "verification stats, and error rates. No API key required.",
     {},
+    { title: "Get settlement metrics", readOnlyHint: true, openWorldHint: true },
     async () => {
       try {
         const result = await client.getMetrics();

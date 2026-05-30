@@ -32,6 +32,7 @@ export function registerBootstrapWallets(server: McpServer) {
       "Use this before bootstrap-merchant to provision wallets, or independently to generate " +
       "any new keypair set.",
     inputSchema,
+    { title: "Bootstrap wallets", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     async ({ strength, mnemonic, includePrivateKeys }) => {
       try {
         const wallets = await generateMerchantWallets({

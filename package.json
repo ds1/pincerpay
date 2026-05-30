@@ -22,7 +22,8 @@
     "bootstrap-merchant": "tsx scripts/bootstrap-merchant.mts",
     "changeset": "changeset",
     "version-packages": "changeset version && node scripts/sync-plugin-version.mjs",
-    "release": "pnpm build && pnpm test && changeset publish"
+    "release": "pnpm build && pnpm test && changeset publish",
+    "release:next": "pnpm build && pnpm test && changeset publish --tag next"
   },
   "pnpm": {
     "overrides": {

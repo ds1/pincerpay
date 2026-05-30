@@ -37,6 +37,7 @@ export function registerBootstrapMerchant(server: McpServer) {
       "PincerPay never persists the mnemonic or private keys; the caller must display them once " +
       "and discard.",
     inputSchema,
+    { title: "Bootstrap merchant", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     async (args) => {
       const auth = resolveAuthMode();
 

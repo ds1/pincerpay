@@ -94,6 +94,7 @@ export function registerScaffoldMiddleware(server: McpServer) {
       "Supports Solana (primary), Base, and Polygon chains. " +
       "Pass `merchantAddresses` for multi-chain merchants, `merchantAddress` for single-chain.",
     inputSchema,
+    { title: "Scaffold merchant middleware", readOnlyHint: true, openWorldHint: false },
     async ({ routes, merchantAddress, merchantAddresses, typescript }) => {
       const bang = typescript ? "!" : "";
       const addressBlock = renderAddressBlock(
