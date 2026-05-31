@@ -182,6 +182,12 @@ async function mintApiKey(
   const prefixWord = environment === "test" ? "pp_test_" : "pp_live_";
   const rawKey = `${prefixWord}${randomBytes(32).toString("hex")}`;
   const { keyHash, keyHashHmac } = hashNewApiKey(rawKey);
+  if (!keyHashHmac) {
+    console.warn(
+      "[pincerpay] TOKEN_PEPPER not set (or under 32 chars): minted a legacy SHA-256 API key. " +
+        "It works via fallback, but set TOKEN_PEPPER (same value as the facilitator) to mint HMAC keys. See issue #133.",
+    );
+  }
   const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
 
   await db.insert(apiKeys).values({
