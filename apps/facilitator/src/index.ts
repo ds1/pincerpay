@@ -298,8 +298,9 @@ authenticated.route("/", createWebhookRoutes(db));
 authenticated.route("/", createMerchantRoute(db));
 
 // CLI onboarding — authenticated endpoints (merchant management, api keys, sessions).
-// Mounted under a separate sub-app so the cliAuthMiddleware is scoped to these
-// routes and does not apply to the existing pp_live_* api-key paths.
+// The cliAuthMiddleware below is scoped to "/v1/onboarding/*", NOT "*":
+// mounting in a sub-app does NOT scope a "*" use(); once mounted at "/" it
+// matches every path and 401s the pp_live_* api-key surface.
 //
 // IMPORTANT: must mount BEFORE `authenticated` because Hono evaluates merged
 // routes/middleware in registration order. `authenticated.use("*", authMiddleware)`
@@ -314,7 +315,10 @@ if (onboardingEnabled) {
     }
     return next();
   });
-  cliAuthenticated.use("*", cliAuthMiddleware(db));
+  // Scope to onboarding paths only. A bare "*" matches every request once this
+  // sub-app is mounted at "/", which 401s the whole pp_live_* api-key surface
+  // (/v1/settle, /v1/verify, etc.) with `missing_bearer_token`. Regression #130.
+  cliAuthenticated.use("/v1/onboarding/*", cliAuthMiddleware(db));
   cliAuthenticated.route("/", createMerchantOnboardingRoute(db));
   cliAuthenticated.route("/", createApiKeysOnboardingRoute(db));
   cliAuthenticated.route("/", createSessionsOnboardingRoute(db));
