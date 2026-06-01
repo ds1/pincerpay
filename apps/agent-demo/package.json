@@ -14,7 +14,7 @@
     "@pincerpay/agent": "workspace:*",
     "@pincerpay/merchant": "workspace:*",
     "chalk": "^5.4.1",
-    "hono": "^4.12.18",
+    "hono": "^4.12.19",
     "next": "^15.5.18",
     "ora": "^8.2.0",
     "react": "^19.1.0",
