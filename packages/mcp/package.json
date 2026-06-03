@@ -46,7 +46,7 @@
     "@types/node": "^22",
     "tsx": "^4",
     "typescript": "^5.7",
-    "vitest": "^3"
+    "vitest": "^4.1.0"
   },
   "files": [
     "dist",
