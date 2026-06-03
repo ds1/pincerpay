@@ -1,44 +1,19 @@
-import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { x402Facilitator } from "@x402/core/facilitator";
 import { createDb } from "@pincerpay/db";
+import { serve } from "@hono/node-server";
 import { loadConfig, parseRpcUrls } from "./config.js";
-import { createLogger, loggingMiddleware } from "./middleware/logging.js";
-import { authMiddleware } from "./middleware/auth.js";
-import { rateLimitMiddleware, routeRateLimitMiddleware } from "./middleware/ratelimit.js";
+import { createLogger } from "./middleware/logging.js";
+import { parseNetworks, groupByNamespace } from "./chains/registry.js";
 import { setupEvmFacilitator } from "./chains/evm.js";
 import { setupSolanaFacilitator, setupSolanaFacilitatorWithKora } from "./chains/solana.js";
-import { parseNetworks, groupByNamespace } from "./chains/registry.js";
-import { createHealthRoute } from "./routes/health.js";
-import { createSupportedRoute } from "./routes/supported.js";
-import { createVerifyRoute } from "./routes/verify.js";
-import { createSettleRoute } from "./routes/settle.js";
-import { createSettleDirectRoute } from "./routes/settle-direct.js";
-import { createStatusRoute } from "./routes/status.js";
-import { createOpenApiRoute } from "./routes/openapi.js";
-import { createMetricsRoute } from "./routes/metrics.js";
-import { createPaywallRoutes } from "./routes/paywalls.js";
-import { createTransactionListRoute } from "./routes/transactions-list.js";
-import { createAgentRoutes } from "./routes/agents.js";
-import { createWebhookRoutes } from "./routes/webhooks.js";
-import { createMerchantRoute } from "./routes/merchant.js";
-import { createAuthRoute } from "./routes/onboarding/auth.js";
-import { createMerchantOnboardingRoute } from "./routes/onboarding/merchant.js";
-import { createApiKeysOnboardingRoute } from "./routes/onboarding/api-keys.js";
-import { createSessionsOnboardingRoute } from "./routes/onboarding/sessions.js";
-import { createOnboardingHealthRoute } from "./routes/onboarding/health.js";
-import { cliAuthMiddleware } from "./middleware/cli-auth.js";
-import { startCleanup } from "./lib/cleanup.js";
-import { Metrics } from "./metrics.js";
-import { serve } from "@hono/node-server";
-import { startConfirmationWorker } from "./workers/confirmation.js";
 import { setupAnchorIntegration } from "./chains/solana-anchor.js";
+import { startConfirmationWorker } from "./workers/confirmation.js";
 import { startOnChainRecorderWorker } from "./workers/on-chain-recorder.js";
 import { startWebhookRetryWorker } from "./webhooks/dispatcher.js";
+import { startCleanup } from "./lib/cleanup.js";
 import { OfacSdnProvider } from "./compliance/ofac-sdn.js";
-import { complianceMiddleware } from "./compliance/middleware.js";
-import { squadsMiddleware } from "./middleware/squads.js";
-import type { AppEnv } from "./env.js";
+import { Metrics } from "./metrics.js";
+import { buildApp } from "./app.js";
 
 const config = loadConfig();
 const logger = createLogger(config.LOG_LEVEL, config.LOGTAIL_SOURCE_TOKEN);
@@ -71,6 +46,7 @@ const evmNetworks = config.EVM_NETWORKS ? parseNetworks(config.EVM_NETWORKS) : [
 const allNetworks = [...solanaNetworks, ...evmNetworks];
 const grouped = groupByNamespace(allNetworks);
 const rpcUrls = parseRpcUrls(config.RPC_URLS);
+const solanaRpcUrl = rpcUrls[solanaNetworks[0]] ?? "https://api.devnet.solana.com";
 
 // Track whether Kora is active (affects gas token reporting)
 let koraEnabled = false;
@@ -134,7 +110,6 @@ if (grouped.eip155.length > 0 && config.FACILITATOR_PRIVATE_KEY) {
 let anchorIntegration: ReturnType<typeof setupAnchorIntegration> | undefined;
 
 if (config.ANCHOR_PROGRAM_ID) {
-  const solanaRpcUrl = rpcUrls[solanaNetworks[0]] ?? "https://api.devnet.solana.com";
   anchorIntegration = setupAnchorIntegration({
     programId: config.ANCHOR_PROGRAM_ID,
     rpcUrl: solanaRpcUrl,
@@ -193,140 +168,39 @@ if (config.OFAC_ENABLED) {
   logger.info({ msg: "ofac_compliance_enabled", refreshIntervalMs: config.OFAC_REFRESH_INTERVAL_MS });
 }
 
-// ─── Hono App ───
-const app = new Hono<AppEnv>();
-
-// Global middleware
-app.use(
-  "*",
-  cors({
-    origin: config.CORS_ORIGINS
-      ? config.CORS_ORIGINS.split(",").map((o) => o.trim())
-      : "*",
-  }),
-);
-app.use("*", loggingMiddleware(logger));
-
-// Health check (no auth) — includes DB, worker status, uptime
-app.route("/", createHealthRoute({
-  db,
-  koraFeePayer,
-  workers: {
-    confirmation: confirmationWorker,
-    webhookRetry: webhookRetryWorker,
-    onChainRecorder: onChainRecorderWorker,
-  },
-  isShuttingDown: () => shuttingDown,
-  ...(ofacProvider && { compliance: { provider: ofacProvider } }),
-}));
-
-// Public endpoints (no auth)
-app.route("/", createSupportedRoute(facilitator));
-app.route("/", createMetricsRoute(metrics));
-app.route("/", createOpenApiRoute());
-
-// CLI onboarding — public auth endpoints (signup, verify, login, recover, reset).
-// Each route is IP-rate-limited internally. Only mounts when Supabase + token
-// pepper config is present; otherwise the warning above already fired.
-if (onboardingEnabled) {
-  app.route("/", createAuthRoute(db, { smtpConfigured: !!config.SUPABASE_SMTP_CONFIGURED }));
-} else {
+if (!onboardingEnabled) {
   logger.warn({
     msg: "onboarding_disabled_missing_config",
     hint: "Set SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, TOKEN_PEPPER to enable CLI onboarding.",
   });
 }
 
-// Authenticated endpoints
-const authenticated = new Hono<AppEnv>();
+// ─── Graceful shutdown state ───
+// Owned here (the server lifecycle) and read by the app via the injected
+// isShuttingDown() — the health route and the drain middleware in buildApp.
+let shuttingDown = false;
 
-// Reject new requests during graceful shutdown drain
-authenticated.use("*", async (c, next) => {
-  if (shuttingDown) {
-    c.header("Retry-After", "1");
-    return c.json({ error: "Service is shutting down, retry on another instance" }, 503);
-  }
-  return next();
-});
-
-authenticated.use("*", authMiddleware(db));
-authenticated.use("*", rateLimitMiddleware(config.RATE_LIMIT_PER_MINUTE));
-
-// Route-specific rate limits (stricter than global)
-authenticated.use("/v1/settle", routeRateLimitMiddleware("settle", 50));
-authenticated.use("/v1/settle-direct", routeRateLimitMiddleware("settle", 50));
-authenticated.use("/v1/verify", routeRateLimitMiddleware("verify", 100));
-
-// OFAC compliance screening on settlement routes
-if (ofacProvider) {
-  authenticated.use("/v1/settle", complianceMiddleware(ofacProvider));
-  authenticated.use("/v1/settle-direct", complianceMiddleware(ofacProvider));
-}
-
-// Squads SPN spending limit validation (Solana payments only)
-const solanaRpcUrl = rpcUrls[solanaNetworks[0]] ?? "https://api.devnet.solana.com";
-authenticated.use("/v1/settle", squadsMiddleware({ db, rpcUrl: solanaRpcUrl }));
-authenticated.use("/v1/settle-direct", squadsMiddleware({ db, rpcUrl: solanaRpcUrl }));
-
-authenticated.route("/", createVerifyRoute(facilitator, { metrics }));
-authenticated.route("/", createSettleRoute(facilitator, db, {
-  koraEnabled,
+// ─── Hono App ───
+const app = buildApp({
+  config,
+  db,
+  facilitator,
   metrics,
-  solanaRpcUrl,
-  onSettle: () => {
-    confirmationWorker.nudge();
-    webhookRetryWorker.nudge();
-    onChainRecorderWorker?.nudge();
+  logger,
+  workers: {
+    confirmation: confirmationWorker,
+    webhookRetry: webhookRetryWorker,
+    onChainRecorder: onChainRecorderWorker,
   },
-}));
-if (anchorIntegration) {
-  authenticated.route("/", createSettleDirectRoute(db, {
-    program: anchorIntegration.program,
-    koraEnabled,
-  }));
-}
-authenticated.route("/", createStatusRoute(db));
-
-// CRUD + management routes (Phase 2/3)
-authenticated.use("/v1/paywalls", routeRateLimitMiddleware("paywalls-write", 30));
-authenticated.use("/v1/agents", routeRateLimitMiddleware("agents-write", 30));
-authenticated.use("/v1/webhooks", routeRateLimitMiddleware("webhooks", 30));
-authenticated.route("/", createPaywallRoutes(db));
-authenticated.route("/", createTransactionListRoute(db));
-authenticated.route("/", createAgentRoutes(db));
-authenticated.route("/", createWebhookRoutes(db));
-authenticated.route("/", createMerchantRoute(db));
-
-// CLI onboarding — authenticated endpoints (merchant management, api keys, sessions).
-// The cliAuthMiddleware below is scoped to "/v1/onboarding/*", NOT "*":
-// mounting in a sub-app does NOT scope a "*" use(); once mounted at "/" it
-// matches every path and 401s the pp_live_* api-key surface.
-//
-// IMPORTANT: must mount BEFORE `authenticated` because Hono evaluates merged
-// routes/middleware in registration order. `authenticated.use("*", authMiddleware)`
-// would otherwise intercept every onboarding request with `Missing API key`
-// before cliAuthMiddleware could see it.
-if (onboardingEnabled) {
-  const cliAuthenticated = new Hono<AppEnv>();
-  cliAuthenticated.use("*", async (c, next) => {
-    if (shuttingDown) {
-      c.header("Retry-After", "1");
-      return c.json({ error: "Service is shutting down, retry on another instance" }, 503);
-    }
-    return next();
-  });
-  // Scope to onboarding paths only. A bare "*" matches every request once this
-  // sub-app is mounted at "/", which 401s the whole pp_live_* api-key surface
-  // (/v1/settle, /v1/verify, etc.) with `missing_bearer_token`. Regression #130.
-  cliAuthenticated.use("/v1/onboarding/*", cliAuthMiddleware(db));
-  cliAuthenticated.route("/", createMerchantOnboardingRoute(db));
-  cliAuthenticated.route("/", createApiKeysOnboardingRoute(db));
-  cliAuthenticated.route("/", createSessionsOnboardingRoute(db));
-  cliAuthenticated.route("/", createOnboardingHealthRoute(db));
-  app.route("/", cliAuthenticated);
-}
-
-app.route("/", authenticated);
+  koraEnabled,
+  koraFeePayer,
+  anchorIntegration,
+  ofacProvider,
+  onboardingEnabled,
+  solanaRpcUrl,
+  supportedNetworks: allNetworks,
+  isShuttingDown: () => shuttingDown,
+});
 
 // ─── Start Server ───
 const port = config.PORT;
@@ -348,12 +222,6 @@ const server = serve({ fetch: app.fetch, port }, (info) => {
 
 // Graceful shutdown
 const SHUTDOWN_TIMEOUT_MS = config.SHUTDOWN_TIMEOUT_MS;
-let shuttingDown = false;
-
-/** Exposed for health route — returns true once SIGTERM/SIGINT received */
-export function isShuttingDown(): boolean {
-  return shuttingDown;
-}
 
 async function shutdown(signal: string) {
   if (shuttingDown) return; // Prevent double-shutdown

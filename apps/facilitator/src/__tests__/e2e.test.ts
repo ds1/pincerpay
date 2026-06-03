@@ -212,7 +212,7 @@ function buildFacilitatorApp(
   // Public routes
   const mockWorkerStatus = { getStatus: () => ({ running: false, lastCycleAt: null, cycleCount: 0, consecutiveErrors: 0, lastError: null }) };
   app.route("/", createHealthRoute({ db: mockDb, workers: { confirmation: mockWorkerStatus, webhookRetry: mockWorkerStatus } }));
-  app.route("/", createSupportedRoute(facilitator));
+  app.route("/", createSupportedRoute(facilitator, { networks: [TEST_CHAIN] }));
 
   // Authenticated routes
   const authenticated = new Hono<AppEnv>();
