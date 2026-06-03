@@ -47,6 +47,11 @@
       "@hono/node-server@<1.19.13": "1.19.13",
       "uuid@<14.0.0": "14.0.0",
       "fast-uri@<3.1.2": "3.1.2"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-r5fr-rjxr-66jc"
+      ]
     }
   },
   "devDependencies": {

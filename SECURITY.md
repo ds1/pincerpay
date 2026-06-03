@@ -39,6 +39,12 @@ If you discover a security vulnerability in PincerPay, please report it using [G
 - Third-party dependencies (report upstream; notify us if it affects PincerPay)
 - Issues in test/example code that don't affect production
 
+## Accepted advisories (audit exceptions)
+
+After assessment, the following advisories are suppressed in `pnpm.auditConfig.ignoreGhsas` (root `package.json`). Each is re-reviewed when an upstream fix ships.
+
+- **GHSA-r5fr-rjxr-66jc** — `lodash` code injection via `_.template`. Transitive and build-only: `apps/dashboard > recharts > lodash`. The vulnerable sink (`_.template`) is never reached (recharts uses lodash for chart-math utilities only), and the dashboard is a private app, not a published package. No upstream fix exists — the advisory cites `>=4.18.0`, which lodash has never released (latest is 4.17.21). Permanent resolution tracked in #154: upgrade `recharts` to v3, which drops the bundled `lodash` dependency.
+
 ## Disclosure Policy
 
 - We will coordinate disclosure timelines with you

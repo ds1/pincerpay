@@ -347,7 +347,7 @@ async function buildSolanaFacilitatorApp(
       },
     }),
   );
-  app.route("/", createSupportedRoute(facilitator));
+  app.route("/", createSupportedRoute(facilitator, { networks: [TEST_CHAIN] }));
 
   // Authenticated routes
   const authenticated = new Hono<AppEnv>();
