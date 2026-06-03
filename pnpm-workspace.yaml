@@ -1,4 +1,8 @@
 packages:
   - "apps/*"
+  # apps/marketing moved to a separate private repo; it is gitignored but still
+  # present locally, so exclude it or `pnpm install` pulls its stale subtree
+  # (old form-data/tough-cookie/vitest) into the committed lockfile.
+  - "!apps/marketing"
   - "packages/*"
   - "examples/*"
