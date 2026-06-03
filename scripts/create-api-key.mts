@@ -20,6 +20,12 @@ Examples:
   pnpm create-api-key create --merchant Fools --label "Fools staging"
   pnpm create-api-key create --merchant 7d9a... --label "production" --dry-run
 
+Environment:
+  DATABASE_URL    Required. Postgres connection string.
+  TOKEN_PEPPER    Recommended. HMAC pepper, identical to the facilitator's value.
+                  When set (>=32 chars) keys are minted as HMAC; otherwise a
+                  legacy SHA-256 key is minted (works via fallback). See #133.
+
 The raw key is printed once. It is never recoverable. Save it immediately.
 `.trim();
 
@@ -102,6 +108,13 @@ async function createKey(opts: {
 
     const rawKey = `pp_live_${randomBytes(32).toString("hex")}`;
     const { keyHash, keyHashHmac } = hashNewApiKey(rawKey);
+    if (!keyHashHmac) {
+      console.warn(
+        "WARNING: TOKEN_PEPPER not set (or under 32 chars). Minting a legacy SHA-256 key.\n" +
+          "         It works via fallback, but set TOKEN_PEPPER (same value as the facilitator)\n" +
+          "         to mint HMAC keys. See issue #133.",
+      );
+    }
     const prefix = rawKey.slice(0, API_KEY_PREFIX_LENGTH);
 
     if (opts.dryRun) {
