@@ -1,5 +1,12 @@
 # @pincerpay/merchant
 
+## 0.10.3
+
+### Patch Changes
+
+- Updated dependencies [[`c4ecadc`](https://github.com/ds1/pincerpay/commit/c4ecadc965784168a4911d71f3f6382066a5bbb8)]:
+  - @pincerpay/core@0.10.3
+
 ## 0.10.2
 
 ### Patch Changes
