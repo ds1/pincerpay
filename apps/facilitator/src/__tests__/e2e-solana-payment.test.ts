@@ -196,7 +196,7 @@ interface CapturedInsert {
   agentId?: string;
 }
 
-function createMockDb(webhookReceiverUrl: string): {
+function createMockDb(webhookReceiverUrl: string, merchantWallet: string): {
   db: Database;
   inserts: CapturedInsert[];
 } {
@@ -239,6 +239,7 @@ function createMockDb(webhookReceiverUrl: string): {
             if (table === merchants) {
               return thenable([
                 {
+                  walletAddress: merchantWallet,
                   webhookUrlLive: webhookReceiverUrl,
                   webhookSecretLive: null,
                   webhookUrlTest: null,
@@ -353,7 +354,7 @@ async function buildSolanaFacilitatorApp(
   const authenticated = new Hono<AppEnv>();
   authenticated.use("*", authMiddleware(mockDb));
   authenticated.use("*", rateLimitMiddleware(120));
-  authenticated.route("/", createVerifyRoute(facilitator));
+  authenticated.route("/", createVerifyRoute(facilitator, mockDb));
   authenticated.route("/", createSettleRoute(facilitator, mockDb));
 
   app.route("/", authenticated);
@@ -435,7 +436,7 @@ describe("E2E Solana payment flow", () => {
     const webhookUrl = `http://127.0.0.1:${wh.port}/webhook`;
 
     // 4. Start facilitator (with mock RPC + mock DB)
-    const { db, inserts } = createMockDb(webhookUrl);
+    const { db, inserts } = createMockDb(webhookUrl, merchantKeypair.address);
     mockInserts = inserts;
     const facilitatorApp = await buildSolanaFacilitatorApp(
       db,

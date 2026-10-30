@@ -3,7 +3,6 @@ import { eq, and } from "drizzle-orm";
 import type { x402Facilitator } from "@x402/core/facilitator";
 import type { Address } from "@solana/kit";
 import { createSolanaRpc } from "@solana/kit";
-import { resolveChain } from "@pincerpay/core";
 import type { Database } from "@pincerpay/db";
 import { transactions, agents } from "@pincerpay/db";
 import { deriveSmartAccountPda, deriveSettingsPda, deriveSpendingLimitPda } from "@pincerpay/solana/squads";
@@ -11,6 +10,7 @@ import type { AppEnv } from "../env.js";
 import type { Metrics } from "../metrics.js";
 import { paymentRequestSchema } from "./schemas.js";
 import { dispatchWebhook } from "../webhooks/dispatcher.js";
+import { rejectForeignPayTo, rejectTestKeyOnMainnet } from "./guards.js";
 
 interface SettleRouteOptions {
   /** Whether Kora gasless mode is active for Solana transactions */
@@ -51,23 +51,16 @@ export function createSettleRoute(
 
       // Test keys cannot operate on mainnet chains. Reject before reaching x402.
       const environment = c.get("environment");
-      if (environment === "test") {
-        const chain = resolveChain(String(paymentRequirements.network));
-        if (chain && !chain.testnet) {
-          logger.warn({
-            msg: "settle_rejected_test_key_mainnet",
-            requestId,
-            network: paymentRequirements.network,
-          });
-          return c.json(
-            {
-              error: "test_key_chain_forbidden",
-              message: `Test API keys cannot settle on ${chain.shorthand}. Use a testnet chain (e.g. solana-devnet) or a live key.`,
-            },
-            403,
-          );
-        }
-      }
+      const testKeyRejection = rejectTestKeyOnMainnet(
+        c,
+        paymentRequirements.network,
+        "settle_rejected_test_key_mainnet",
+      );
+      if (testKeyRejection) return testKeyRejection;
+
+      // Only settle to the calling merchant's own wallet.
+      const payToRejection = await rejectForeignPayTo(c, db, paymentRequirements);
+      if (payToRejection) return payToRejection;
 
       logger.info({
         msg: "settle_request",

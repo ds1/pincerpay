@@ -5,6 +5,7 @@ import type { Database } from "@pincerpay/db";
 import { transactions, merchants, agents } from "@pincerpay/db";
 import type { PincerPayProgram } from "@pincerpay/program";
 import type { AppEnv } from "../env.js";
+import { rejectTestKeyOnMainnet } from "./guards.js";
 
 const settleDirectSchema = z.object({
   /** Agent's Solana wallet address */
@@ -65,6 +66,14 @@ export function createSettleDirectRoute(
           400,
         );
       }
+
+      // Test keys cannot operate on mainnet chains (same rule as /v1/settle).
+      const testKeyRejection = rejectTestKeyOnMainnet(
+        c,
+        network,
+        "settle_direct_rejected_test_key_mainnet",
+      );
+      if (testKeyRejection) return testKeyRejection;
 
       // Verify merchant exists and is registered on-chain
       const merchant = merchantId
@@ -137,6 +146,8 @@ export function createSettleDirectRoute(
       const [inserted] = await db.insert(transactions)
         .values({
           merchantId: merchantId!,
+          apiKeyId: c.get("apiKeyId"),
+          environment: c.get("environment"),
           chainId: network,
           txHash: `pending-direct-${Date.now()}`, // Placeholder until on-chain tx is broadcast
           fromAddress: agentAddress,
@@ -157,6 +168,8 @@ export function createSettleDirectRoute(
         accounts: {
           config: configPda,
           merchantAccount: merchantPda,
+          // Historical name: this is the merchant's owner wallet, not its USDC ATA.
+          // Kept for response-shape compatibility.
           merchantUsdcAta: merchant.walletAddress,
           agent: agentAddress,
         },
