@@ -4,6 +4,12 @@ import { resolveChain } from "@pincerpay/core";
 import type { Database } from "@pincerpay/db";
 import { merchants } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
+import {
+  DEFAULT_SOLANA_FEE_LIMITS,
+  checkSolanaFeeLimits,
+  readSolanaFeeParams,
+  type SolanaFeeLimits,
+} from "../chains/solana-fees.js";
 
 /**
  * Test API keys cannot operate on mainnet chains. Returns a 403 response to
@@ -81,5 +87,50 @@ export async function rejectForeignPayTo(
       message: "paymentRequirements.payTo must be the merchant's registered wallet.",
     },
     403,
+  );
+}
+
+/**
+ * On Solana the agent builds the transaction and the facilitator pays its
+ * fees, so the agent chooses what the facilitator spends. x402 caps the
+ * compute-unit price but not the limit. Reject transactions whose compute
+ * limit, priority fee or signature count exceed the configured caps.
+ *
+ * Returns a 400 response to send, or null when the request may proceed.
+ * Non-Solana networks and payloads without a transaction pass through
+ * (x402 verification rejects the latter).
+ */
+export function rejectExcessiveSolanaFees(
+  c: Context<AppEnv>,
+  paymentPayload: { payload?: unknown } | undefined,
+  network: unknown,
+  limits: SolanaFeeLimits = DEFAULT_SOLANA_FEE_LIMITS,
+): Response | null {
+  if (!String(network ?? "").startsWith("solana:")) return null;
+
+  const inner = paymentPayload?.payload as { transaction?: unknown } | undefined;
+  if (typeof inner?.transaction !== "string") return null;
+
+  let reason: string | null;
+  try {
+    reason = checkSolanaFeeLimits(readSolanaFeeParams(inner.transaction), limits);
+  } catch {
+    reason = "transaction could not be decoded";
+  }
+  if (!reason) return null;
+
+  c.get("logger").warn({
+    msg: "solana_fee_exceeds_cap",
+    requestId: c.get("requestId"),
+    merchantId: c.get("merchantId"),
+    network,
+    reason,
+  });
+  return c.json(
+    {
+      error: "solana_fee_exceeds_cap",
+      message: `Transaction rejected: ${reason}.`,
+    },
+    400,
   );
 }

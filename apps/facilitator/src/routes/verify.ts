@@ -4,10 +4,13 @@ import type { Database } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
 import type { Metrics } from "../metrics.js";
 import { paymentRequestSchema } from "./schemas.js";
-import { rejectForeignPayTo, rejectTestKeyOnMainnet } from "./guards.js";
+import { rejectExcessiveSolanaFees, rejectForeignPayTo, rejectTestKeyOnMainnet } from "./guards.js";
+import type { SolanaFeeLimits } from "../chains/solana-fees.js";
 
 interface VerifyRouteOptions {
   metrics?: Metrics;
+  /** Caps on fees the facilitator pays for agent-built Solana transactions */
+  solanaFeeLimits?: SolanaFeeLimits;
 }
 
 export function createVerifyRoute(
@@ -46,6 +49,14 @@ export function createVerifyRoute(
 
       const payToRejection = await rejectForeignPayTo(c, db, paymentRequirements);
       if (payToRejection) return payToRejection;
+
+      const feeRejection = rejectExcessiveSolanaFees(
+        c,
+        paymentPayload,
+        paymentRequirements.network,
+        options?.solanaFeeLimits,
+      );
+      if (feeRejection) return feeRejection;
 
       logger.info({
         msg: "verify_request",

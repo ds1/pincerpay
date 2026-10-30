@@ -7,6 +7,7 @@ import type { Logger } from "./middleware/logging.js";
 import type { Metrics } from "./metrics.js";
 import type { OfacSdnProvider } from "./compliance/ofac-sdn.js";
 import type { AppEnv } from "./env.js";
+import { DEFAULT_SOLANA_FEE_LIMITS, type SolanaFeeLimits } from "./chains/solana-fees.js";
 import { loggingMiddleware } from "./middleware/logging.js";
 import { authMiddleware } from "./middleware/auth.js";
 import { rateLimitMiddleware, routeRateLimitMiddleware } from "./middleware/ratelimit.js";
@@ -165,8 +166,14 @@ export function buildApp(deps: BuildAppDeps): Hono<AppEnv> {
   authenticated.use("/v1/settle", squadsMiddleware({ db, rpcUrl: solanaRpcUrl }));
   authenticated.use("/v1/settle-direct", squadsMiddleware({ db, rpcUrl: solanaRpcUrl }));
 
-  authenticated.route("/", createVerifyRoute(facilitator, db, { metrics }));
+  const solanaFeeLimits: SolanaFeeLimits = {
+    maxComputeUnitLimit: config.SOLANA_MAX_COMPUTE_UNIT_LIMIT ?? DEFAULT_SOLANA_FEE_LIMITS.maxComputeUnitLimit,
+    maxPriorityFeeLamports: config.SOLANA_MAX_PRIORITY_FEE_LAMPORTS ?? DEFAULT_SOLANA_FEE_LIMITS.maxPriorityFeeLamports,
+    maxSignatures: config.SOLANA_MAX_SIGNATURES ?? DEFAULT_SOLANA_FEE_LIMITS.maxSignatures,
+  };
+  authenticated.route("/", createVerifyRoute(facilitator, db, { metrics, solanaFeeLimits }));
   authenticated.route("/", createSettleRoute(facilitator, db, {
+    solanaFeeLimits,
     koraEnabled,
     metrics,
     solanaRpcUrl,
