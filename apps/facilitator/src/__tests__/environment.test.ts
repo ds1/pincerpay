@@ -81,6 +81,7 @@ function buildMockDb(): Database {
             }
             return thenable([
               {
+                walletAddress: REQUIREMENTS_BASE.payTo,
                 webhookUrlLive: null,
                 webhookSecretLive: null,
                 webhookUrlTest: null,
@@ -113,7 +114,7 @@ function buildApp(db: Database) {
   app.use("*", loggingMiddleware(silentLogger));
   const authed = new Hono<AppEnv>();
   authed.use("*", authMiddleware(db));
-  authed.route("/", createVerifyRoute(facilitator));
+  authed.route("/", createVerifyRoute(facilitator, db));
   authed.route("/", createSettleRoute(facilitator, db));
   app.route("/", authed);
   return app;

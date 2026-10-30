@@ -165,7 +165,7 @@ export function buildApp(deps: BuildAppDeps): Hono<AppEnv> {
   authenticated.use("/v1/settle", squadsMiddleware({ db, rpcUrl: solanaRpcUrl }));
   authenticated.use("/v1/settle-direct", squadsMiddleware({ db, rpcUrl: solanaRpcUrl }));
 
-  authenticated.route("/", createVerifyRoute(facilitator, { metrics }));
+  authenticated.route("/", createVerifyRoute(facilitator, db, { metrics }));
   authenticated.route("/", createSettleRoute(facilitator, db, {
     koraEnabled,
     metrics,
