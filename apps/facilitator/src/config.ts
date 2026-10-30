@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+/**
+ * Boolean env var. Unlike z.coerce.boolean(), which treats any non-empty
+ * string (including "false") as true, this accepts only true/false/1/0.
+ */
+const envBoolean = z
+  .enum(["true", "false", "1", "0", "TRUE", "FALSE"])
+  .transform((v) => v === "true" || v === "1" || v === "TRUE");
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(4402),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -45,7 +53,7 @@ const envSchema = z.object({
   SHUTDOWN_TIMEOUT_MS: z.coerce.number().default(10_000),
 
   /** Enable OFAC compliance screening on settlement routes */
-  OFAC_ENABLED: z.coerce.boolean().default(false),
+  OFAC_ENABLED: envBoolean.default("false"),
   /** OFAC SDN list refresh interval in milliseconds (default: 24 hours) */
   OFAC_REFRESH_INTERVAL_MS: z.coerce.number().default(86_400_000),
 
@@ -60,7 +68,7 @@ const envSchema = z.object({
    * When false, /signup returns 503 instead of falsely reporting that an OTP
    * email was sent (Supabase's built-in email service silently drops mail).
    */
-  SUPABASE_SMTP_CONFIGURED: z.coerce.boolean().default(false),
+  SUPABASE_SMTP_CONFIGURED: envBoolean.default("false"),
 }).refine(
   (data) => data.SOLANA_PRIVATE_KEY || data.KORA_RPC_URL,
   { message: "At least one of SOLANA_PRIVATE_KEY or KORA_RPC_URL is required", path: ["SOLANA_PRIVATE_KEY"] },
