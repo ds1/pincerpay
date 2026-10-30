@@ -107,7 +107,7 @@ export class FacilitatorClient {
   }
 
   async getMetrics(): Promise<unknown> {
-    return this.request("/v1/metrics");
+    return this.request(FACILITATOR_ROUTES.metrics);
   }
 
   async getOpenApiSpec(): Promise<unknown> {

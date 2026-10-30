@@ -155,3 +155,64 @@ describe("PincerPayAgent Solana support", () => {
     expect(agent.solanaAddress).toBeUndefined();
   });
 });
+
+describe("PincerPayAgent allowlists (#167)", () => {
+  const MERCHANT_A = "9aE476sH92Vz7DMPyq5WLPkrKWivxeuTKEFKd2sZZcde";
+  const MERCHANT_B = "GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm";
+  const EVM_MERCHANT = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+  const SOLANA_MAINNET = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
+
+  function agentWith(policy: Record<string, unknown>) {
+    return new PincerPayAgent({ chains: ["solana"], evmPrivateKey: TEST_EVM_KEY, policies: [policy] });
+  }
+
+  it("refuses a payTo outside allowedMerchants", () => {
+    const agent = agentWith({ allowedMerchants: [MERCHANT_A] });
+    expect(agent.checkPolicy("1000", { payTo: MERCHANT_A, network: SOLANA_MAINNET }).allowed).toBe(true);
+    const check = agent.checkPolicy("1000", { payTo: MERCHANT_B, network: SOLANA_MAINNET });
+    expect(check.allowed).toBe(false);
+    expect(check.reason).toContain("Merchant not in allowlist");
+  });
+
+  it("compares EVM merchants case-insensitively", () => {
+    const agent = agentWith({ allowedMerchants: [EVM_MERCHANT] });
+    expect(agent.checkPolicy("1000", { payTo: EVM_MERCHANT.toLowerCase(), network: "eip155:8453" }).allowed).toBe(true);
+  });
+
+  it("refuses when an allowlist is set but payTo is unknown", () => {
+    const agent = agentWith({ allowedMerchants: [MERCHANT_A] });
+    expect(agent.checkPolicy("1000").allowed).toBe(false);
+  });
+
+  it("matches a CAIP-2 network against a shorthand allowedChains entry", () => {
+    const agent = agentWith({ allowedChains: ["solana"] });
+    expect(agent.checkPolicy("1000", { payTo: MERCHANT_A, network: SOLANA_MAINNET }).allowed).toBe(true);
+    const check = agent.checkPolicy("1000", { payTo: MERCHANT_A, network: "eip155:8453" });
+    expect(check.allowed).toBe(false);
+    expect(check.reason).toContain("Chain not in allowlist");
+  });
+
+  it("the pre-payment hook passes payTo and network to the policy check", async () => {
+    let beforeHook: ((ctx: unknown) => Promise<unknown>) | undefined;
+    const fakeClient = {
+      onBeforePaymentCreation: (fn: (ctx: unknown) => Promise<unknown>) => {
+        beforeHook = fn;
+      },
+      onAfterPaymentCreation: () => {},
+    };
+    new PincerPayAgent(
+      { chains: ["solana"], evmPrivateKey: TEST_EVM_KEY, policies: [{ allowedMerchants: [MERCHANT_A] }] },
+      fakeClient as never,
+    );
+
+    const blocked = await beforeHook!({
+      selectedRequirements: { amount: "1000", payTo: MERCHANT_B, network: SOLANA_MAINNET },
+    });
+    expect(blocked).toMatchObject({ abort: true });
+
+    const allowed = await beforeHook!({
+      selectedRequirements: { amount: "1000", payTo: MERCHANT_A, network: SOLANA_MAINNET },
+    });
+    expect(allowed).toBeUndefined();
+  });
+});
