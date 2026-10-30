@@ -214,7 +214,10 @@ export interface AgentConfig {
   solanaPrivateKey?: string;
   /** Spending policies */
   policies?: SpendingPolicy[];
-  /** Custom facilitator URL */
+  /**
+   * @deprecated Unused. The agent pays merchants directly over x402; the
+   * merchant's middleware talks to the facilitator. Kept for compatibility.
+   */
   facilitatorUrl?: string;
 }
 

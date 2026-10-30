@@ -11,6 +11,7 @@ vi.mock("@pincerpay/solana/squads", () => ({
 vi.mock("@pincerpay/db", () => {
   return {
     agents: { id: "id", solanaAddress: "solana_address", merchantId: "merchant_id" },
+    transactions: { amount: "amount", agentId: "agent_id", createdAt: "created_at" },
   };
 });
 
@@ -18,66 +19,94 @@ vi.mock("@pincerpay/db", () => {
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((col: string, val: string) => ({ col, val, op: "eq" })),
   and: vi.fn((...args: unknown[]) => ({ args, op: "and" })),
+  gte: vi.fn((col: string, val: unknown) => ({ col, val, op: "gte" })),
+  sql: vi.fn(() => ({ op: "sql" })),
 }));
 
 import { squadsMiddleware } from "../middleware/squads.js";
 import { checkSpendingLimit } from "@pincerpay/solana/squads";
+import { eq } from "drizzle-orm";
 
 const mockedCheckSpendingLimit = vi.mocked(checkSpendingLimit);
 
 // ─── Helpers ───
 
-/** Build a minimal fake Solana transaction (base64) with a known fee payer. */
-function buildFakeSolanaTx(payerBase58: string): string {
-  // Decode base58 to 32 bytes for the payer pubkey
+function base58ToBytes(address: string): Uint8Array {
   const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   let num = 0n;
-  for (const char of payerBase58) {
+  for (const char of address) {
     const idx = ALPHABET.indexOf(char);
     if (idx < 0) throw new Error(`Invalid base58 char: ${char}`);
     num = num * 58n + BigInt(idx);
   }
-  const payerBytes = new Uint8Array(32);
+  const bytes = new Uint8Array(32);
   for (let i = 31; i >= 0; i--) {
-    payerBytes[i] = Number(num & 0xffn);
+    bytes[i] = Number(num & 0xffn);
     num = num >> 8n;
   }
+  return bytes;
+}
 
-  // Build minimal transaction bytes:
-  // [sigCount(1)] [sig(64)] [header(3)] [accountCount(1)] [payerPubkey(32)] [recentBlockhash(32)] [instructionCount(1)]
-  const buf = Buffer.alloc(1 + 64 + 3 + 1 + 32 + 32 + 1);
-  let offset = 0;
+const TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+/** Facilitator/Kora signer: the fee payer in x402 exact SVM, never the agent. */
+const FACILITATOR_FEE_PAYER = "Fh8gDkM2aaEhX29LAMg7u48NPtCVjjB1ykFqjUhATJkB";
 
-  buf[offset++] = 1; // 1 signature
-  // 64 zero bytes for signature placeholder
-  offset += 64;
+/**
+ * Build an x402-shaped Solana transaction (base64): the facilitator pays the
+ * fee and the agent is the authority of an SPL TransferChecked instruction.
+ */
+function buildX402Tx(authorityBase58: string, amount = 1_000_000n): string {
+  const filler = (n: number) => new Uint8Array(32).fill(n);
+  // Static accounts, ordered: writable signer, readonly signer,
+  // writable non-signers, readonly non-signers.
+  const accounts = [
+    base58ToBytes(FACILITATOR_FEE_PAYER), // 0 fee payer
+    base58ToBytes(authorityBase58), // 1 transfer authority (agent)
+    filler(7), // 2 source token account
+    filler(8), // 3 destination token account
+    filler(9), // 4 USDC mint
+    base58ToBytes(TOKEN_PROGRAM), // 5 token program
+  ];
+  const data = Buffer.alloc(10);
+  data[0] = 12; // TransferChecked
+  data.writeBigUInt64LE(amount, 1);
+  data[9] = 6; // decimals
 
-  // Message header
-  buf[offset++] = 1; // numRequiredSignatures
-  buf[offset++] = 0; // numReadonlySignedAccounts
-  buf[offset++] = 0; // numReadonlyUnsignedAccounts
-
-  buf[offset++] = 1; // 1 account
-  Buffer.from(payerBytes).copy(buf, offset);
-  offset += 32;
-
-  // 32 zero bytes for recent blockhash + 1 byte for 0 instructions
-  // (already zero-filled)
-
-  return buf.toString("base64");
+  const message = Buffer.concat([
+    Buffer.from([2, 1, 2]), // header: 2 signers, 1 readonly signer, 2 readonly unsigned
+    Buffer.from([accounts.length]),
+    ...accounts.map((a) => Buffer.from(a)),
+    Buffer.alloc(32), // recent blockhash
+    Buffer.from([1]), // 1 instruction
+    Buffer.from([5, 4, 2, 4, 3, 1, data.length]), // program 5; accounts [src, mint, dst, authority]
+    data,
+  ]);
+  return Buffer.concat([Buffer.from([2]), Buffer.alloc(128), message]).toString("base64");
 }
 
 /** A known test address in base58 */
 const TEST_PAYER = "GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm";
 const TEST_MERCHANT_ID = "merchant-uuid-123";
 
-/** Create a mock database object that returns configured agent rows. */
-function createMockDb(agentRows: Record<string, unknown>[]) {
+/**
+ * Mock database: the agent lookup (select().from().where().limit()) returns
+ * agentRows; the daily-spend aggregate (select().from().where()) resolves to
+ * dailyTotal. With throwOnQuery, every query rejects.
+ */
+function createMockDb(
+  agentRows: Record<string, unknown>[],
+  opts?: { dailyTotal?: string; throwOnQuery?: boolean },
+) {
+  const result = <T>(value: T) =>
+    opts?.throwOnQuery ? Promise.reject(new Error("db down")) : Promise.resolve(value);
   const mockDb = {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue(agentRows),
+    where: vi.fn(() => ({
+      limit: vi.fn(() => result(agentRows)),
+      then: (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+        result([{ total: opts?.dailyTotal ?? "0" }]).then(resolve, reject),
+    })),
   };
   return mockDb as unknown;
 }
@@ -135,7 +164,7 @@ function settleBody(overrides?: {
       scheme: "exact",
       network: overrides?.network ?? "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
       payload: {
-        transaction: overrides?.txBase64 ?? buildFakeSolanaTx(TEST_PAYER),
+        transaction: overrides?.txBase64 ?? buildX402Tx(TEST_PAYER),
       },
       accepted: {},
     },
@@ -343,7 +372,7 @@ describe("squadsMiddleware", () => {
     expect(res.status).toBe(200);
   });
 
-  it("fails open when on-chain check throws an error", async () => {
+  it("fails closed (503) when the on-chain check throws", async () => {
     mockedCheckSpendingLimit.mockRejectedValue(new Error("RPC timeout"));
 
     const db = createMockDb([
@@ -359,8 +388,9 @@ describe("squadsMiddleware", () => {
     const app = createTestApp(db);
 
     const res = await postSettle(app, settleBody());
-    // Should still pass through (fail open)
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as { code: string };
+    expect(body.code).toBe("SPENDING_POLICY_UNAVAILABLE");
   });
 
   it("passes through when request body is not valid JSON", async () => {
@@ -392,5 +422,55 @@ describe("squadsMiddleware", () => {
       }),
     });
     expect(res.status).toBe(200);
+  });
+
+  it("identifies the agent by transfer authority, not the facilitator fee payer", async () => {
+    const db = createMockDb([]);
+    const app = createTestApp(db);
+
+    await postSettle(app, settleBody());
+    expect(vi.mocked(eq)).toHaveBeenCalledWith("solana_address", TEST_PAYER);
+    expect(vi.mocked(eq)).not.toHaveBeenCalledWith("solana_address", FACILITATOR_FEE_PAYER);
+  });
+
+  it("returns 403 when the daily limit would be exceeded", async () => {
+    const db = createMockDb(
+      [
+        {
+          id: "agent-1",
+          solanaAddress: TEST_PAYER,
+          merchantId: TEST_MERCHANT_ID,
+          status: "active",
+          smartAccountPda: null,
+          maxPerTransaction: null,
+          maxPerDay: "1500000", // 1.5 USDC per day
+        },
+      ],
+      { dailyTotal: "900000" }, // 0.9 already spent today
+    );
+    const app = createTestApp(db);
+
+    const res = await postSettle(app, settleBody({ amount: "1000000" }));
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { code: string };
+    expect(body.code).toBe("DAILY_LIMIT_EXCEEDED");
+  });
+
+  it("fails closed (503) when the database lookup errors", async () => {
+    const db = createMockDb([], { throwOnQuery: true });
+    const app = createTestApp(db);
+
+    const res = await postSettle(app, settleBody());
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as { code: string };
+    expect(body.code).toBe("SPENDING_POLICY_UNAVAILABLE");
+  });
+
+  it("fails closed (503) when the transaction cannot be decoded", async () => {
+    const db = createMockDb([]);
+    const app = createTestApp(db);
+
+    const res = await postSettle(app, settleBody({ txBase64: "AAAA" }));
+    expect(res.status).toBe(503);
   });
 });

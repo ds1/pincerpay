@@ -11,7 +11,8 @@ export const FACILITATOR_ROUTES = {
   status: `/${API_VERSION}/status`,
   supported: `/${API_VERSION}/supported`,
   health: "/health",
-  metrics: `/${API_VERSION}/metrics`,
+  /** Unversioned and unauthenticated, like health. */
+  metrics: "/metrics",
   paywalls: `/${API_VERSION}/paywalls`,
   transactions: `/${API_VERSION}/transactions`,
   agents: `/${API_VERSION}/agents`,

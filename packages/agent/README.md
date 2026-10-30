@@ -64,15 +64,18 @@ interface AgentConfig {
   evmPrivateKey?: string;          // Hex-encoded EVM key
   solanaPrivateKey?: string;       // Base58-encoded Solana keypair
   policies?: SpendingPolicy[];     // Client-side spending limits
-  facilitatorUrl?: string;         // Default: https://facilitator.pincerpay.com
+  facilitatorUrl?: string;         // Deprecated, unused: agents pay merchants directly
 }
 
 interface SpendingPolicy {
   maxPerTransaction?: string;      // Max USDC per transaction (base units)
   maxPerDay?: string;              // Max USDC per day (base units)
-  allowedMerchants?: string[];     // Whitelist merchant addresses
-  allowedChains?: string[];        // Whitelist chain shorthands
+  allowedMerchants?: string[];     // Only pay these payTo addresses
+  allowedChains?: string[];        // Only pay on these chains ("solana" or CAIP-2 IDs)
 }
+
+// Policies are enforced before the agent signs each payment. With an
+// allowlist set, a payment to a merchant or chain outside it is refused.
 
 // USDC base units (6 decimals): $0.01 = "10000", $0.10 = "100000", $1.00 = "1000000"
 // WARNING: Do NOT use human-readable amounts like "0.10" -- BigInt("0.10") throws at runtime.

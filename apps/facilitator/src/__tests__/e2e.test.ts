@@ -15,7 +15,7 @@ import { PincerPayAgent } from "@pincerpay/agent";
 import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 import type { AppEnv } from "../env.js";
 import type { Database } from "@pincerpay/db";
-import { agents, apiKeys, transactions } from "@pincerpay/db";
+import { agents, apiKeys, merchants, transactions } from "@pincerpay/db";
 
 // ─── Test Constants ───
 
@@ -163,6 +163,10 @@ function createMockDb(): { db: Database; inserts: CapturedInsert[]; agentInserts
                 },
               ]);
             }
+            // payTo guard looks up the merchant wallet
+            if (table === merchants) {
+              return thenable([{ walletAddress: MERCHANT_ADDRESS }]);
+            }
             return thenable([]);
           },
         }),
@@ -222,7 +226,7 @@ function buildFacilitatorApp(
   const authenticated = new Hono<AppEnv>();
   authenticated.use("*", authMiddleware(mockDb));
   authenticated.use("*", rateLimitMiddleware(120));
-  authenticated.route("/", createVerifyRoute(facilitator));
+  authenticated.route("/", createVerifyRoute(facilitator, mockDb));
   authenticated.route("/", createSettleRoute(facilitator, mockDb));
 
   app.route("/", authenticated);

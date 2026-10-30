@@ -1,15 +1,20 @@
 import { Hono } from "hono";
 import type { x402Facilitator } from "@x402/core/facilitator";
-import { resolveChain } from "@pincerpay/core";
+import type { Database } from "@pincerpay/db";
 import type { AppEnv } from "../env.js";
 import type { Metrics } from "../metrics.js";
 import { paymentRequestSchema } from "./schemas.js";
+import { rejectForeignPayTo, rejectTestKeyOnMainnet } from "./guards.js";
 
 interface VerifyRouteOptions {
   metrics?: Metrics;
 }
 
-export function createVerifyRoute(facilitator: x402Facilitator, options?: VerifyRouteOptions) {
+export function createVerifyRoute(
+  facilitator: x402Facilitator,
+  db: Database,
+  options?: VerifyRouteOptions,
+) {
   const app = new Hono<AppEnv>();
 
   app.post("/v1/verify", async (c) => {
@@ -32,23 +37,15 @@ export function createVerifyRoute(facilitator: x402Facilitator, options?: Verify
 
       // Test keys cannot operate on mainnet chains. Reject before any work.
       const environment = c.get("environment");
-      if (environment === "test") {
-        const chain = resolveChain(String(paymentRequirements.network));
-        if (chain && !chain.testnet) {
-          logger.warn({
-            msg: "verify_rejected_test_key_mainnet",
-            requestId,
-            network: paymentRequirements.network,
-          });
-          return c.json(
-            {
-              error: "test_key_chain_forbidden",
-              message: `Test API keys cannot settle on ${chain.shorthand}. Use a testnet chain (e.g. solana-devnet) or a live key.`,
-            },
-            403,
-          );
-        }
-      }
+      const testKeyRejection = rejectTestKeyOnMainnet(
+        c,
+        paymentRequirements.network,
+        "verify_rejected_test_key_mainnet",
+      );
+      if (testKeyRejection) return testKeyRejection;
+
+      const payToRejection = await rejectForeignPayTo(c, db, paymentRequirements);
+      if (payToRejection) return payToRejection;
 
       logger.info({
         msg: "verify_request",
