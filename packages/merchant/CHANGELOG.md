@@ -1,5 +1,11 @@
 # @pincerpay/merchant
 
+## 0.10.2
+
+### Patch Changes
+
+- [`455f408`](https://github.com/ds1/pincerpay/commit/455f4083e0d5405cb43a77b9c7be3c9ffa74a97f) Thanks [@ds1](https://github.com/ds1)! - Security: settle only against the route's own payment requirements. The middleware now rejects a payment whose `accepted` terms (scheme, network, amount, asset, payTo) don't match an offered option, and sends its own copy of the terms to the facilitator instead of the agent-supplied ones.
+
 ## 0.10.0
 
 ### Minor Changes
