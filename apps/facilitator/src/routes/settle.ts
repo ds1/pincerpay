@@ -101,9 +101,11 @@ export function createSettleRoute(
           : network.startsWith("eip155:137") || network.startsWith("eip155:80002") ? "MATIC"
           : "ETH";
 
-        // Upsert agent: auto-register unknown agents on first payment
+        // Upsert agent: auto-register unknown agents on first payment.
+        // Agents are keyed by Solana address; EVM payers aren't registered
+        // (agents has no EVM address column).
         const fromAddress = result.payer ?? "unknown";
-        const agentUpsert = fromAddress !== "unknown"
+        const agentUpsert = fromAddress !== "unknown" && network.startsWith("solana:")
           ? db.select({ id: agents.id, smartAccountPda: agents.smartAccountPda })
               .from(agents)
               .where(and(eq(agents.solanaAddress, fromAddress), eq(agents.merchantId, merchantId)))
@@ -152,9 +154,10 @@ export function createSettleRoute(
               optimistic: isOptimistic,
               agentId,
               endpoint: paymentPayload.resource?.url,
-            });
+            })
+            .returning({ id: transactions.id });
         })
-          .then(() => {
+          .then(([recorded]) => {
             logger.info({
               msg: "transaction_recorded",
               requestId,
@@ -167,7 +170,7 @@ export function createSettleRoute(
               dispatchWebhook(db, {
                 merchantId,
                 environment,
-                transactionId: undefined, // transaction ID not returned by insert
+                transactionId: recorded?.id,
                 webhookUrl,
                 webhookSecret: c.get("webhookSecret"),
                 payload: {
