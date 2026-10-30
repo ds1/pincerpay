@@ -7,6 +7,10 @@ import {
   validateMerchantAddressForChain,
 } from "@pincerpay/core";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 const inputSchema = {
   config: z.string().describe(
     "JSON string of a PincerPayConfig object to validate. " +
@@ -45,51 +49,39 @@ export function registerValidateConfig(server: McpServer) {
       }
 
       const result = PincerPayConfigSchema.safeParse(parsed);
-      if (!result.success) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(
-                {
-                  valid: false,
-                  errors: result.error.issues.map(
-                    (i) => `${i.path.join(".")}: ${i.message}`,
-                  ),
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
-      }
-
+      // Schema errors don't stop the route-level checks: report everything
+      // wrong with the config in one pass.
+      const errors: string[] = result.success
+        ? []
+        : result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
       const warnings: string[] = [];
-      const data = result.data;
 
-      if (
-        !data.apiKey.startsWith("pp_live_") &&
-        !data.apiKey.startsWith("pp_test_")
-      ) {
+      const raw = isRecord(parsed) ? parsed : {};
+      const apiKey = typeof raw.apiKey === "string" ? raw.apiKey : undefined;
+      const addresses = {
+        merchantAddress: typeof raw.merchantAddress === "string" ? raw.merchantAddress : undefined,
+        merchantAddresses: isRecord(raw.merchantAddresses)
+          ? (raw.merchantAddresses as Record<string, string>)
+          : undefined,
+      };
+      const routes = isRecord(raw.routes) ? raw.routes : {};
+
+      if (apiKey && !apiKey.startsWith("pp_live_") && !apiKey.startsWith("pp_test_")) {
         warnings.push(
           "API key does not start with 'pp_live_' or 'pp_test_'. Verify it's correct.",
         );
       }
 
-      const validMethods = new Set([
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE",
-        "PATCH",
-      ]);
+      const validMethods = new Set(["GET", "POST", "PUT", "DELETE", "PATCH"]);
       const allChains = new Set<string>();
-      for (const [pattern, route] of Object.entries(data.routes)) {
-        // Validate route pattern format: "METHOD /path"
+      for (const [pattern, routeValue] of Object.entries(routes)) {
+        const route = isRecord(routeValue) ? routeValue : {};
+
+        // Route pattern format: "METHOD /path". A malformed key never matches
+        // a request, so the route would silently stay free.
         const parts = pattern.split(" ");
         if (parts.length < 2) {
-          warnings.push(
+          errors.push(
             `Route "${pattern}": invalid format. Must be "METHOD /path" (e.g., "GET /api/weather").`,
           );
         } else {
@@ -101,26 +93,29 @@ export function registerValidateConfig(server: McpServer) {
             );
           }
           if (!path.startsWith("/")) {
-            warnings.push(
+            errors.push(
               `Route "${pattern}": path must start with "/" (e.g., "GET /api/weather").`,
             );
           }
         }
 
-        const chains =
-          route.chains ?? (route.chain ? [route.chain] : ["solana"]);
+        // Unknown chains, missing wallets and malformed addresses make the
+        // middleware throw at init, so they are errors.
+        const chains = Array.isArray(route.chains)
+          ? route.chains.filter((c): c is string => typeof c === "string")
+          : typeof route.chain === "string"
+            ? [route.chain]
+            : ["solana"];
         for (const chain of chains) {
           allChains.add(chain);
           if (!resolveChain(chain)) {
-            warnings.push(`Route "${pattern}": unknown chain "${chain}".`);
+            errors.push(`Route "${pattern}": unknown chain "${chain}".`);
             continue;
           }
 
-          // Verify a receiving wallet exists for this chain — surfaces
-          // missing per-chain entries before middleware init throws at runtime.
-          const resolved = resolveMerchantAddress(data, chain);
+          const resolved = resolveMerchantAddress(addresses, chain);
           if (!resolved) {
-            warnings.push(
+            errors.push(
               `Route "${pattern}": no receiving wallet for chain "${chain}". ` +
                 `Set merchantAddresses[${JSON.stringify(chain)}] or a legacy merchantAddress.`,
             );
@@ -129,11 +124,11 @@ export function registerValidateConfig(server: McpServer) {
 
           const formatError = validateMerchantAddressForChain(resolved, chain);
           if (formatError) {
-            warnings.push(`Route "${pattern}": ${formatError}`);
+            errors.push(`Route "${pattern}": ${formatError}`);
           }
         }
 
-        const price = parseFloat(route.price);
+        const price = typeof route.price === "string" ? parseFloat(route.price) : NaN;
         if (price === 0) {
           warnings.push(
             `Route "${pattern}": price is 0 — endpoint will effectively be free.`,
@@ -146,15 +141,17 @@ export function registerValidateConfig(server: McpServer) {
         }
       }
 
+      const valid = errors.length === 0;
       return {
         content: [
           {
             type: "text" as const,
             text: JSON.stringify(
               {
-                valid: true,
+                valid,
+                errors: valid ? undefined : errors,
                 warnings: warnings.length > 0 ? warnings : undefined,
-                routeCount: Object.keys(data.routes).length,
+                routeCount: Object.keys(routes).length,
                 chains: [...allChains],
               },
               null,
@@ -162,6 +159,7 @@ export function registerValidateConfig(server: McpServer) {
             ),
           },
         ],
+        ...(valid ? {} : { isError: true }),
       };
     },
   );

@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { PACKAGE_VERSION } from "./version.js";
 import { ApiError } from "./lib/api.js";
 import { closePrompts } from "./lib/prompts.js";
 import { runSignup } from "./commands/signup.js";
@@ -27,7 +28,7 @@ const program = new Command();
 program
   .name("pincerpay")
   .description("Frictionless CLI for PincerPay merchant onboarding. No browser required.")
-  .version("0.1.0")
+  .version(PACKAGE_VERSION)
   .option("--facilitator-url <url>", "Override facilitator URL (also: PINCERPAY_FACILITATOR_URL env var)");
 
 program

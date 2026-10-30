@@ -1,8 +1,12 @@
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { FacilitatorClient } from "./client.js";
 import { registerTools } from "./tools/index.js";
 import { registerResources } from "./resources/index.js";
 import { registerPrompts } from "./prompts/index.js";
+
+// Read at runtime: package.json sits outside rootDir (src), and is always published.
+const PACKAGE_VERSION = (createRequire(import.meta.url)("../package.json") as { version: string }).version;
 
 export interface PincerPayMcpConfig {
   /** PincerPay API key (pp_live_... or pp_test_...) */
@@ -24,7 +28,7 @@ export function createPincerPayMcpServer(config: PincerPayMcpConfig = {}) {
   const server = new McpServer(
     {
       name: "pincerpay",
-      version: "0.4.0",
+      version: PACKAGE_VERSION,
     },
     {
       instructions:

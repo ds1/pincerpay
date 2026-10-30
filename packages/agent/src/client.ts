@@ -5,6 +5,7 @@ import { wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
+import { resolveChain } from "@pincerpay/core";
 import type { AgentConfig, SpendingPolicy } from "@pincerpay/core";
 
 /** Adapt a viem LocalAccount into the ClientEvmSigner shape required by @x402/evm 2.6+ */
@@ -106,9 +107,15 @@ export class PincerPayAgent {
   }
 
   /**
-   * Check if a transaction amount is within spending policy limits.
+   * Check a payment against the spending policies: per-transaction and daily
+   * limits, plus the merchant (payTo) and chain allowlists when set. When an
+   * allowlist is configured but the payment's payTo/network is unknown, the
+   * payment is refused.
    */
-  checkPolicy(amountBaseUnits: string): { allowed: boolean; reason?: string } {
+  checkPolicy(
+    amountBaseUnits: string,
+    target?: { payTo?: string; network?: string },
+  ): { allowed: boolean; reason?: string } {
     const policies = this.config.policies;
     if (!policies || policies.length === 0) {
       return { allowed: true };
@@ -117,6 +124,45 @@ export class PincerPayAgent {
     const amount = BigInt(amountBaseUnits);
 
     for (const policy of policies) {
+      // Merchant allowlist (payTo). EVM addresses compare case-insensitively.
+      if (policy.allowedMerchants && policy.allowedMerchants.length > 0) {
+        const payTo = target?.payTo;
+        const isEvm = payTo?.startsWith("0x") ?? false;
+        const allowed =
+          payTo !== undefined &&
+          policy.allowedMerchants.some((m) =>
+            isEvm ? m.toLowerCase() === payTo.toLowerCase() : m === payTo,
+          );
+        if (!allowed) {
+          return {
+            allowed: false,
+            reason: `Merchant not in allowlist: ${payTo ?? "unknown payTo"}`,
+          };
+        }
+      }
+
+      // Chain allowlist. Accepts shorthands ("solana") or CAIP-2 IDs.
+      if (policy.allowedChains && policy.allowedChains.length > 0) {
+        const network = target?.network;
+        const chain = network ? resolveChain(network) : undefined;
+        const allowed =
+          network !== undefined &&
+          policy.allowedChains.some((c) => {
+            const entry = c.toLowerCase();
+            return (
+              entry === network.toLowerCase() ||
+              entry === chain?.shorthand.toLowerCase() ||
+              entry === chain?.caip2Id.toLowerCase()
+            );
+          });
+        if (!allowed) {
+          return {
+            allowed: false,
+            reason: `Chain not in allowlist: ${network ?? "unknown network"}`,
+          };
+        }
+      }
+
       // Per-transaction limit
       if (policy.maxPerTransaction) {
         const max = BigInt(policy.maxPerTransaction);
@@ -209,9 +255,20 @@ export class PincerPayAgent {
     if (!this.config.policies || this.config.policies.length === 0) return;
 
     // Before payment: enforce spending limits
-    client.onBeforePaymentCreation(async (ctx: { selectedRequirements: { maxAmountRequired?: unknown; amount?: unknown } }) => {
-      const amount = String(ctx.selectedRequirements.maxAmountRequired ?? ctx.selectedRequirements.amount ?? "0");
-      const check = this.checkPolicy(amount);
+    client.onBeforePaymentCreation(async (ctx: {
+      selectedRequirements: {
+        maxAmountRequired?: unknown;
+        amount?: unknown;
+        payTo?: unknown;
+        network?: unknown;
+      };
+    }) => {
+      const req = ctx.selectedRequirements;
+      const amount = String(req.maxAmountRequired ?? req.amount ?? "0");
+      const check = this.checkPolicy(amount, {
+        payTo: typeof req.payTo === "string" ? req.payTo : undefined,
+        network: typeof req.network === "string" ? req.network : undefined,
+      });
       if (!check.allowed) {
         return { abort: true, reason: check.reason! };
       }
