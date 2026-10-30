@@ -53,7 +53,7 @@ This is a feature: you learn about a broken config at deploy, not when an agent 
 
 - When the path/method **doesn't match** a route, the middleware calls `next()` (free passthrough).
 - When it matches but there's **no payment header** (`payment-signature` or `x-payment`), it returns **HTTP 402** with a JSON body (`x402Version`, `error`, `resource`, `accepts`, `extensions`) and a base64 `payment-required` header describing accepted assets.
-- When it matches **with a payment header**, it POSTs to the facilitator's `/v1/settle`. On `success: false` it returns **402** `{ error: "Payment settlement failed", reason, message }`. On success it sets `c.set("pincerpay", paymentInfo)`, adds a base64 `payment-response` header, and calls `next()`.
+- When it matches **with a payment header**, it first checks that the payment's `accepted` terms (scheme, network, amount, asset, `payTo`) exactly match one of the options it offered, and returns **402** with `reason: "payment_requirements_mismatch"` if not. It then POSTs to the facilitator's `/v1/settle` using its own copy of those terms, never the agent's. On `success: false` it returns **402** `{ error: "Payment settlement failed", reason, message }`. On success it sets `c.set("pincerpay", paymentInfo)`, adds a base64 `payment-response` header, and calls `next()`.
 - On an unexpected error it returns **HTTP 500** `{ error: "Payment processing failed", detail }`.
 
 After payment, read the verified result in your handler:
