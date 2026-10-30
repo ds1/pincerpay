@@ -26,6 +26,41 @@ function toBaseUnits(amount: string): string {
   return result.toString();
 }
 
+type OfferedRequirement = {
+  scheme: string;
+  network: string;
+  amount: string;
+  asset: string;
+  payTo: string;
+};
+
+/**
+ * Return the route's offered requirement that matches the agent's accepted
+ * requirement on scheme, network, amount, asset and payTo, or undefined.
+ * EVM addresses compare case-insensitively; Solana addresses are case-sensitive.
+ */
+function matchOfferedRequirement<T extends OfferedRequirement>(
+  offered: T[],
+  accepted: unknown,
+): T | undefined {
+  if (!accepted || typeof accepted !== "object") return undefined;
+  const a = accepted as Record<string, unknown>;
+
+  return offered.find((o) => {
+    const sameAddress = (x: string, y: unknown) =>
+      typeof y === "string" &&
+      (o.network.startsWith("eip155:") ? x.toLowerCase() === y.toLowerCase() : x === y);
+
+    return (
+      a.scheme === o.scheme &&
+      a.network === o.network &&
+      String(a.amount) === o.amount &&
+      sameAddress(o.asset, a.asset) &&
+      sameAddress(o.payTo, a.payTo)
+    );
+  });
+}
+
 /**
  * Lightweight Next.js / Hono middleware for PincerPay x402 paywalls.
  *
@@ -210,8 +245,26 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
         );
       }
 
-      const paymentRequirements =
-        decoded.accepted ?? decoded.paymentRequirements;
+      // Never settle against terms the agent supplied. Find the requirement
+      // this route actually offered that matches the agent's choice, and send
+      // our own copy to the facilitator so it verifies the transfer against
+      // the merchant's price and wallet.
+      const paymentRequirements = matchOfferedRequirement(
+        route.accepts,
+        decoded.accepted ?? decoded.paymentRequirements,
+      );
+
+      if (!paymentRequirements) {
+        return c.json(
+          {
+            error: "Payment settlement failed",
+            reason: "payment_requirements_mismatch",
+            message:
+              "Payment does not match any payment option offered for this route.",
+          },
+          402,
+        );
+      }
 
       const settleRes = await fetch(
         `${facilitatorUrl}${FACILITATOR_ROUTES.settle}`,

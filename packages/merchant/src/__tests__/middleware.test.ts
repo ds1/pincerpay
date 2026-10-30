@@ -71,6 +71,22 @@ function defaultFacilitatorHandler(
   };
 }
 
+// Build a payment header the way a real x402 client does: copy the offered
+// requirement from the 402 response into `accepted`, optionally tampered.
+async function paymentHeaderFor(
+  app: Hono<{ Variables: PincerPayContextVariables }>,
+  overrides: Record<string, unknown> = {},
+): Promise<string> {
+  const offer = await (await app.request("/weather")).json();
+  return Buffer.from(
+    JSON.stringify({
+      x402Version: 2,
+      accepted: { ...offer.accepts[0], ...overrides },
+      payload: { transaction: "base64tx" },
+    }),
+  ).toString("base64");
+}
+
 describe("createPincerPayMiddleware", () => {
   let restoreFetch: () => void = () => {};
 
@@ -103,14 +119,7 @@ describe("createPincerPayMiddleware", () => {
     );
     const { app } = buildApp();
 
-    const paymentPayload = Buffer.from(
-      JSON.stringify({
-        x402Version: 2,
-        scheme: "exact",
-        network: "solana:devnet",
-        payload: { signature: "deadbeef" },
-      }),
-    ).toString("base64");
+    const paymentPayload = await paymentHeaderFor(app);
 
     const res = await app.request("/weather", {
       headers: { "x-payment": paymentPayload },
@@ -132,9 +141,7 @@ describe("createPincerPayMiddleware", () => {
     );
     const { app } = buildApp();
 
-    const paymentPayload = Buffer.from(
-      JSON.stringify({ x402Version: 2, scheme: "exact" }),
-    ).toString("base64");
+    const paymentPayload = await paymentHeaderFor(app);
 
     const res = await app.request("/weather", {
       headers: { "x-payment": paymentPayload },
@@ -160,9 +167,7 @@ describe("createPincerPayMiddleware", () => {
     );
     const { app } = buildApp();
 
-    const paymentPayload = Buffer.from(
-      JSON.stringify({ x402Version: 2, scheme: "exact" }),
-    ).toString("base64");
+    const paymentPayload = await paymentHeaderFor(app);
 
     const res = await app.request("/weather", {
       headers: { "x-payment": paymentPayload },
@@ -185,9 +190,7 @@ describe("createPincerPayMiddleware", () => {
     );
     const { app } = buildApp();
 
-    const paymentPayload = Buffer.from(
-      JSON.stringify({ x402Version: 2, scheme: "exact" }),
-    ).toString("base64");
+    const paymentPayload = await paymentHeaderFor(app);
 
     const res = await app.request("/weather", {
       headers: { "x-payment": paymentPayload },
@@ -196,5 +199,71 @@ describe("createPincerPayMiddleware", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.paidBy).toBe(""); // empty string fallback, not undefined
+  });
+
+  // ─── GHSA-pwgq-6779-q657: never settle against agent-supplied terms ───
+
+  function recordingFacilitator() {
+    const settleBodies: Array<Record<string, unknown>> = [];
+    const handler: FetchHandler = (url, init) => {
+      if (url.endsWith("/v1/supported")) return { kinds: [] };
+      if (url.endsWith("/v1/settle")) {
+        settleBodies.push(JSON.parse(String(init?.body)));
+        return { success: true, transaction: "tx_abc", network: "solana:x", payer: SOLANA_AGENT };
+      }
+      return new Response("not found", { status: 404 });
+    };
+    return { handler, settleBodies };
+  }
+
+  it("sends the route's own requirements to the facilitator", async () => {
+    const { handler, settleBodies } = recordingFacilitator();
+    restoreFetch = installMockFetch(handler);
+    const { app } = buildApp();
+
+    const offer = (await (await app.request("/weather")).json()).accepts[0];
+    const res = await app.request("/weather", {
+      headers: { "x-payment": await paymentHeaderFor(app) },
+    });
+
+    expect(res.status).toBe(200);
+    expect(settleBodies).toHaveLength(1);
+    expect(settleBodies[0]!.paymentRequirements).toEqual(offer);
+  });
+
+  it.each([
+    ["underpays", { amount: "1" }],
+    ["pays itself", { payTo: SOLANA_AGENT }],
+    ["swaps the asset", { asset: "So11111111111111111111111111111111111111112" }],
+    ["switches network", { network: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1" }],
+    ["changes scheme", { scheme: "upto" }],
+  ])("rejects a payment that %s without calling settle", async (_label, overrides) => {
+    const { handler, settleBodies } = recordingFacilitator();
+    restoreFetch = installMockFetch(handler);
+    const { app } = buildApp();
+
+    const res = await app.request("/weather", {
+      headers: { "x-payment": await paymentHeaderFor(app, overrides) },
+    });
+
+    expect(res.status).toBe(402);
+    expect((await res.json()).reason).toBe("payment_requirements_mismatch");
+    expect(settleBodies).toHaveLength(0);
+  });
+
+  it("rejects a payment header with no accepted requirements", async () => {
+    const { handler, settleBodies } = recordingFacilitator();
+    restoreFetch = installMockFetch(handler);
+    const { app } = buildApp();
+
+    const paymentPayload = Buffer.from(
+      JSON.stringify({ x402Version: 2, scheme: "exact", payload: {} }),
+    ).toString("base64");
+    const res = await app.request("/weather", {
+      headers: { "x-payment": paymentPayload },
+    });
+
+    expect(res.status).toBe(402);
+    expect(settleBodies).toHaveLength(0);
   });
 });
