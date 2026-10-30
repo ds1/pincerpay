@@ -15,7 +15,7 @@ import { PincerPayAgent } from "@pincerpay/agent";
 import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 import type { AppEnv } from "../env.js";
 import type { Database } from "@pincerpay/db";
-import { apiKeys, transactions } from "@pincerpay/db";
+import { agents, apiKeys, transactions } from "@pincerpay/db";
 
 // ─── Test Constants ───
 
@@ -126,8 +126,9 @@ interface CapturedInsert {
   endpoint?: string;
 }
 
-function createMockDb(): { db: Database; inserts: CapturedInsert[] } {
+function createMockDb(): { db: Database; inserts: CapturedInsert[]; agentInserts: unknown[] } {
   const inserts: CapturedInsert[] = [];
+  const agentInserts: unknown[] = [];
 
   // Build a chainable mock that mimics Drizzle's query builder
   function thenable(value: unknown = []) {
@@ -172,6 +173,9 @@ function createMockDb(): { db: Database; inserts: CapturedInsert[] } {
         if (table === transactions) {
           inserts.push(data);
         }
+        if (table === agents) {
+          agentInserts.push(data);
+        }
         const base = thenable();
         return {
           ...base,
@@ -187,7 +191,7 @@ function createMockDb(): { db: Database; inserts: CapturedInsert[] } {
     execute: () => thenable([{ "?column?": 1 }]),
   } as unknown as Database;
 
-  return { db, inserts };
+  return { db, inserts, agentInserts };
 }
 
 // ─── App Builders ───
@@ -272,6 +276,7 @@ describe("E2E payment flow", () => {
   let merchantServer: ServerType;
   let merchantPort: number;
   let mockInserts: CapturedInsert[];
+  let mockAgentInserts: unknown[];
   let agent: PincerPayAgent;
 
   beforeAll(async () => {
@@ -281,8 +286,9 @@ describe("E2E payment flow", () => {
     const rpcUrl = `http://127.0.0.1:${rpc.port}`;
 
     // 2. Start facilitator (with mock RPC + mock DB)
-    const { db, inserts } = createMockDb();
+    const { db, inserts, agentInserts } = createMockDb();
     mockInserts = inserts;
+    mockAgentInserts = agentInserts;
     const facilitatorApp = buildFacilitatorApp(db, rpcUrl);
     const fac = await startServer(facilitatorApp);
     facilitatorServer = fac.server;
@@ -349,5 +355,10 @@ describe("E2E payment flow", () => {
     const body = (await res.json()) as { status: string; service: string };
     expect(body.status).toBe("ok");
     expect(body.service).toBe("pincerpay-facilitator");
+  });
+
+  it("does not auto-register an EVM payer as a Solana agent (#165)", () => {
+    expect(mockAgentInserts).toHaveLength(0);
+    expect(mockInserts[0]?.agentId ?? null).toBeNull();
   });
 });

@@ -199,17 +199,22 @@ interface CapturedInsert {
 function createMockDb(webhookReceiverUrl: string): {
   db: Database;
   inserts: CapturedInsert[];
+  deliveries: Array<{ transactionId?: string; event?: string }>;
 } {
   const inserts: CapturedInsert[] = [];
+  const deliveries: Array<{ transactionId?: string; event?: string }> = [];
 
   // Build a chainable mock that mimics Drizzle's query builder.
   // Resolves synchronously (like the EVM e2e test) so fire-and-forget
   // DB chains complete before the next test assertion.
-  function thenable(value: unknown = []) {
+  // Like a promise, .then() passes the callback's return value down the chain.
+  function thenable(value: unknown = []): Record<string, unknown> {
     const obj: Record<string, unknown> = {
-      then: (resolve: (v: unknown) => void) => {
-        resolve(value);
-        return obj;
+      then: (resolve?: (v: unknown) => unknown) => {
+        const next = resolve ? resolve(value) : value;
+        return next && typeof (next as { then?: unknown }).then === "function"
+          ? next
+          : thenable(next);
       },
       catch: (_fn: (e: unknown) => void) => obj,
     };
@@ -259,6 +264,9 @@ function createMockDb(webhookReceiverUrl: string): {
         if (table === transactions) {
           inserts.push(data as CapturedInsert);
         }
+        if (table === webhookDeliveries) {
+          deliveries.push(data as { transactionId?: string; event?: string });
+        }
         const base = thenable();
         return {
           ...base,
@@ -280,7 +288,7 @@ function createMockDb(webhookReceiverUrl: string): {
     execute: () => thenable([{ "?column?": 1 }]),
   } as unknown as Database;
 
-  return { db, inserts };
+  return { db, inserts, deliveries };
 }
 
 // ─── Webhook Receiver ───
@@ -411,6 +419,7 @@ describe("E2E Solana payment flow", () => {
   let webhookServer: ServerType;
   let merchantPort: number;
   let mockInserts: CapturedInsert[];
+  let mockDeliveries: Array<{ transactionId?: string; event?: string }>;
   let agent: PincerPayAgent;
   let webhookReceived: WebhookPayload[];
   let webhookPromise: Promise<WebhookPayload>;
@@ -435,8 +444,9 @@ describe("E2E Solana payment flow", () => {
     const webhookUrl = `http://127.0.0.1:${wh.port}/webhook`;
 
     // 4. Start facilitator (with mock RPC + mock DB)
-    const { db, inserts } = createMockDb(webhookUrl);
+    const { db, inserts, deliveries } = createMockDb(webhookUrl);
     mockInserts = inserts;
+    mockDeliveries = deliveries;
     const facilitatorApp = await buildSolanaFacilitatorApp(
       db,
       rpcUrl,
@@ -519,6 +529,12 @@ describe("E2E Solana payment flow", () => {
     expect(payload.transaction.amount).toBe("1000");
     expect(payload.transaction.status).toBe("optimistic");
   }, 10_000);
+
+it("webhook delivery is linked to the recorded transaction (#165)", () => {
+    const settled = mockDeliveries.find((d) => d.event === "payment.settled");
+    expect(settled).toBeDefined();
+    expect(settled!.transactionId).toBe("mock-id");
+  });
 
   it("non-paywalled routes pass through", async () => {
     const res = await fetch(
