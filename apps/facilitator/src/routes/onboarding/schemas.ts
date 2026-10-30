@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { webhookUrlProblem } from "../../webhooks/deliver.js";
 
 const email = z.string().email();
 const password = z
@@ -15,6 +16,14 @@ const walletAddress = z.string().min(1).max(100);
 const apiKeyLabel = z.string().min(1).max(50);
 const sessionLabel = z.string().min(1).max(50);
 const clientName = z.string().min(1).max(100).optional();
+/** Public https URL only; the facilitator POSTs here (SSRF guard). */
+const webhookUrl = z
+  .string()
+  .max(2048)
+  .superRefine((url, ctx) => {
+    const problem = webhookUrlProblem(url);
+    if (problem) ctx.addIssue({ code: z.ZodIssueCode.custom, message: problem });
+  });
 
 // ─── Auth ───
 
@@ -65,9 +74,9 @@ export const bootstrapMerchantSchema = z.object({
   walletAddress: walletAddress.optional(),
   supportedChains: z.array(z.string().min(1)).default(["solana", "polygon"]),
   /** Live-mode webhook URL. */
-  webhookUrlLive: z.string().url().optional(),
+  webhookUrlLive: webhookUrl.optional(),
   /** Test-mode webhook URL. */
-  webhookUrlTest: z.string().url().optional(),
+  webhookUrlTest: webhookUrl.optional(),
 });
 
 export const patchMerchantSchema = z.object({
@@ -75,8 +84,8 @@ export const patchMerchantSchema = z.object({
   walletAddress: walletAddress.optional(),
   walletAddresses: z.record(z.string().min(1), walletAddress).optional(),
   supportedChains: z.array(z.string().min(1)).optional(),
-  webhookUrlLive: z.string().url().nullable().optional(),
-  webhookUrlTest: z.string().url().nullable().optional(),
+  webhookUrlLive: webhookUrl.nullable().optional(),
+  webhookUrlTest: webhookUrl.nullable().optional(),
 });
 
 // ─── API keys ───

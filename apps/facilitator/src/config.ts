@@ -43,6 +43,12 @@ const envSchema = z.object({
   /** Rate limiting */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().default(120),
 
+  /**
+   * Allow http and private/internal webhook destinations (e.g. a localhost
+   * receiver). Local development only; refused when NODE_ENV=production.
+   */
+  WEBHOOK_ALLOW_PRIVATE_URLS: envBoolean.default("false"),
+
   /** Log level */
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 

@@ -10,6 +10,7 @@ import { setupAnchorIntegration } from "./chains/solana-anchor.js";
 import { startConfirmationWorker } from "./workers/confirmation.js";
 import { startOnChainRecorderWorker } from "./workers/on-chain-recorder.js";
 import { startWebhookRetryWorker } from "./webhooks/dispatcher.js";
+import { setWebhookAllowPrivate } from "./webhooks/deliver.js";
 import { startCleanup } from "./lib/cleanup.js";
 import { OfacSdnProvider } from "./compliance/ofac-sdn.js";
 import { Metrics } from "./metrics.js";
@@ -32,6 +33,14 @@ if (config.NODE_ENV === "production" && !config.CORS_ORIGINS) {
   throw new Error(
     "CORS_ORIGINS must be set in production. Refusing to start with wildcard CORS.",
   );
+}
+
+if (config.WEBHOOK_ALLOW_PRIVATE_URLS) {
+  // Same fail-closed rule: private webhook destinations are an SSRF hole in production.
+  if (config.NODE_ENV === "production") {
+    throw new Error("WEBHOOK_ALLOW_PRIVATE_URLS must not be set in production.");
+  }
+  setWebhookAllowPrivate(true);
 }
 
 // ─── Database ───

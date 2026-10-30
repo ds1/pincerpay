@@ -6,7 +6,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { merchants, apiKeys, hashNewApiKey, type Environment } from "@pincerpay/db";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { API_KEY_PREFIX_LENGTH } from "@pincerpay/core";
+import { API_KEY_PREFIX_LENGTH, checkWebhookUrl } from "@pincerpay/core";
 
 export async function saveMerchantProfile(formData: FormData) {
   const supabase = await createSupabaseServer();
@@ -27,6 +27,14 @@ export async function saveMerchantProfile(formData: FormData) {
     if (!isEvm && !isSolana) {
       return { success: false, error: "Invalid wallet address. Must be an EVM address (0x...) or Solana address (base58, 32-44 chars)." };
     }
+  }
+
+  // The facilitator POSTs to these URLs: public https only (SSRF guard).
+  // The facilitator re-checks at delivery time; this gives the merchant an early error.
+  const allowPrivate = process.env.WEBHOOK_ALLOW_PRIVATE_URLS === "true" && process.env.NODE_ENV !== "production";
+  for (const [label, url] of [["Live", webhookUrlLive], ["Test", webhookUrlTest]] as const) {
+    const problem = url ? checkWebhookUrl(url, { allowPrivate }) : null;
+    if (problem) return { success: false, error: `${label} webhook URL rejected: ${problem}.` };
   }
 
   // Check if merchant exists
