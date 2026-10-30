@@ -22,7 +22,7 @@ You have an API and want to add payment walls so agents pay per request.
 
 1. **Install**: \`npm install @pincerpay/merchant\`
 2. **Get an API key**: Sign up at https://pincerpay.com/dashboard → Settings → API Keys (\`pp_live_...\`)
-3. **Generate code**: Use the \`scaffold-x402-middleware\` tool (supports Express, Hono, Next.js)
+3. **Generate code**: Use the \`scaffold-x402-middleware\` tool (Hono-based middleware for Next.js App Router and any Hono app; an Express adapter is on the roadmap)
 4. **Validate config**: Use the \`validate-payment-config\` tool to check your setup
 5. **Add discovery**: Use the \`generate-ucp-manifest\` tool for agent discoverability
 
@@ -71,7 +71,7 @@ Use the \`debug-transaction\` prompt with your transaction hash, or see \`docs:/
 
 ## Key Concepts
 - **Optimistic Finality**: Payments under $1 USDC are released after mempool broadcast (~200ms)
-- **Gas Passthrough**: Agents pay gas costs in USDC (via Kora on Solana, meta-txns on EVM), not merchants
+- **Gas**: The facilitator submits each settlement transaction as the fee payer, so merchants never pay gas. On Solana with Kora enabled (devnet today), the agent reimburses the fee in USDC and never needs SOL. On EVM, the facilitator submits the agent's signed USDC authorization
 - **x402 Protocol**: HTTP 402-based payment challenges (Coinbase open standard)
 - **Prices vs Policies**: Route \`price\` uses human-readable amounts ("0.01"), spending \`policies\` use base units ("10000")`,
   },

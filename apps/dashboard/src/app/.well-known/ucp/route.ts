@@ -21,7 +21,7 @@ export function GET() {
           package: "@pincerpay/merchant",
           registry: "https://www.npmjs.com/package/@pincerpay/merchant",
           description:
-            "Express and Hono middleware for accepting USDC payments from AI agents",
+            "Hono middleware for Next.js App Router and any Hono app, for accepting USDC payments from AI agents",
         },
         agent: {
           package: "@pincerpay/agent",
@@ -34,18 +34,18 @@ export function GET() {
         facilitator: "https://facilitator.pincerpay.com",
         endpoints: [
           {
-            path: "/verify",
+            path: "/v1/verify",
             method: "POST",
             description: "Verify a signed payment without broadcasting",
           },
           {
-            path: "/settle",
+            path: "/v1/settle",
             method: "POST",
             description:
               "Verify and broadcast a signed payment, return receipt",
           },
           {
-            path: "/supported",
+            path: "/v1/supported",
             method: "GET",
             description: "List supported chains, tokens, and payment schemes",
           },

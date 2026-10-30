@@ -36,24 +36,32 @@ The entire round trip settles with ~200ms optimistic finality for amounts under 
 PincerPay is the x402 gateway that handles steps 2 through 6. Merchants install `@pincerpay/merchant` and wrap their endpoints with a paywall:
 
 ```typescript
-import { createPaywall } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const paywall = createPaywall({
-  price: "0.001",
-  token: "USDC",
-  network: "solana",
-  recipient: "YOUR_WALLET_ADDRESS",
-});
+const app = new Hono().basePath("/api");
 
-app.use("/api/weather", paywall);
+app.use("*", createPincerPayMiddleware({
+  apiKey: process.env.PINCERPAY_API_KEY!,
+  merchantAddress: "YOUR_SOLANA_WALLET",
+  routes: { "GET /api/weather": { price: "0.001", chain: "solana", description: "Weather data" } },
+}));
+
+app.get("/weather", (c) => c.json({ temp: 72 }));
+
+export const GET = handle(app);
 ```
 
 Agents install `@pincerpay/agent` and wrap their HTTP client:
 
 ```typescript
-import { createPincerAgent } from "@pincerpay/agent";
+import { PincerPayAgent } from "@pincerpay/agent";
 
-const agent = createPincerAgent({ privateKey: AGENT_PRIVATE_KEY });
+const agent = await PincerPayAgent.create({
+  chains: ["solana"],
+  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
+});
 const response = await agent.fetch("https://api.example.com/api/weather");
 ```
 

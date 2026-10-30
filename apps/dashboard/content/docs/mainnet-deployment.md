@@ -18,7 +18,7 @@ The core architecture stays the same. The differences between devnet and mainnet
 | USDC value | Faucet tokens (worthless) | Real USD-backed stablecoins |
 | Facilitator URL | `https://facilitator.pincerpay.com` | `https://facilitator.pincerpay.com` (same) |
 | Solana RPC | Public devnet RPC | Public mainnet RPC (rate-limited) |
-| Gas cost | Free (airdrop SOL) | ~$0.00025 per tx (or USDC via Kora) |
+| Gas cost | Facilitator is fee payer; agent reimburses it in USDC via Kora | ~$0.00025 per tx, facilitator is fee payer (Kora not yet on mainnet) |
 
 The facilitator URL does not change. PincerPay's facilitator automatically routes to the correct chain based on the `chain` field in your configuration.
 
@@ -168,9 +168,11 @@ spl-token balance EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v \
   --url mainnet-beta
 ```
 
-### 3. Use a Dedicated RPC Provider
+### 3. Plan for RPC Rate Limits
 
-The public Solana mainnet RPC (`https://api.mainnet-beta.solana.com`) is heavily rate-limited and not suitable for production agents. Use a dedicated RPC provider:
+When the agent SDK builds a Solana payment, it makes two light RPC reads (the USDC mint and a recent blockhash). `PincerPayAgent` uses the network's default public RPC for these reads; it does not currently accept a custom RPC URL. The public Solana mainnet RPC (`https://api.mainnet-beta.solana.com`) is rate-limited, so high-volume agents may see occasional throttling.
+
+For your own tooling (balance checks, monitoring, scripts), a dedicated RPC provider avoids those limits:
 
 | Provider | Free Tier | Link |
 |----------|-----------|------|
@@ -178,18 +180,12 @@ The public Solana mainnet RPC (`https://api.mainnet-beta.solana.com`) is heavily
 | Triton | 100k req/day | [triton.one](https://triton.one/) |
 | QuickNode | 25 req/sec | [quicknode.com](https://www.quicknode.com/) |
 
-Configure the RPC URL in your agent's environment:
-
-```bash
-# .env
-SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
-```
+The agent configuration itself stays the same as on devnet, apart from the chain:
 
 ```typescript
 const agent = await PincerPayAgent.create({
   chains: ["solana"],
   solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
-  solanaRpcUrl: process.env.SOLANA_RPC_URL,  // custom RPC
   policies: [
     {
       maxPerTransaction: "1000000",
@@ -227,13 +223,11 @@ const agent = await PincerPayAgent.create({
 
 Start with conservative limits and increase as you gain confidence in your agent's spending patterns. Use `agent.getDailySpend()` to monitor usage.
 
-### 5. Kora Gasless Mode
+### 5. Gas and Kora
 
-With Kora integration, agents pay gas fees in USDC instead of SOL. This means your agent wallet does not need to hold any SOL -- all costs are denominated in USDC.
+In x402, the facilitator submits each settlement transaction and is its fee payer, so the agent signs the USDC transfer but does not broadcast it. Merchants never pay gas.
 
-When Kora is enabled on the facilitator, gas is automatically deducted from the payment amount. No agent-side configuration is required.
-
-Without Kora, agents need a small SOL balance for transaction fees (~0.000005 SOL per transfer, roughly $0.00025).
+Kora is live on devnet today. When Kora is enabled on the facilitator, the agent reimburses the network fee (~0.000005 SOL per transfer, roughly $0.00025) in USDC as part of the payment, so the agent wallet only needs USDC. No agent-side configuration is required. Kora is not yet running on mainnet, so do not rely on USDC fee reimbursement there until it is announced.
 
 ## Wallet Security
 

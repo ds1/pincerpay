@@ -31,7 +31,7 @@ PincerPay is a non-custodial x402 facilitator. When an AI agent hits a merchant 
 |---|---|---|
 | `apps/facilitator` | x402 facilitator service (Hono + Node.js) | |
 | `apps/dashboard` | Merchant dashboard (Next.js 15) | |
-| [`packages/merchant`](packages/merchant/) | Merchant SDK with Express + Hono middleware | [README](packages/merchant/README.md) |
+| [`packages/merchant`](packages/merchant/) | Merchant SDK with Hono-based middleware (Next.js App Router + any Hono app) | [README](packages/merchant/README.md) |
 | [`packages/agent`](packages/agent/) | Agent SDK with automatic x402 payment handling | [README](packages/agent/README.md) |
 | [`packages/core`](packages/core/) | Shared types, chain configs, constants | [README](packages/core/README.md) |
 | [`packages/db`](packages/db/) | Drizzle ORM schema + migrations | [README](packages/db/README.md) |
@@ -104,16 +104,21 @@ The same flows are exposed as MCP tools (`bootstrap-wallets`, `bootstrap-merchan
 
 ## Merchant SDK
 
-```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant/express";
+The middleware is Hono-based, so it runs in Next.js App Router (via `hono/vercel`) and in any Hono app. An Express adapter is on the roadmap ([#108](https://github.com/ds1/pincerpay/issues/108)).
 
-const app = express();
+```typescript
+// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
+
+const app = new Hono().basePath("/api");
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: "YOUR_SOLANA_ADDRESS",
+    merchantAddress: "YOUR_SOLANA_WALLET",
     routes: {
       "GET /api/weather": {
         price: "0.01",
@@ -123,9 +128,13 @@ app.use(
     },
   })
 );
+
+app.get("/weather", (c) => c.json({ temp: 72 }));
+
+export const GET = handle(app);
 ```
 
-See [`@pincerpay/merchant` README](packages/merchant/README.md) for Hono middleware, multi-chain config, and full API reference.
+Paywall route keys use the full request path (including `/api`); handlers are relative to `basePath`. See [`@pincerpay/merchant` README](packages/merchant/README.md) for multi-chain config and the full API reference.
 
 ## Agent SDK
 
@@ -184,7 +193,8 @@ pnpm test
 
 | Example | Description |
 |---|---|
-| [`examples/express-merchant`](examples/express-merchant/) | Express merchant with PincerPay middleware |
+| [`examples/nextjs-merchant`](examples/nextjs-merchant/) | Next.js App Router merchant with PincerPay middleware |
+| [`examples/express-merchant`](examples/express-merchant/) | Standalone Node.js merchant server (Hono + `@hono/node-server`; the folder name is historical) |
 | [`examples/agent-weather`](examples/agent-weather/) | AI agent paying for weather API data |
 | [`pincerpay-agent-demo`](https://github.com/ds1/pincerpay-agent-demo) | Standalone agent demo repository |
 

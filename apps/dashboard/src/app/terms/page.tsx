@@ -13,7 +13,7 @@ export default function TermsPage() {
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-4xl font-bold tracking-tight mb-2">Terms of Service</h1>
-        <p className="text-sm text-[var(--muted-foreground)] mb-10">Last updated: March 5, 2026</p>
+        <p className="text-sm text-[var(--muted-foreground)] mb-10">Last updated: October 30, 2026</p>
 
         <div className="prose prose-invert max-w-none space-y-8 text-[var(--muted-foreground)] [&_h2]:text-[var(--foreground)] [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-10 [&_h2]:mb-3 [&_strong]:text-[var(--foreground)] [&_a]:text-[var(--primary)] [&_a]:underline">
           <p>
@@ -58,9 +58,9 @@ export default function TermsPage() {
 
           <h2>5. Fees</h2>
           <p>
-            PincerPay charges a facilitation fee on processed transactions as described in our pricing documentation.
-            Blockchain network fees (gas) are paid by the transacting parties, not by PincerPay. We reserve the
-            right to modify our fee structure with reasonable notice.
+            PincerPay may charge a facilitation fee on processed transactions. Blockchain network fees (gas) are
+            paid by the transacting parties, not by PincerPay. We reserve the right to modify our fee structure
+            with reasonable notice.
           </p>
 
           <h2>6. Acceptable Use</h2>

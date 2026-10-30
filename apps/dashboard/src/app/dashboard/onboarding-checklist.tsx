@@ -22,10 +22,16 @@ interface OnboardingChecklistProps {
 }
 
 function buildSnippet(walletAddress?: string, chain?: string): string {
-  return `import { pincerpay } from "@pincerpay/merchant";
+  return `// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
+
+const app = new Hono().basePath("/api");
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "${walletAddress || "YOUR_WALLET_ADDRESS"}",
     routes: {
@@ -36,7 +42,11 @@ app.use(
       },
     },
   })
-);`;
+);
+
+app.get("/data", (c) => c.json({ ok: true }));
+
+export const GET = handle(app);`;
 }
 
 function CheckIcon({ className }: { className?: string }) {

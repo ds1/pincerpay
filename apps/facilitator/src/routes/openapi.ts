@@ -27,7 +27,7 @@ const spec = {
         },
       },
     },
-    "/supported": {
+    "/v1/supported": {
       get: {
         summary: "Supported networks and schemes",
         operationId: "getSupported",
@@ -36,6 +36,19 @@ const spec = {
           "200": {
             description: "Registered x402 schemes",
             content: { "application/json": { schema: { $ref: "#/components/schemas/SupportedResponse" } } },
+          },
+        },
+      },
+    },
+    "/metrics": {
+      get: {
+        summary: "Service metrics snapshot",
+        operationId: "getMetrics",
+        tags: ["Public"],
+        responses: {
+          "200": {
+            description: "In-process request and settlement counters",
+            content: { "application/json": { schema: { type: "object" } } },
           },
         },
       },
@@ -121,6 +134,185 @@ const spec = {
           },
           "401": { description: "Missing or invalid API key" },
           "404": { description: "Transaction not found" },
+        },
+      },
+    },
+    "/v1/paywalls": {
+      get: {
+        summary: "List paywalls",
+        operationId: "listPaywalls",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "limit", in: "query", required: false, schema: { type: "integer" } },
+          { name: "offset", in: "query", required: false, schema: { type: "integer" } },
+          { name: "active", in: "query", required: false, schema: { type: "boolean" } },
+        ],
+        responses: {
+          "200": { description: "Paginated paywalls for the API key's merchant and environment" },
+          "400": { description: "Invalid query parameters" },
+          "401": { description: "Missing or invalid API key" },
+        },
+      },
+      post: {
+        summary: "Create a paywall",
+        operationId: "createPaywall",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        responses: {
+          "201": { description: "Paywall created" },
+          "400": { description: "Invalid request body" },
+          "401": { description: "Missing or invalid API key" },
+          "409": { description: "A paywall for this endpoint already exists" },
+        },
+      },
+    },
+    "/v1/paywalls/{id}": {
+      put: {
+        summary: "Update a paywall",
+        operationId: "updatePaywall",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        responses: {
+          "200": { description: "Paywall updated" },
+          "400": { description: "Invalid request body" },
+          "401": { description: "Missing or invalid API key" },
+          "404": { description: "Paywall not found" },
+        },
+      },
+      delete: {
+        summary: "Delete a paywall",
+        operationId: "deletePaywall",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "204": { description: "Paywall deleted" },
+          "401": { description: "Missing or invalid API key" },
+          "404": { description: "Paywall not found" },
+        },
+      },
+    },
+    "/v1/transactions": {
+      get: {
+        summary: "List transactions",
+        operationId: "listTransactions",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "limit", in: "query", required: false, schema: { type: "integer" } },
+          { name: "offset", in: "query", required: false, schema: { type: "integer" } },
+          { name: "status", in: "query", required: false, schema: { type: "string" } },
+          { name: "chain", in: "query", required: false, schema: { type: "string" } },
+          { name: "from", in: "query", required: false, schema: { type: "string" }, description: "Payer address" },
+          { name: "to", in: "query", required: false, schema: { type: "string" }, description: "Recipient address" },
+          { name: "agent", in: "query", required: false, schema: { type: "string" }, description: "Agent ID" },
+        ],
+        responses: {
+          "200": { description: "Paginated transactions for the API key's merchant and environment" },
+          "400": { description: "Invalid query parameters" },
+          "401": { description: "Missing or invalid API key" },
+        },
+      },
+    },
+    "/v1/agents": {
+      get: {
+        summary: "List agents known to this merchant",
+        operationId: "listAgents",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "limit", in: "query", required: false, schema: { type: "integer" } },
+          { name: "offset", in: "query", required: false, schema: { type: "integer" } },
+          { name: "status", in: "query", required: false, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Paginated agents for this merchant" },
+          "400": { description: "Invalid query parameters" },
+          "401": { description: "Missing or invalid API key" },
+        },
+      },
+    },
+    "/v1/agents/{id}": {
+      put: {
+        summary: "Update an agent's status or limits for this merchant",
+        operationId: "updateAgent",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } },
+        ],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        responses: {
+          "200": { description: "Agent updated" },
+          "400": { description: "Invalid request body" },
+          "401": { description: "Missing or invalid API key" },
+          "404": { description: "Agent not found" },
+        },
+      },
+    },
+    "/v1/webhooks": {
+      get: {
+        summary: "List webhook deliveries",
+        operationId: "listWebhookDeliveries",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "limit", in: "query", required: false, schema: { type: "integer" } },
+          { name: "offset", in: "query", required: false, schema: { type: "integer" } },
+          { name: "status", in: "query", required: false, schema: { type: "string" } },
+          { name: "event", in: "query", required: false, schema: { type: "string" }, description: "e.g. payment.settled, payment.confirmed, payment.failed" },
+        ],
+        responses: {
+          "200": { description: "Paginated webhook deliveries" },
+          "400": { description: "Invalid query parameters" },
+          "401": { description: "Missing or invalid API key" },
+        },
+      },
+    },
+    "/v1/webhooks/{id}/retry": {
+      post: {
+        summary: "Retry a webhook delivery",
+        operationId: "retryWebhookDelivery",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Delivery re-queued" },
+          "401": { description: "Missing or invalid API key" },
+          "404": { description: "Webhook delivery not found" },
+          "409": { description: "Webhook already delivered successfully" },
+        },
+      },
+    },
+    "/v1/merchant": {
+      get: {
+        summary: "Get the merchant profile for this API key",
+        operationId: "getMerchant",
+        tags: ["Merchant"],
+        security: [{ apiKey: [] }],
+        responses: {
+          "200": { description: "Merchant profile" },
+          "401": { description: "Missing or invalid API key" },
+          "404": { description: "Merchant not found" },
         },
       },
     },

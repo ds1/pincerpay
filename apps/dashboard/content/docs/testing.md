@@ -104,7 +104,7 @@ Test webhook delivery to confirm your integration receives payment events correc
 
 1. **Set up a webhook URL.** For local development, use a tunnel service like [ngrok](https://ngrok.com) (`ngrok http 4000`) or a hosted listener like [webhook.site](https://webhook.site) to get a publicly reachable URL.
 2. **Configure the webhook URL** in the PincerPay dashboard under Settings > Webhooks. Copy the webhook secret displayed after saving.
-3. **Make a test payment** using the devnet flow described above. The facilitator fires a `payment.completed` event to your webhook URL on settlement.
+3. **Make a test payment** using the devnet flow described above. The facilitator fires a `payment.settled` event to your webhook URL on settlement, followed by `payment.confirmed` once the transaction reaches on-chain finality (or `payment.failed` if it does not).
 4. **Check delivery status** by calling `GET /v1/webhooks`. Each entry shows the HTTP status code returned by your endpoint and the timestamp of the attempt.
 5. **Retry failed webhooks** by calling `POST /v1/webhooks/:id/retry`. This re-sends the same payload with a fresh signature.
 

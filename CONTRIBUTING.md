@@ -43,10 +43,10 @@ packages/
   solana/         # Kora gasless txns, Squads smart accounts
   program/        # Anchor program client
   agent/          # Agent SDK (fetch wrapper)
-  merchant/       # Merchant SDK (Express/Hono/Next.js middleware)
+  merchant/       # Merchant SDK (Hono-based middleware for Next.js App Router + any Hono app)
   mcp/            # MCP server for AI assistants
 examples/
-  express-merchant/  # Express merchant demo
+  express-merchant/  # Standalone Node merchant demo (Hono; folder name is historical)
   agent-weather/     # Agent weather API demo
   nextjs-merchant/   # Next.js merchant demo
 ```

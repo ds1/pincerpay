@@ -7,7 +7,7 @@ section: Reference
 
 ## Who pays gas fees?
 
-Agents always pay gas. On Solana, agents pay a small SOL fee (typically <$0.001). PincerPay never subsidizes gas.
+Merchants never pay gas. In x402, the facilitator submits each settlement transaction and is its fee payer. On Solana, when Kora is enabled (live on devnet today), the agent reimburses that fee in USDC (typically <$0.001), so the agent never needs to hold SOL. On EVM chains, the agent signs a USDC transfer authorization and the facilitator submits it on-chain.
 
 ## What is optimistic finality?
 

@@ -4,7 +4,7 @@ A minimal Next.js 15 app demonstrating PincerPay paywall on API route handlers u
 
 ## How it works
 
-Hono is mounted inside a Next.js catch-all route handler (`src/app/api/[...path]/route.ts`). The `pincerpayHono` middleware intercepts requests to paywalled routes and returns `402 Payment Required` with x402 payment instructions. Free routes like `/api/health` pass through normally.
+Hono is mounted inside a Next.js catch-all route handler (`src/app/api/[...path]/route.ts`). The `createPincerPayMiddleware` middleware (from `@pincerpay/merchant/nextjs`) intercepts requests to paywalled routes and returns `402 Payment Required` with x402 payment instructions. Free routes like `/api/health` pass through normally.
 
 ## Setup
 

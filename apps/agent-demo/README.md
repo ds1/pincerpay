@@ -69,7 +69,7 @@ No real crypto, no funded wallet, no facilitator. A simulation engine generates 
 
 ### Live (`DEMO_MODE=live`)
 
-Real `@pincerpay/agent` SDK calling a real Express merchant server, with actual on-chain USDC settlement on Solana devnet.
+Real `@pincerpay/agent` SDK calling the demo's own paywalled API routes (a Hono catch-all route at `src/app/api/[...route]/route.ts` using `createPincerPayMiddleware`), with actual on-chain USDC settlement on Solana devnet.
 
 ```bash
 cp .env.example .env.local
@@ -107,7 +107,7 @@ Use these when demoing PincerPay or presenting the agent payment story.
 
 > "PincerPay is the infrastructure that makes x402 work in production. Three pieces:"
 >
-> 1. **Merchant SDK** — One middleware to add x402 pricing to any API endpoint. `app.use(pincerpay({ routes: { "GET /api/weather": { price: "0.001" } } }))`.
+> 1. **Merchant SDK** — One middleware to add x402 pricing to any API endpoint. `app.use("*", createPincerPayMiddleware({ routes: { "GET /api/weather": { price: "0.001" } } }))`.
 > 2. **Agent SDK** — One wrapper around fetch. `agent.fetch(url)` handles 402 challenges automatically.
 > 3. **Facilitator** — Verifies payment signatures and settles on-chain. Merchants don't touch crypto directly.
 
@@ -129,6 +129,7 @@ Use these when demoing PincerPay or presenting the agent payment story.
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx                 # Landing page
+│   │   ├── api/[...route]/route.ts  # Paywalled API routes (Hono + PincerPay, live mode)
 │   │   └── playground/
 │   │       ├── page.tsx             # Interactive playground
 │   │       └── actions.ts           # Server action (sim or live)
@@ -143,8 +144,6 @@ Use these when demoing PincerPay or presenting the agent payment story.
 │       ├── demo-endpoints.ts        # Mock endpoint definitions
 │       ├── simulate.ts              # Simulation engine
 │       └── execute-live.ts          # Live mode execution
-├── server/
-│   └── merchant.ts                  # Express merchant (live mode)
 ├── cli/
 │   └── demo.ts                      # CLI demo script
 └── package.json
@@ -164,8 +163,16 @@ PincerPay is an on-chain payment gateway for the agentic economy built on the **
 **For merchants**: Add a middleware to your API. One line per endpoint sets the price. PincerPay handles verification and settlement.
 
 ```typescript
+// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
+
+const app = new Hono().basePath("/api");
+
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -174,9 +181,9 @@ app.use(
   })
 );
 
-app.get("/api/weather", (req, res) => {
-  res.json({ temp: 68, conditions: "Sunny" });
-});
+app.get("/weather", (c) => c.json({ temp: 68, conditions: "Sunny" }));
+
+export const GET = handle(app);
 ```
 
 **For agents**: Wrap your fetch. PincerPay handles 402 challenges, payment signing, and retry.

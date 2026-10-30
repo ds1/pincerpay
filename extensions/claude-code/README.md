@@ -57,7 +57,7 @@ Discovery tools (scaffolding, gas estimates, chain listing, health checks) work 
 
 | Tool | Description |
 |------|-------------|
-| `scaffold-x402-middleware` | Generate Express/Hono/Next.js middleware |
+| `scaffold-x402-middleware` | Generate Hono-based middleware for a Next.js App Router catch-all route |
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies |
 | `validate-payment-config` | Validate merchant config with route pattern checks |
 | `generate-ucp-manifest` | Create commerce discovery manifest |

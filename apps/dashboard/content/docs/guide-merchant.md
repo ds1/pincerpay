@@ -7,7 +7,7 @@ section: SDK Guides
 
 `@pincerpay/merchant` is how a merchant accepts agent payments: wrap your routes in middleware that returns `402` until a valid USDC payment arrives, then let the request through. The package has two entry points and five exports. This guide covers each, including the startup-time validation that will throw before your server ever serves a request.
 
-> **ESM-only, server-side.** Two entry points: `@pincerpay/merchant` (helpers + client) and `@pincerpay/merchant/nextjs` (the middleware). There is **no Express or Hono adapter**; those were removed. The Next.js middleware is hono-compatible and is the supported path.
+> **ESM-only, server-side.** Two entry points: `@pincerpay/merchant` (helpers + client) and `@pincerpay/merchant/nextjs` (the middleware). The middleware is Hono-based: it runs in Next.js App Router (via `hono/vercel`) and in any Hono app, so use Hono today. A dedicated Express adapter is on the roadmap ([#108](https://github.com/ds1/pincerpay/issues/108)).
 
 ## `createPincerPayMiddleware(config)`: the paywall
 
