@@ -78,7 +78,7 @@ export default async function PaywallsPage({
             Add one above or create them via the SDK:
           </p>
           <code className="text-sm bg-[var(--muted)] px-4 py-2 rounded-lg inline-block mt-2">
-            pincerpay({"{ routes: { \"GET /api/data\": { price: \"0.01\" } } }"})
+            createPincerPayMiddleware({"{ routes: { \"GET /api/data\": { price: \"0.01\" } } }"})
           </code>
         </div>
       ) : (

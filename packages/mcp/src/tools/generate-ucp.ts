@@ -100,15 +100,13 @@ export function registerGenerateUcp(server: McpServer) {
               `Serve this JSON at \`${merchantUrl}/.well-known/ucp\`:\n\n` +
               `\`\`\`json\n${manifestJson}\n\`\`\`\n\n` +
               `### How to Serve\n\n` +
-              `**Express:**\n` +
-              `\`\`\`typescript\n` +
-              `app.get("/.well-known/ucp", (req, res) => {\n` +
-              `  res.json(${JSON.stringify(manifest)});\n` +
-              `});\n` +
-              `\`\`\`\n\n` +
-              `**Hono:**\n` +
+              `**Hono** (on an app without a \`basePath\`):\n` +
               `\`\`\`typescript\n` +
               `app.get("/.well-known/ucp", (c) => c.json(${JSON.stringify(manifest)}));\n` +
+              `\`\`\`\n\n` +
+              `**Next.js App Router** (\`app/.well-known/ucp/route.ts\`):\n` +
+              `\`\`\`typescript\n` +
+              `export const GET = () => Response.json(${JSON.stringify(manifest)});\n` +
               `\`\`\`\n\n` +
               `AI agents discover this manifest to learn what your API offers,\n` +
               `which chains you accept, and how much each endpoint costs.`,

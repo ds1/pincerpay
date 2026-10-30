@@ -23,7 +23,7 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 ### SDKs
 
 - [@pincerpay/cli](https://pincerpay.com/docs/cli): Frictionless terminal-only CLI for merchant onboarding: signup, wallet generation, API keys, session management. No browser required.
-- [Merchant SDK](https://pincerpay.com/docs/merchant-sdk): Express, Hono, and Next.js middleware for accepting USDC payments from agents
+- [Merchant SDK](https://pincerpay.com/docs/merchant-sdk): Hono-based middleware for Next.js App Router and any Hono app, for accepting USDC payments from agents (Express adapter on the roadmap)
 - [Agent SDK](https://pincerpay.com/docs/agent-sdk): Drop-in fetch wrapper that handles 402 payment flows automatically
 - [MCP Server](https://pincerpay.com/docs/mcp-server): Connect PincerPay to any MCP-compatible AI assistant
 
@@ -36,14 +36,14 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 ### Reference
 
-- [API Reference](https://pincerpay.com/docs/api-reference): Facilitator REST API: /verify, /settle, /settle-direct, /supported, /health, /metrics
+- [API Reference](https://pincerpay.com/docs/api-reference): Facilitator REST API: /v1/verify, /v1/settle, /v1/settle-direct, /v1/supported, /health, /metrics, plus merchant endpoints
 - [Testing](https://pincerpay.com/docs/testing): Devnet/testnet setup, faucets, end-to-end test scripts
 - [FAQ](https://pincerpay.com/docs/faq): Frequently asked questions about PincerPay integration and usage
 
 ### Examples
 
 - [Next.js Merchant](https://pincerpay.com/docs/example-nextjs-merchant): Next.js 15 + Hono catch-all route handler with paywalled endpoints
-- [Express Merchant](https://pincerpay.com/docs/example-express-merchant): Express server with free and paywalled routes at different price tiers
+- [Standalone Node Merchant](https://pincerpay.com/docs/example-express-merchant): Hono + @hono/node-server server with free and paywalled routes at different price tiers (lives in examples/express-merchant for historical reasons)
 - [Weather Agent](https://pincerpay.com/docs/example-agent-weather): AI agent with spending policies that pays for weather data automatically
 
 ## Full Documentation
@@ -58,17 +58,17 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 - **x402 Protocol**: HTTP 402 Payment Required with structured payment requirements. Agent signs USDC transfer, facilitator verifies and broadcasts, merchant delivers resource.
 - **Non-custodial**: Agents hold their own keys. PincerPay verifies transactions but never controls funds.
-- **Solana-first**: Sub-second finality, sub-cent fees. Kora integration for gasless transactions (agents pay gas in USDC).
+- **Solana-first**: Sub-second finality, sub-cent fees. With Kora enabled (devnet today), agents reimburse the network fee in USDC and never need to hold SOL.
 - **Spending Policies**: Per-transaction limits, daily budgets, merchant allowlists, enforced client-side by the SDK, server-side by the facilitator, and optionally on-chain via Squads SPN.
 - **AP2 Mandates (roadmap)**: Intent Mandates (autonomous limits), Cart Mandates (human approval), Payment Mandates (execution-level authorization). Not yet implemented; planned for a future phase.
 - **UCP Discovery**: Merchants publish a /.well-known/ucp manifest for agent-readable commerce discovery. PincerPay includes a UCP manifest generator for merchants.
 - **Optimistic Finality**: Sub-$1 payments release after mempool broadcast (~200ms) before block confirmation.
-- **Gas Passthrough**: PincerPay never subsidizes gas. Agents pay via Kora (Solana) or meta-transactions (EVM).
+- **Gas**: The facilitator submits each settlement transaction as the fee payer, so merchants never pay gas. On Solana with Kora enabled (devnet today), the agent reimburses the fee in USDC. On EVM, the facilitator submits the agent's signed USDC authorization on-chain.
 
 ## Integration
 
 - npm: @pincerpay/cli (terminal-only merchant onboarding: signup, wallets, API keys, sessions)
-- npm: @pincerpay/merchant (Express/Hono/Next.js middleware)
+- npm: @pincerpay/merchant (Hono-based middleware for Next.js App Router and any Hono app)
 - npm: @pincerpay/agent (fetch wrapper with auto-payment)
 - npm: @pincerpay/mcp (MCP server: 26 tools, 3 resources, 6 prompts, 5 doc topics; admin and public auth modes)
 - npm: @pincerpay/core (shared types, chain configs, constants)

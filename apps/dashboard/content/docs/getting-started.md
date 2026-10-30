@@ -130,5 +130,5 @@ Check the **Transactions** page in your dashboard to see the payment.
 Working examples you can clone and run locally:
 
 - [Next.js Merchant](/docs/example-nextjs-merchant): Hono catch-all route handler with paywalled endpoints in a Next.js 15 app
-- [Express Merchant](/docs/example-express-merchant): Express server with free and paywalled routes at different price tiers
+- [Standalone Node Merchant](/docs/example-express-merchant): Hono + `@hono/node-server` server with free and paywalled routes at different price tiers
 - [Weather Agent](/docs/example-agent-weather): AI agent with spending policies that pays for weather data automatically

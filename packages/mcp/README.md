@@ -130,7 +130,7 @@ npx @pincerpay/mcp --transport=http --port=3100 --api-key=pp_live_your_key
 | Tool | Description | Auth Required |
 |------|-------------|:---:|
 | `validate-payment-config` | Validate merchant config with route pattern checks | No |
-| `scaffold-x402-middleware` | Generate Express/Hono/Next.js middleware | No |
+| `scaffold-x402-middleware` | Generate Hono-based middleware for a Next.js App Router catch-all route | No |
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies | No |
 | `generate-ucp-manifest` | Create commerce discovery manifest | No |
 
@@ -169,7 +169,7 @@ See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) and [`@pincerpa
 | Topic | URI | Content |
 |-------|-----|---------|
 | Getting Started | `docs://pincerpay/getting-started` | Prerequisites, Choose Your Path (merchant vs agent), devnet/mainnet, key concepts |
-| Merchant Guide | `docs://pincerpay/merchant` | Express, Hono, and Next.js middleware setup, multi-chain routes, config reference |
+| Merchant Guide | `docs://pincerpay/merchant` | Next.js App Router and Hono middleware setup, multi-chain routes, config reference |
 | Agent Guide | `docs://pincerpay/agent` | Agent setup, spending policies (base units), runtime management, properties |
 | Troubleshooting | `docs://pincerpay/troubleshooting` | Common issues table, devnet funding, debugging tips |
 | Reference | `docs://pincerpay/reference` | Chain shorthands, USDC amounts, package exports, API methods |
@@ -179,7 +179,7 @@ See [Merchant Onboarding](https://pincerpay.com/docs/onboarding) and [`@pincerpa
 | Prompt | Description |
 |--------|-------------|
 | `get-started` | Interactive onboarding that determines your role and guides you to the right flow |
-| `integrate-merchant` | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
+| `integrate-merchant` | Step-by-step merchant SDK integration (Hono-based middleware for Next.js App Router) |
 | `integrate-agent` | Agent SDK setup with spending policies and gas estimates |
 | `debug-transaction` | Transaction troubleshooting by hash/signature |
 | `manage-paywalls` | Paywall management: list, create, update, delete, or review configuration |

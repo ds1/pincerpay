@@ -38,21 +38,24 @@ Go from zero to a working PincerPay integration in 5 minutes.
 5. Install the Merchant SDK:
 
 ```bash
-npm install @pincerpay/merchant
+npm install @pincerpay/merchant hono
 ```
 
 ESM Required: Your project must have `"type": "module"` in package.json. Both `@pincerpay/merchant` and `@pincerpay/agent` are ESM-only packages.
 
-6. Add Middleware:
+6. Add Middleware. The middleware is Hono-based: it runs in Next.js App Router (via `hono/vercel`) and in any Hono app. An Express adapter is on the roadmap (https://github.com/ds1/pincerpay/issues/108).
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+// app/api/[...route]/route.ts
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono().basePath("/api");
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
     routes: {
@@ -65,12 +68,12 @@ app.use(
   })
 );
 
-app.get("/api/weather", (req, res) => {
-  res.json({ temp: 72, condition: "sunny" });
-});
+app.get("/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
 
-app.listen(3000);
+export const GET = handle(app);
 ```
+
+Paywall route keys use the full request path (including /api); handlers are relative to basePath.
 
 7. Test It:
 
@@ -187,8 +190,9 @@ Accept your first USDC payment from an AI agent in under 10 minutes.
 ```bash
 mkdir my-merchant && cd my-merchant
 npm init -y
-npm install @pincerpay/merchant express
-npm install -D tsx typescript @types/express
+npm pkg set type=module
+npm install @pincerpay/merchant hono @hono/node-server
+npm install -D tsx typescript
 ```
 
 Create a `.env` file:
@@ -200,14 +204,18 @@ MERCHANT_ADDRESS=YourSolanaWalletAddress
 
 ### Step 2: Write the server
 
-```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+Create `server.ts`:
 
-const app = express();
+```typescript
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
+
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -220,21 +228,19 @@ app.use(
   })
 );
 
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
+app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-app.get("/api/weather", (_req, res) => {
-  res.json({
+app.get("/api/weather", (c) =>
+  c.json({
     temperature: 72,
     conditions: "sunny",
     location: "San Francisco",
     timestamp: new Date().toISOString(),
-  });
-});
+  })
+);
 
-app.listen(3001, () => {
-  console.log("Merchant running at http://localhost:3001");
+serve({ fetch: app.fetch, port: 3001 }, (info) => {
+  console.log(`Merchant running at http://localhost:${info.port}`);
 });
 ```
 
@@ -258,18 +264,21 @@ curl -i http://localhost:3001/api/weather
 # HTTP/1.1 402 Payment Required
 ```
 
-### Hono Variant
+### Next.js Variant
+
+The same middleware runs inside a Next.js App Router catch-all route:
 
 ```typescript
+// app/api/[...route]/route.ts
 import { Hono } from "hono";
-import { serve } from "@hono/node-server";
-import { pincerpayHono } from "@pincerpay/merchant";
+import { handle } from "hono/vercel";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = new Hono();
+const app = new Hono().basePath("/api");
 
 app.use(
   "*",
-  pincerpayHono({
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -282,9 +291,9 @@ app.use(
   })
 );
 
-app.get("/api/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
+app.get("/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
 
-serve({ fetch: app.fetch, port: 3001 });
+export const GET = handle(app);
 ```
 
 ---
@@ -387,20 +396,21 @@ USDC base units: $0.01 = "10000", $0.10 = "100000", $1.00 = "1000000", $10.00 = 
 
 ## Merchant SDK (@pincerpay/merchant)
 
-Accept USDC payments from AI agents with Express, Hono, or Next.js middleware.
+Accept USDC payments from AI agents with Hono-based middleware that runs in Next.js App Router (via `hono/vercel`) and in any Hono app. The middleware is `createPincerPayMiddleware`, exported from `@pincerpay/merchant/nextjs`. An Express adapter is on the roadmap (https://github.com/ds1/pincerpay/issues/108).
 
-Install: `npm install @pincerpay/merchant`
+Install: `npm install @pincerpay/merchant hono`
 
-### Express Middleware
+### Hono Middleware
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
     routes: {
@@ -418,56 +428,26 @@ app.use(
   })
 );
 
-app.get("/api/weather", (req, res) => {
-  res.json({ temp: 72, condition: "sunny" });
-});
-
-app.listen(3000);
-```
-
-### Hono Middleware
-
-```typescript
-import { Hono } from "hono";
-import { pincerpayHono } from "@pincerpay/merchant";
-
-const app = new Hono();
-
-app.use(
-  "*",
-  pincerpayHono({
-    apiKey: process.env.PINCERPAY_API_KEY!,
-    merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
-    routes: {
-      "GET /api/weather": {
-        price: "0.01",
-        chain: "solana",
-        description: "Current weather data",
-      },
-    },
-  })
-);
-
-app.get("/api/weather", (c) => {
-  return c.json({ temp: 72, condition: "sunny" });
-});
+app.get("/api/weather", (c) => c.json({ temp: 72, condition: "sunny" }));
 
 export default app;
 ```
 
-### Next.js (Hono Adapter)
+For a standalone Node.js server, serve the same app with `@hono/node-server`: `serve({ fetch: app.fetch, port: 3000 })`.
 
-Next.js doesn't have native x402 middleware support. Use Hono inside a catch-all App Router route:
+### Next.js (App Router)
+
+Use Hono inside a catch-all App Router route:
 
 ```typescript
 // app/api/[...route]/route.ts
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { pincerpayHono } from "@pincerpay/merchant";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono().basePath("/api");
 
-app.use("*", pincerpayHono({
+app.use("*", createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "YOUR_SOLANA_WALLET_ADDRESS",
   routes: {
@@ -485,18 +465,17 @@ export const GET = handle(app);
 export const POST = handle(app);
 ```
 
-Install: `npm install @pincerpay/merchant hono`
-
 Note: `basePath("/api")` must match the catch-all route location. Route handlers use paths relative to basePath (`/weather` serves `/api/weather`).
 
 ### Configuration
 
-pincerpay() accepts a PincerPayConfig object:
+createPincerPayMiddleware() accepts a PincerPayConfig object:
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | apiKey | string | Yes | Your PincerPay API key (pp_live_...) |
-| merchantAddress | string | Yes | Your wallet address for receiving USDC |
+| merchantAddress | string | If merchantAddresses not set | Single receiving wallet address (or fallback for chains not in merchantAddresses) |
+| merchantAddresses | Record<string, string> | If merchantAddress not set | Per-chain receiving wallets keyed by chain shorthand (solana, polygon, base, ...) |
 | facilitatorUrl | string | No | Override facilitator URL (default: https://facilitator.pincerpay.com) |
 | routes | Record<string, RoutePaywallConfig> | Yes | Map of endpoint patterns to paywall config |
 
@@ -627,24 +606,21 @@ console.log(`Spent ${amount} base units on ${date}`);
 
 Important: Spending policies use base units (6 decimals), NOT human-readable amounts. Using "0.10" will cause BigInt() to throw at runtime. Use "100000" for $0.10.
 
-### Solana Smart Agent (Squads Protocol)
+### Squads Smart Accounts (on-chain spending limits)
 
-For agents using Squads Protocol smart accounts with on-chain spending limits:
+On-chain spending limits are enforced by the facilitator, so agents use the same `PincerPayAgent` client. When an agent's Solana wallet is linked to a Squads smart account (managed from the PincerPay dashboard, live on devnet), the facilitator checks the agent's status and its on-chain Squads spending limit before settling a Solana payment. Client-side `policies` still apply on top:
 
 ```typescript
-import { SolanaSmartAgent } from "@pincerpay/agent";
+import { PincerPayAgent } from "@pincerpay/agent";
 
-const agent = await SolanaSmartAgent.create({
+const agent = await PincerPayAgent.create({
   chains: ["solana"],
   solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
-  smartAccountIndex: 0,
-  spendingLimitIndex: 0,
+  policies: [{ maxPerTransaction: "100000" }], // 0.10 USDC, enforced client-side
 });
 
-const policy = await agent.checkOnChainPolicy("100000");
-if (policy.allowed) {
-  const response = await agent.fetch("https://api.example.com/data");
-}
+// The facilitator rejects the settlement if it exceeds the on-chain limit
+const response = await agent.fetch("https://api.example.com/data");
 ```
 
 ### Environment Variables
@@ -717,7 +693,7 @@ Doc topics: getting-started, merchant, agent, troubleshooting, reference.
 | Prompt | Description |
 |--------|-------------|
 | get-started | Interactive onboarding: determines your role and guides you to the right flow |
-| integrate-merchant | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
+| integrate-merchant | Step-by-step merchant SDK integration (Hono-based middleware for Next.js App Router) |
 | integrate-agent | Agent SDK setup with spending policies and gas estimates |
 | debug-transaction | Transaction troubleshooting by hash/signature |
 | manage-paywalls | Paywall management: list, create, update, delete, or review configuration |
@@ -878,16 +854,16 @@ Solana-first design with optional EVM compatibility for Base and Polygon.
 
 - Sub-second finality: transactions confirm in ~400ms
 - Sub-cent fees: a USDC transfer costs ~$0.00025
-- Kora gasless: agents pay gas in USDC instead of SOL (live on devnet)
+- Kora: agents reimburse the network fee in USDC instead of holding SOL (live on devnet)
 - Squads SPN: on-chain Smart Accounts with spending limits, manageable from the PincerPay dashboard
 
 ### Optimistic Finality
 
 For payments under $1 USDC, PincerPay releases the resource after the transaction is broadcast to the mempool (~200ms) rather than waiting for block confirmation.
 
-### Gas Passthrough
+### Who Pays Gas
 
-PincerPay never subsidizes gas. On Solana, agents pay a small SOL fee (~$0.00025) per transaction. With Kora integration, agents can pay gas in USDC instead.
+In x402, the facilitator submits each settlement transaction and is its fee payer, so merchants never pay gas. On Solana the fee is small (~$0.00025). When Kora is enabled (live on devnet today), the agent reimburses that fee in USDC as part of the payment, so the agent never needs to hold SOL. On EVM chains, the agent signs a USDC transfer authorization and the facilitator submits it on-chain, so the agent never needs ETH or POL.
 
 ### EVM (Optional Compatibility)
 
@@ -1070,7 +1046,7 @@ Zero-setup option: The interactive demo (https://demo.pincerpay.com/playground) 
 Merchant:
 
 ```typescript
-pincerpay({
+createPincerPayMiddleware({
   apiKey: process.env.PINCERPAY_API_KEY!,
   merchantAddress: "YOUR_DEVNET_WALLET",
   routes: {
@@ -1103,13 +1079,15 @@ const agent = await PincerPayAgent.create({
 ### End-to-End Test Script
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 import { PincerPayAgent } from "@pincerpay/agent";
 
-const app = express();
+const app = new Hono();
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_WALLET!,
     routes: {
@@ -1121,9 +1099,9 @@ app.use(
     },
   })
 );
-app.get("/api/data", (req, res) => res.json({ result: "success" }));
+app.get("/api/data", (c) => c.json({ result: "success" }));
 
-const server = app.listen(4000);
+const server = serve({ fetch: app.fetch, port: 4000 });
 
 const agent = await PincerPayAgent.create({
   chains: ["solana-devnet"],
@@ -1142,7 +1120,7 @@ server.close();
 
 ### Who pays gas fees?
 
-Agents always pay gas. On Solana, agents pay a small SOL fee (typically <$0.001). PincerPay never subsidizes gas.
+Merchants never pay gas. In x402, the facilitator submits each settlement transaction as the fee payer. On Solana with Kora enabled (devnet today), the agent reimburses that fee in USDC (typically <$0.001), so it never needs to hold SOL. On EVM chains, the facilitator submits the agent's signed USDC authorization on-chain.
 
 ### What is optimistic finality?
 
@@ -1166,7 +1144,7 @@ Webhooks send a POST request with a JSON body containing: txHash, status, amount
 
 Next.js 15 + Hono catch-all route handler with PincerPay paywall middleware.
 
-Hono is mounted inside a Next.js catch-all route handler (src/app/api/[...path]/route.ts). The pincerpayHono middleware intercepts paywalled routes and returns 402.
+Hono is mounted inside a Next.js catch-all route handler (src/app/api/[...path]/route.ts). The createPincerPayMiddleware middleware intercepts paywalled routes and returns 402.
 
 Endpoints: GET /api/health (free), GET /api/weather (0.001 USDC), GET /api/joke (0.001 USDC).
 
@@ -1174,13 +1152,13 @@ Endpoints: GET /api/health (free), GET /api/weather (0.001 USDC), GET /api/joke 
 // src/app/api/[...path]/route.ts
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { pincerpayHono } from "@pincerpay/merchant";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
 const app = new Hono().basePath("/api");
 
 app.use(
   "*",
-  pincerpayHono({
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -1210,20 +1188,22 @@ Source: https://github.com/ds1/pincerpay/tree/master/examples/nextjs-merchant
 
 ---
 
-## Example: Express Merchant
+## Example: Standalone Node Merchant
 
-Express server with free and paywalled endpoints using PincerPay middleware.
+Standalone Node.js server with free and paywalled endpoints using PincerPay middleware on Hono + @hono/node-server. It lives in examples/express-merchant for historical reasons; the source is Hono-based. An Express adapter is on the roadmap.
 
 Endpoints: GET /api/health (free), GET /api/weather (0.001 USDC), GET /api/premium (0.10 USDC).
 
 ```typescript
-import express from "express";
-import { pincerpay } from "@pincerpay/merchant";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { createPincerPayMiddleware } from "@pincerpay/merchant/nextjs";
 
-const app = express();
+const app = new Hono();
 
 app.use(
-  pincerpay({
+  "*",
+  createPincerPayMiddleware({
     apiKey: process.env.PINCERPAY_API_KEY!,
     merchantAddress: process.env.MERCHANT_ADDRESS!,
     routes: {
@@ -1241,12 +1221,12 @@ app.use(
   })
 );
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
-app.get("/api/weather", (_req, res) => res.json({ temperature: 72, conditions: "sunny" }));
-app.get("/api/premium", (_req, res) => res.json({ insights: [{ metric: "daily_active_agents", value: 1420 }] }));
+app.get("/api/health", (c) => c.json({ status: "ok" }));
+app.get("/api/weather", (c) => c.json({ temperature: 72, conditions: "sunny" }));
+app.get("/api/premium", (c) => c.json({ insights: [{ metric: "daily_active_agents", value: 1420 }] }));
 
-const port = process.env.PORT ?? 3001;
-app.listen(port);
+const port = Number(process.env.PORT ?? 3001);
+serve({ fetch: app.fetch, port });
 ```
 
 Source: https://github.com/ds1/pincerpay/tree/master/examples/express-merchant
@@ -1291,9 +1271,9 @@ Source: https://github.com/ds1/pincerpay/tree/master/examples/agent-weather
 ## Key Differentiators
 
 - Non-custodial: Agents hold their own keys. PincerPay never controls funds.
-- Solana-first: Sub-second finality, sub-cent fees, Kora gasless (agents pay gas in USDC).
+- Solana-first: Sub-second finality, sub-cent fees. With Kora (devnet today), agents reimburse network fees in USDC and never need SOL.
 - Open standard: Implements x402, not a proprietary protocol.
 - Micropayment-viable: $0.0001 per transaction vs $0.30+ on card rails.
-- Gas passthrough: PincerPay never subsidizes gas; agents pay via Kora (Solana) or meta-transactions (EVM).
+- Merchants never pay gas: the facilitator submits each settlement as the fee payer; on Solana with Kora, the agent reimburses the fee in USDC.
 - Double-Lock: x402 payment + AP2 mandate must both validate before the facilitator broadcasts.
 - Compliance-as-a-Service: OFAC screening + reputation gating at the facilitator layer.

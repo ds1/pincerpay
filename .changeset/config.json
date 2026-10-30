@@ -5,10 +5,10 @@
     { "repo": "ds1/pincerpay" }
   ],
   "commit": false,
-  "fixed": [],
-  "linked": [
+  "fixed": [
     ["@pincerpay/core", "@pincerpay/agent", "@pincerpay/merchant", "@pincerpay/mcp"]
   ],
+  "linked": [],
   "access": "public",
   "baseBranch": "master",
   "updateInternalDependencies": "minor",

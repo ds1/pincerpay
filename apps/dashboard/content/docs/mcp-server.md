@@ -134,7 +134,7 @@ The MCP server exposes 26 tools covering the full developer lifecycle: onboardin
 | Tool | Description | Auth |
 |------|-------------|:---:|
 | `validate-payment-config` | Validate merchant config with route pattern checks | No |
-| `scaffold-x402-middleware` | Generate Express/Hono/Next.js middleware | No |
+| `scaffold-x402-middleware` | Generate Hono-based middleware for a Next.js App Router catch-all route | No |
 | `scaffold-agent-client` | Generate agent fetch wrapper with spending policies | No |
 | `generate-ucp-manifest` | Create commerce discovery manifest | No |
 
@@ -173,7 +173,7 @@ The server embeds full documentation that your assistant can read on demand:
 | Topic | URI | Content |
 |-------|-----|---------|
 | Getting Started | `docs://pincerpay/getting-started` | Prerequisites, Choose Your Path (merchant vs agent), devnet/mainnet, key concepts |
-| Merchant Guide | `docs://pincerpay/merchant` | Express, Hono, and Next.js middleware setup, multi-chain routes, config reference |
+| Merchant Guide | `docs://pincerpay/merchant` | Next.js App Router and Hono middleware setup, multi-chain routes, config reference |
 | Agent Guide | `docs://pincerpay/agent` | Agent setup, spending policies (base units), runtime management, properties |
 | Troubleshooting | `docs://pincerpay/troubleshooting` | Common issues table, devnet funding, debugging tips |
 | Reference | `docs://pincerpay/reference` | Chain shorthands, USDC amounts, package exports, API methods |
@@ -185,7 +185,7 @@ Interactive prompts guide your assistant through common workflows:
 | Prompt | Description |
 |--------|-------------|
 | `get-started` | Interactive onboarding that determines your role and guides you to the right flow |
-| `integrate-merchant` | Step-by-step merchant SDK integration (Express, Hono, or Next.js) |
+| `integrate-merchant` | Step-by-step merchant SDK integration (Hono-based middleware for Next.js App Router) |
 | `integrate-agent` | Agent SDK setup with spending policies and gas estimates |
 | `debug-transaction` | Transaction troubleshooting by hash/signature |
 | `manage-paywalls` | Paywall management: list, create, update, delete, or review configuration |
@@ -240,7 +240,7 @@ After connecting, paste any of these into your AI assistant:
 
 - "Bootstrap a new PincerPay merchant for me, generating wallets and an API key"
 - "Generate a non-custodial wallet set with a 12-word mnemonic"
-- "Set up PincerPay merchant middleware for my Express app"
+- "Set up PincerPay merchant middleware for my Next.js API routes"
 - "Scaffold an agent client with a $5/day spending limit on Solana"
 - "What chains does PincerPay support? Show me gas costs for each"
 - "Generate a UCP manifest for my API"

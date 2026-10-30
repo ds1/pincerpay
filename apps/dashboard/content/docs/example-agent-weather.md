@@ -95,7 +95,7 @@ solana airdrop 2 <agent-address> --url devnet
 pnpm install
 ```
 
-4. Start a merchant server (e.g., the [Express example](/docs/example-express-merchant)), then run the agent:
+4. Start a merchant server (e.g., the [standalone Node merchant example](/docs/example-express-merchant), a Hono + `@hono/node-server` server), then run the agent:
 
 ```bash
 pnpm --filter example-agent-weather start

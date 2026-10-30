@@ -11,16 +11,16 @@ PincerPay is Solana-first. Solana's speed and cost make it the best chain for ag
 
 - **Sub-second finality** -- transactions confirm in ~400ms
 - **Sub-cent fees** -- a USDC transfer costs ~$0.00025
-- **Kora gasless** -- agents pay gas in USDC instead of SOL (live on devnet)
+- **Kora** -- agents reimburse the network fee in USDC instead of holding SOL (live on devnet)
 - **Squads SPN** -- on-chain Smart Accounts with spending limits, manageable from the PincerPay dashboard (live on devnet)
 
 ### Optimistic Finality
 
 For payments under $1 USDC, PincerPay releases the resource after the transaction is broadcast to the mempool (~200ms) rather than waiting for block confirmation. This keeps latency low for micropayments while maintaining security for larger amounts.
 
-### Gas Passthrough
+### Who Pays Gas
 
-PincerPay never subsidizes gas. On Solana, agents pay a small SOL fee (~$0.00025) per transaction. With Kora integration, agents can pay gas in USDC instead, removing the need to hold SOL entirely.
+In x402, the facilitator submits each settlement transaction and is its fee payer, so merchants never pay gas. On Solana the fee is small (~$0.00025). When Kora is enabled (live on devnet today), the agent reimburses that fee in USDC as part of the payment, so the agent never needs to hold SOL. On EVM chains, the agent signs a USDC transfer authorization and the facilitator submits it on-chain.
 
 ## EVM (Optional Compatibility)
 

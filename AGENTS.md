@@ -15,12 +15,12 @@ pincerpay/
 │   ├── solana/          # Kora gasless txns + Squads smart accounts
 │   ├── program/         # Anchor program client for on-chain settlement
 │   ├── agent/           # Agent SDK (fetch wrapper with auto x402 payment)
-│   ├── merchant/        # Merchant SDK (Express + Hono + Next.js middleware)
+│   ├── merchant/        # Merchant SDK (Hono-based middleware for Next.js App Router + any Hono app)
 │   ├── onboarding/      # Non-custodial wallet generation + merchant bootstrap helpers
 │   ├── cli/             # Terminal-only merchant onboarding (`npx @pincerpay/cli`)
 │   └── mcp/             # MCP server for AI agent tool integration
 ├── examples/
-│   ├── express-merchant/ # Express merchant demo
+│   ├── express-merchant/ # Standalone Node merchant demo (Hono + @hono/node-server; folder name is historical)
 │   └── agent-weather/    # Agent weather API demo
 └── packages/solana-program/ # Anchor on-chain program (Rust)
 ```
@@ -83,7 +83,7 @@ Requires `DATABASE_URL` env var (PostgreSQL connection string, Supabase recommen
 Agent -> HTTP 402 Challenge -> Sign USDC Transfer -> PincerPay Facilitator -> Blockchain -> Merchant
 ```
 
-1. Merchant adds `@pincerpay/merchant` middleware to Express/Hono routes
+1. Merchant adds `@pincerpay/merchant` middleware (`createPincerPayMiddleware`) to Next.js App Router or Hono routes
 2. Agent hits protected endpoint, gets HTTP 402 with payment requirements
 3. Agent signs a USDC transfer transaction using `@pincerpay/agent` (spending policies use base units with 6 decimals, so $1.00 = "1000000")
 4. PincerPay facilitator verifies signature, broadcasts to chain, confirms settlement
