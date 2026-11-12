@@ -1,5 +1,12 @@
 # @pincerpay/onboarding
 
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies [[`3f18952`](https://github.com/ds1/pincerpay/commit/3f18952673366ae5b8421b533078a1f91c58ab59)]:
+  - @pincerpay/core@0.11.0
+
 ## 0.3.4
 
 ### Patch Changes
