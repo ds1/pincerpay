@@ -49,6 +49,14 @@ const envSchema = z.object({
    */
   WEBHOOK_ALLOW_PRIVATE_URLS: envBoolean.default("false"),
 
+  /**
+   * Caps on fees the facilitator pays for agent-built Solana transactions.
+   * The stock x402 client uses 20,000 CU at 1 microlamport/CU and 2 signers.
+   */
+  SOLANA_MAX_COMPUTE_UNIT_LIMIT: z.coerce.number().int().positive().default(200_000),
+  SOLANA_MAX_PRIORITY_FEE_LAMPORTS: z.coerce.number().int().nonnegative().default(5_000),
+  SOLANA_MAX_SIGNATURES: z.coerce.number().int().positive().default(3),
+
   /** Log level */
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 
