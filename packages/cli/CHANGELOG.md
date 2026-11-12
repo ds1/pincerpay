@@ -1,5 +1,12 @@
 # @pincerpay/cli
 
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @pincerpay/onboarding@0.3.5
+
 ## 0.3.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @pincerpay/core
 
+## 0.11.0
+
+### Minor Changes
+
+- [#185](https://github.com/ds1/pincerpay/pull/185) [`3f18952`](https://github.com/ds1/pincerpay/commit/3f18952673366ae5b8421b533078a1f91c58ab59) Thanks [@ds1](https://github.com/ds1)! - Add `checkWebhookUrl` and `isNonPublicIp`: a shared webhook destination policy that requires public https URLs and rejects loopback, private, link-local, reserved and internal hosts.
+
 ## 0.10.3
 
 ### Patch Changes
