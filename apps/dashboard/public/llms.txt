@@ -38,6 +38,7 @@ PincerPay lets AI agents pay for HTTP resources (APIs, data, compute) using USDC
 
 - [API Reference](https://pincerpay.com/docs/api-reference): Facilitator REST API: /v1/verify, /v1/settle, /v1/settle-direct, /v1/supported, /health, /metrics, plus merchant endpoints
 - [Testing](https://pincerpay.com/docs/testing): Devnet/testnet setup, faucets, end-to-end test scripts
+- [Fees](https://pincerpay.com/docs/fees): Per-merchant fee on top of the listed price, 100 basis points by default, metered from settled payments and invoiced monthly in USDC
 - [FAQ](https://pincerpay.com/docs/faq): Frequently asked questions about PincerPay integration and usage
 
 ### Examples

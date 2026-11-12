@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const merchants = pgTable("merchants", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -19,6 +19,12 @@ export const merchants = pgTable("merchants", {
   onChainRegistered: boolean("on_chain_registered").notNull().default(false),
   /** On-chain MerchantAccount PDA address (null if not registered) */
   merchantPda: text("merchant_pda"),
+  /**
+   * PincerPay's cut in basis points, charged on top of the listed price.
+   * 100 = 1%. Metered by the merchant_fee_accruals view and invoiced monthly.
+   * Change it with a SQL update, never in code.
+   */
+  feeBps: integer("fee_bps").notNull().default(100),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
