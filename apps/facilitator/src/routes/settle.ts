@@ -10,9 +10,12 @@ import type { AppEnv } from "../env.js";
 import type { Metrics } from "../metrics.js";
 import { paymentRequestSchema } from "./schemas.js";
 import { dispatchWebhook } from "../webhooks/dispatcher.js";
-import { rejectForeignPayTo, rejectTestKeyOnMainnet } from "./guards.js";
+import { rejectExcessiveSolanaFees, rejectForeignPayTo, rejectTestKeyOnMainnet } from "./guards.js";
+import type { SolanaFeeLimits } from "../chains/solana-fees.js";
 
 interface SettleRouteOptions {
+  /** Caps on fees the facilitator pays for agent-built Solana transactions */
+  solanaFeeLimits?: SolanaFeeLimits;
   /** Whether Kora gasless mode is active for Solana transactions */
   koraEnabled?: boolean;
   /** Nudge background workers to poll sooner after a new settlement */
@@ -61,6 +64,15 @@ export function createSettleRoute(
       // Only settle to the calling merchant's own wallet.
       const payToRejection = await rejectForeignPayTo(c, db, paymentRequirements);
       if (payToRejection) return payToRejection;
+
+      // The facilitator pays this transaction's fees; cap what the agent can make it spend.
+      const feeRejection = rejectExcessiveSolanaFees(
+        c,
+        paymentPayload,
+        paymentRequirements.network,
+        options?.solanaFeeLimits,
+      );
+      if (feeRejection) return feeRejection;
 
       logger.info({
         msg: "settle_request",
