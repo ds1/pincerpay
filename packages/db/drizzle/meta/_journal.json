@@ -36,6 +36,13 @@
       "when": 1779841729702,
       "tag": "0004_needy_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794446387349,
+      "tag": "0005_merchant_fee_bps",
+      "breakpoints": true
     }
   ]
 }

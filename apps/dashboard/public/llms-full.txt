@@ -1116,6 +1116,16 @@ server.close();
 
 ---
 
+## Fees
+
+PincerPay takes a cut of each payment that settles through the facilitator. The cut rides on top of the listed price. The agent pays the listed price plus the cut. The default cut is 100 basis points, which equals 1%.
+
+Each merchant has its own rate. `GET /v1/merchant` returns it as `feeBps`. Add the cut to the listed price in base units with `ceil(price * (10000 + feeBps) / 10000)`. At 100 basis points, a listed price of 20.00 USDC becomes 20.20 USDC.
+
+The facilitator deducts nothing at settle time. A database view meters the cut per merchant and per calendar month from settled x402 payments. The cut inside one payment is `amount * feeBps / (10000 + feeBps)`. Accrued fees are invoiced monthly in USDC. Invoicing is a manual step today.
+
+---
+
 ## FAQ
 
 ### Who pays gas fees?

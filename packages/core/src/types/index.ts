@@ -39,6 +39,8 @@ export interface MerchantProfile {
   walletAddress: string;
   supportedChains: string[];
   webhookUrl?: string;
+  /** PincerPay's cut in basis points, charged on top of the listed price. 100 = 1%. */
+  feeBps?: number;
   createdAt: Date;
 }
 

@@ -19,6 +19,7 @@ export function createMerchantRoute(db: Database) {
         webhookUrlLive: merchants.webhookUrlLive,
         webhookUrlTest: merchants.webhookUrlTest,
         onChainRegistered: merchants.onChainRegistered,
+        feeBps: merchants.feeBps,
         createdAt: merchants.createdAt,
       })
       .from(merchants)
