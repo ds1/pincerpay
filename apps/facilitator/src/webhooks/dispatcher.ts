@@ -11,6 +11,9 @@ const RETRY_DELAYS = [1_000, 5_000, 30_000, 120_000, 600_000];
 
 const MAX_ATTEMPTS = RETRY_DELAYS.length;
 
+/** Delivery status the retry worker polls. Anything re-queued for delivery must use it. */
+export const RETRY_QUEUE_STATUS = "retrying";
+
 export interface WebhookPayload {
   event: string;
   transaction: {
@@ -174,7 +177,7 @@ async function scheduleRetryOrFail(
     await db
       .update(webhookDeliveries)
       .set({
-        status: "retrying",
+        status: RETRY_QUEUE_STATUS,
         statusCode,
         lastError: error,
         attempts: nextAttempt,
@@ -231,7 +234,7 @@ export function startWebhookRetryWorker(
         .from(webhookDeliveries)
         .where(
           and(
-            eq(webhookDeliveries.status, "retrying"),
+            eq(webhookDeliveries.status, RETRY_QUEUE_STATUS),
             lte(webhookDeliveries.nextRetryAt, now),
           ),
         )
