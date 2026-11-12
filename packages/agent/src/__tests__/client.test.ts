@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { base58 } from "@scure/base";
+import { x402Client } from "@x402/core/client";
 import { PincerPayAgent } from "../client.js";
+import type { PaymentRequired } from "../index.js";
+import type { SpendingPolicy } from "@pincerpay/core";
 
 // Test private key (DO NOT use in production — this is a well-known test key)
 const TEST_EVM_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
@@ -214,5 +217,82 @@ describe("PincerPayAgent allowlists (#167)", () => {
       selectedRequirements: { amount: "1000", payTo: MERCHANT_A, network: SOLANA_MAINNET },
     });
     expect(allowed).toBeUndefined();
+  });
+});
+
+describe("PincerPayAgent.createPaymentPayload (#178)", () => {
+  const SOLANA_DEVNET = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
+  const STUD = "Qa4Vp4kMKD5P8syNrc1ywz7WHiCt4poyykCKR21zLxP";
+  const STRANGER = "GjsWy1viAxWZkb4VyLVz3oU7sNpvyuKXnRu11uUybNgm";
+
+  // A real x402Client with a fake `exact` scheme on every Solana network, so
+  // the test runs x402's own selection and hook pipeline without a signer.
+  function agentWithFakeScheme(policies?: SpendingPolicy[]) {
+    const signed: unknown[] = [];
+    const client = new x402Client().register("solana:*", {
+      scheme: "exact",
+      createPaymentPayload: async (x402Version: number, requirements: unknown) => {
+        signed.push(requirements);
+        return { x402Version, payload: { transaction: "signed-by-fake-scheme" } };
+      },
+    });
+    const agent = new PincerPayAgent(
+      { chains: ["solana-devnet"], evmPrivateKey: TEST_EVM_KEY, policies },
+      client,
+    );
+    return { agent, signed };
+  }
+
+  function paymentRequired(payTo: string): PaymentRequired {
+    return {
+      x402Version: 2,
+      resource: { url: "urn:stud:quote:q1", description: "500 credits" },
+      accepts: [
+        {
+          scheme: "exact",
+          network: SOLANA_DEVNET,
+          amount: "20000000",
+          asset: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+          payTo,
+          maxTimeoutSeconds: 300,
+          extra: { feePayer: STRANGER },
+        },
+      ],
+    };
+  }
+
+  it("signs a challenge that arrived outside HTTP and returns the payload", async () => {
+    const { agent, signed } = agentWithFakeScheme();
+    const required = paymentRequired(STUD);
+
+    const payload = await agent.createPaymentPayload(required);
+
+    expect(signed).toEqual([required.accepts[0]]);
+    expect(payload.x402Version).toBe(2);
+    expect(payload.accepted).toEqual(required.accepts[0]);
+    expect(payload.resource).toEqual(required.resource);
+    expect(payload.payload).toEqual({ transaction: "signed-by-fake-scheme" });
+  });
+
+  it("runs the spending policies and refuses a payTo outside allowedMerchants", async () => {
+    const { agent, signed } = agentWithFakeScheme([{ allowedMerchants: [STUD] }]);
+
+    await expect(agent.createPaymentPayload(paymentRequired(STRANGER))).rejects.toThrow(
+      /Payment creation aborted: Merchant not in allowlist/,
+    );
+    expect(signed).toHaveLength(0);
+  });
+
+  it("counts a signed payment toward the daily limit", async () => {
+    const { agent } = agentWithFakeScheme([
+      { allowedMerchants: [STUD], maxPerTransaction: "20000000", maxPerDay: "30000000" },
+    ]);
+
+    await agent.createPaymentPayload(paymentRequired(STUD));
+    expect(agent.getDailySpend().amount).toBe(20_000_000n);
+
+    await expect(agent.createPaymentPayload(paymentRequired(STUD))).rejects.toThrow(
+      /Exceeds daily limit/,
+    );
   });
 });

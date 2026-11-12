@@ -150,9 +150,112 @@ The same `payer` field is also included in the base64-encoded `payment-response`
 
 The middleware sets **exactly one** context variable, `pincerpay` (typed as `PincerPayPaymentInfo`). There is no `agentWallet` context key: in the example above, `agentWallet` is just a field name on the caller's own `recordTrade(...)` function. Import `PincerPayContextVariables` / `PincerPayPaymentInfo` from `@pincerpay/merchant` (or `@pincerpay/merchant/nextjs`) instead of duck-typing the shape, so you fail at compile time if the contract changes. Any change to the keys set, or to `PincerPayPaymentInfo`, is called out in the merchant package CHANGELOG.
 
+## Selling a Resource That Is Not an HTTP Route
+
+The middleware paywalls HTTP routes. A merchant that sells a credit grant, a job, or a download link quotes and settles from its own server code. The flow has three steps: quote, settle, and grant.
+
+### 1. Quote
+
+Build the requirement on your server and store it with the quote. On Solana the facilitator pays the network fee. The quote therefore needs the facilitator's `feePayer` from `GET /v1/supported`. Fetch it once and cache it.
+
+```typescript
+import {
+  PincerPayClient,
+  buildPaymentRequirements,
+  buildPaymentRequired,
+} from "@pincerpay/merchant";
+
+const client = new PincerPayClient({ apiKey: process.env.PINCERPAY_API_KEY! });
+const supported = await client.getSupported();
+
+const requirements = buildPaymentRequirements({
+  chain: "solana-devnet",                        // required, there is no mainnet default
+  payTo: process.env.PINCERPAY_MERCHANT_WALLET!, // must equal your registered wallet
+  price: "20",                                   // or amount: "20000000"
+  supported,
+});
+await db.quotes.insert({ id: quoteId, requirements });
+
+// Send this to the agent over MCP, JSON, or any other channel.
+const paymentRequired = buildPaymentRequired({
+  accepts: [requirements],
+  resource: { url: `https://example.com/quotes/${quoteId}`, description: "500 credits" },
+});
+```
+
+A requirement carries these fields.
+
+| Field | Value |
+|-------|-------|
+| `scheme` | `"exact"` |
+| `network` | CAIP-2 id, for example `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` |
+| `asset` | The chain's USDC mint or contract |
+| `amount` | USDC base units as a string |
+| `payTo` | Your registered wallet for that chain |
+| `maxTimeoutSeconds` | Seconds the agent has to pay. Default 300. |
+| `extra` | On Solana, the facilitator's `feePayer`. On EVM, the USDC EIP-712 `name` and `version`. |
+
+`payTo` must equal the wallet registered on your merchant account byte for byte. The facilitator answers any other address with `403 pay_to_not_merchant_wallet`. A `pp_test_` key works only on test networks. A mainnet requirement sent with a test key gets `403 test_key_chain_forbidden`.
+
+### 2. Settle
+
+The agent signs the challenge and sends back a payment payload. Match it against your stored quote and settle against your copy. Never settle against the requirement the agent sent.
+
+```typescript
+import { PincerPayError, matchOfferedRequirement } from "@pincerpay/merchant";
+
+const quote = await db.quotes.get(quoteId);
+const offered = matchOfferedRequirement([quote.requirements], paymentPayload.accepted);
+if (!offered) throw new Error("The payment does not match the quote.");
+
+try {
+  const settled = await client.settle(paymentPayload, offered);
+  if (!settled.success) {
+    // Refused on chain or by verification. settled.errorReason says why.
+  }
+} catch (err) {
+  if (err instanceof PincerPayError && err.code === "pay_to_not_merchant_wallet") {
+    // Your payTo drifted from the registered wallet.
+  }
+  throw err;
+}
+```
+
+`settle` verifies the payment before it broadcasts. `client.verify(paymentPayload, offered)` runs the same check and moves no funds. A 200 with `isValid: false` is a normal answer and does not throw.
+
+### 3. Grant exactly once
+
+Key the grant on `settled.network` plus `settled.transaction`. Refuse a second grant for the same pair. A replayed payload can settle twice.
+
+Two signals confirm a payment after the settle response.
+
+- The `payment.settled` webhook fires once per successful settle. See [Webhook Verification](#webhook-verification).
+- `client.getStatus(txHash)` reads the facilitator's transaction row.
+
+The facilitator writes that row after it answers `/v1/settle`. A 404 from `getStatus` right after a successful settle means the row is not written yet. Retry with backoff for about 30 seconds. A settle that crashed after broadcast is never recorded. A 404 therefore never proves the payment did not happen. Check the chain before you refuse a buyer.
+
+`payment.confirmed` fires only for payments under 1 USDC. The facilitator records larger payments as `confirmed` at settle time. For them `payment.settled` is the last event.
+
+### The cut
+
+`feeBps` adds PincerPay's cut on top of the listed price. The formula is `amount = ceil(base * (10000 + feeBps) / 10000)`. A nonzero cut is also written to `extra.feeBps`. The agent can then show the buyer what the cut adds. Store the builder's `amount` on the quote and never compute it yourself.
+
+```typescript
+buildPaymentRequirements({ chain: "solana-devnet", payTo, price: "20", supported, feeBps: 100 });
+// amount "20200000", extra { feePayer: "...", feeBps: 100 }
+```
+
+The middleware takes the same `feeBps` in its config. Unset means 0. At 0 every 402 stays exactly as before.
+
+### Client Errors and Timeouts
+
+`PincerPayClient` takes `apiKey`, `facilitatorUrl`, and `timeoutMs`. It needs no `routes`. A trailing `/v1` on `facilitatorUrl` is stripped. Each request times out after 60 seconds by default.
+
+Every non-2xx response throws `PincerPayError` with `status`, `code`, `body`, `path`, and `retryAfter`. `code` comes from the body's `error`, `errorReason`, or `invalidReason`. A timeout throws status 0 with code `timeout`. A network failure throws status 0 with code `network_error`. The builders throw `PincerPayError` with status 0 and codes such as `missing_fee_payer` and `invalid_pay_to`. The [package README](https://github.com/ds1/pincerpay/tree/master/packages/merchant#api-reference) lists every export and code.
+
 ## Configuration
 
-`createPincerPayMiddleware()` accepts a `PincerPayConfig` object:
+`createPincerPayMiddleware()` accepts a `PincerPayMiddlewareConfig` object. It is `PincerPayConfig` plus an optional `feeBps`.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -162,6 +265,7 @@ The middleware sets **exactly one** context variable, `pincerpay` (typed as `Pin
 | `facilitatorUrl` | `string` | No | Override facilitator URL (default: `https://facilitator.pincerpay.com`) |
 | `routes` | `Record<string, RoutePaywallConfig>` | Yes | Map of endpoint patterns to paywall config |
 | `syncFacilitatorOnStart` | `boolean` | No | Defer facilitator sync to first request (default: `false`) |
+| `feeBps` | `number` | No | PincerPay's cut in basis points, added on top of each route price (default: `0`) |
 
 ### Route Configuration
 

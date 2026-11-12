@@ -120,6 +120,34 @@ const { date, amount } = agent.getDailySpend();
 console.log(`Spent ${amount} base units on ${date}`);
 ```
 
+## Paying a Challenge Outside HTTP
+
+Some merchants send the x402 challenge in a tool result or a JSON body. `agent.fetch()` never sees a 402 for those. Pass the challenge to `createPaymentPayload` and hand the signed payload back to the merchant.
+
+```typescript
+import { PincerPayAgent, type PaymentRequired } from "@pincerpay/agent";
+
+const agent = await PincerPayAgent.create({
+  chains: ["solana-devnet"],
+  solanaPrivateKey: process.env.AGENT_SOLANA_KEY!,
+  policies: [
+    {
+      allowedMerchants: [MERCHANT_WALLET],
+      allowedChains: ["solana-devnet"],
+      maxPerTransaction: "20000000", // 20 USDC
+    },
+  ],
+});
+
+// paymentRequired came back from the merchant's quote tool
+const payload = await agent.createPaymentPayload(paymentRequired as PaymentRequired);
+// send payload to the merchant, which settles it
+```
+
+The spending policies run before the agent signs. A refused payment rejects with `Payment creation aborted: <reason>`. A signed payment counts toward `maxPerDay`. The merchant settles the payload. The agent never broadcasts it.
+
+`accepts[n].extra.feeBps` is PincerPay's cut in basis points, when the merchant charges one. The `amount` already includes it. Show it to the owner before you sign.
+
 ## Environment Variables
 
 | Variable | Required | Description |

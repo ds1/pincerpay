@@ -1,6 +1,7 @@
 import { privateKeyToAccount } from "viem/accounts";
 import type { LocalAccount } from "viem/accounts";
 import { x402Client } from "@x402/core/client";
+import type { PaymentPayload, PaymentRequired } from "@x402/core/types";
 import { wrapFetchWithPayment } from "@x402/fetch";
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { registerExactSvmScheme } from "@x402/svm/exact/client";
@@ -38,6 +39,7 @@ function toEvmSigner(account: LocalAccount) {
  */
 export class PincerPayAgent {
   private config: AgentConfig;
+  private x402: x402Client;
   private x402Fetch: typeof globalThis.fetch;
   private dailySpend: Map<string, bigint> = new Map();
   private dailyResetAt: number = 0;
@@ -55,6 +57,7 @@ export class PincerPayAgent {
     }
 
     const x402 = client ?? new x402Client();
+    this.x402 = x402;
 
     // Register EVM scheme synchronously
     if (config.evmPrivateKey && !client) {
@@ -104,6 +107,24 @@ export class PincerPayAgent {
     init?: RequestInit,
   ): Promise<Response> {
     return this.x402Fetch(url.toString(), init);
+  }
+
+  /**
+   * Sign a payment for a 402 challenge that did not arrive as an HTTP
+   * response, for example `accepts[]` returned by an MCP tool.
+   *
+   * Runs the same spending policies as `fetch()`. A refused payment rejects
+   * with `Payment creation aborted: <reason>`. A signed payment counts toward
+   * the daily limit.
+   *
+   * ```ts
+   * // paymentRequired came back from a merchant tool call
+   * const payload = await agent.createPaymentPayload(paymentRequired);
+   * // hand payload back to the merchant, which settles it
+   * ```
+   */
+  async createPaymentPayload(paymentRequired: PaymentRequired): Promise<PaymentPayload> {
+    return this.x402.createPaymentPayload(paymentRequired);
   }
 
   /**

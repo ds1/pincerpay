@@ -2,6 +2,8 @@ import { describe, it, expect, afterEach } from "vitest";
 import { Hono } from "hono";
 import { createPincerPayMiddleware } from "../middleware/nextjs.js";
 import type { PincerPayContextVariables } from "../middleware/nextjs.js";
+import { buildPaymentRequirements } from "../requirements.js";
+import type { SupportedResponse } from "../requirements.js";
 
 // ─── Reusable test harness ───
 //
@@ -265,5 +267,75 @@ describe("createPincerPayMiddleware", () => {
 
     expect(res.status).toBe(402);
     expect(settleBodies).toHaveLength(0);
+  });
+
+  // ─── #178: the middleware and the server-side builder agree ───
+
+  describe("parity with buildPaymentRequirements", () => {
+    const SOLANA_DEVNET = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
+    const EVM_MERCHANT = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    const supported: SupportedResponse = {
+      kinds: [
+        { x402Version: 2, scheme: "exact", network: SOLANA_DEVNET, extra: { feePayer: SOLANA_AGENT } },
+        { x402Version: 2, scheme: "exact", network: "eip155:80002", extra: { name: "USDC", version: "2" } },
+      ],
+      extensions: [],
+      signers: {},
+    };
+
+    function parityApp(feeBps?: number) {
+      const app = new Hono();
+      app.use(
+        "*",
+        createPincerPayMiddleware({
+          apiKey: "pp_test_unit",
+          merchantAddresses: { "solana-devnet": SOLANA_MERCHANT, "polygon-amoy": EVM_MERCHANT },
+          facilitatorUrl: "https://facilitator.test",
+          ...(feeBps === undefined ? {} : { feeBps }),
+          routes: {
+            "GET /pack": { price: "20", chains: ["solana-devnet", "polygon-amoy"] },
+          },
+        }),
+      );
+      app.get("/pack", (c) => c.json({ ok: true }));
+      return app;
+    }
+
+    function expectedAccepts(feeBps?: number) {
+      return [
+        buildPaymentRequirements({ chain: "solana-devnet", payTo: SOLANA_MERCHANT, price: "20", supported, feeBps }),
+        buildPaymentRequirements({ chain: "polygon-amoy", payTo: EVM_MERCHANT, price: "20", supported, feeBps }),
+      ];
+    }
+
+    it("emits the same accepts as the builder for the same supported kinds", async () => {
+      restoreFetch = installMockFetch((url) =>
+        url.endsWith("/v1/supported") ? (supported as unknown as Record<string, unknown>) : new Response("", { status: 404 }),
+      );
+      const body = await (await parityApp().request("/pack")).json();
+      expect(body.accepts).toEqual(expectedAccepts());
+      expect(body.accepts[0].extra).not.toHaveProperty("feeBps");
+    });
+
+    it("grosses up by feeBps from the merchant config and matches the builder", async () => {
+      restoreFetch = installMockFetch((url) =>
+        url.endsWith("/v1/supported") ? (supported as unknown as Record<string, unknown>) : new Response("", { status: 404 }),
+      );
+      const body = await (await parityApp(100).request("/pack")).json();
+      expect(body.accepts).toEqual(expectedAccepts(100));
+      expect(body.accepts[0].amount).toBe("20200000");
+      expect(body.accepts[0].extra.feeBps).toBe(100);
+    });
+
+    it("keeps the feePayer: payTo fallback when /v1/supported is down", async () => {
+      restoreFetch = installMockFetch(() => new Response("down", { status: 503 }));
+      const body = await (await parityApp().request("/pack")).json();
+      expect(body.accepts[0].extra).toEqual({ feePayer: SOLANA_MERCHANT });
+    });
+
+    it("rejects an invalid feeBps at init", () => {
+      restoreFetch = installMockFetch(() => ({ kinds: [] }));
+      expect(() => parityApp(-5)).toThrow(/feeBps/);
+    });
   });
 });

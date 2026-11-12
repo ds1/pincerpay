@@ -653,7 +653,7 @@ Merchants can register a webhook URL in the dashboard to receive async notificat
 | Event | Trigger |
 |-------|---------|
 | `payment.settled` | Payment broadcast on-chain (from `/v1/settle`) |
-| `payment.confirmed` | Payment confirmed on-chain (from confirmation worker) |
+| `payment.confirmed` | Payment confirmed on-chain (from confirmation worker). Fires only for payments under 1 USDC. Larger payments are recorded as `confirmed` at settle time and send only `payment.settled`. |
 | `payment.failed` | Payment failed to confirm within timeout |
 
 ### Payload

@@ -202,6 +202,103 @@ import type {
 Any change to the keys the middleware sets, or to `PincerPayPaymentInfo`, will be
 called out in this package's [CHANGELOG](./CHANGELOG.md).
 
+## Selling a resource that is not an HTTP route
+
+The middleware paywalls HTTP routes. A merchant that sells a credit grant, a job, or a download link quotes and settles from its own server code. The flow has three steps: quote, settle, and grant.
+
+### 1. Quote
+
+Build the requirement on your server and store it with the quote. On Solana the facilitator pays the network fee. The quote therefore needs the facilitator's `feePayer` from `GET /v1/supported`. Fetch it once and cache it.
+
+```typescript
+import {
+  PincerPayClient,
+  buildPaymentRequirements,
+  buildPaymentRequired,
+} from "@pincerpay/merchant";
+
+const client = new PincerPayClient({ apiKey: process.env.PINCERPAY_API_KEY! });
+const supported = await client.getSupported();
+
+const requirements = buildPaymentRequirements({
+  chain: "solana-devnet",                        // required, there is no mainnet default
+  payTo: process.env.PINCERPAY_MERCHANT_WALLET!, // must equal your registered wallet
+  price: "20",                                   // or amount: "20000000"
+  supported,
+});
+await db.quotes.insert({ id: quoteId, requirements });
+
+// Send this to the agent over MCP, JSON, or any other channel.
+const paymentRequired = buildPaymentRequired({
+  accepts: [requirements],
+  resource: { url: `https://example.com/quotes/${quoteId}`, description: "500 credits" },
+});
+```
+
+A requirement carries these fields.
+
+| Field | Value |
+|-------|-------|
+| `scheme` | `"exact"` |
+| `network` | CAIP-2 id, for example `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` |
+| `asset` | The chain's USDC mint or contract |
+| `amount` | USDC base units as a string |
+| `payTo` | Your registered wallet for that chain |
+| `maxTimeoutSeconds` | Seconds the agent has to pay. Default 300. |
+| `extra` | On Solana, the facilitator's `feePayer`. On EVM, the USDC EIP-712 `name` and `version`. |
+
+`payTo` must equal the wallet registered on your merchant account byte for byte. The facilitator answers any other address with `403 pay_to_not_merchant_wallet`. A `pp_test_` key works only on test networks. A mainnet requirement sent with a test key gets `403 test_key_chain_forbidden`.
+
+### 2. Settle
+
+The agent signs the challenge and sends back a payment payload. Match it against your stored quote and settle against your copy. Never settle against the requirement the agent sent.
+
+```typescript
+import { PincerPayError, matchOfferedRequirement } from "@pincerpay/merchant";
+
+const quote = await db.quotes.get(quoteId);
+const offered = matchOfferedRequirement([quote.requirements], paymentPayload.accepted);
+if (!offered) throw new Error("The payment does not match the quote.");
+
+try {
+  const settled = await client.settle(paymentPayload, offered);
+  if (!settled.success) {
+    // Refused on chain or by verification. settled.errorReason says why.
+  }
+} catch (err) {
+  if (err instanceof PincerPayError && err.code === "pay_to_not_merchant_wallet") {
+    // Your payTo drifted from the registered wallet.
+  }
+  throw err;
+}
+```
+
+`settle` verifies the payment before it broadcasts. `client.verify(paymentPayload, offered)` runs the same check and moves no funds. A 200 with `isValid: false` is a normal answer and does not throw.
+
+### 3. Grant exactly once
+
+Key the grant on `settled.network` plus `settled.transaction`. Refuse a second grant for the same pair. A replayed payload can settle twice.
+
+Two signals confirm a payment after the settle response.
+
+- The `payment.settled` webhook fires once per successful settle. See [Webhook Verification](#webhook-verification).
+- `client.getStatus(txHash)` reads the facilitator's transaction row.
+
+The facilitator writes that row after it answers `/v1/settle`. A 404 from `getStatus` right after a successful settle means the row is not written yet. Retry with backoff for about 30 seconds. A settle that crashed after broadcast is never recorded. A 404 therefore never proves the payment did not happen. Check the chain before you refuse a buyer.
+
+`payment.confirmed` fires only for payments under 1 USDC. The facilitator records larger payments as `confirmed` at settle time. For them `payment.settled` is the last event.
+
+### The cut
+
+`feeBps` adds PincerPay's cut on top of the listed price. The formula is `amount = ceil(base * (10000 + feeBps) / 10000)`. A nonzero cut is also written to `extra.feeBps`. The agent can then show the buyer what the cut adds. Store the builder's `amount` on the quote and never compute it yourself.
+
+```typescript
+buildPaymentRequirements({ chain: "solana-devnet", payTo, price: "20", supported, feeBps: 100 });
+// amount "20200000", extra { feePayer: "...", feeBps: 100 }
+```
+
+The middleware takes the same `feeBps` in its config. Unset means 0. At 0 every 402 stays exactly as before.
+
 ## API Reference
 
 ### `createPincerPayMiddleware(config): Hono.MiddlewareHandler`
@@ -210,22 +307,80 @@ Hono middleware that intercepts requests matching configured routes and returns 
 
 ### `PincerPayClient`
 
-Low-level client for direct facilitator API access.
+Typed client for the facilitator HTTP API. A full `PincerPayConfig` also fits the constructor.
 
 ```typescript
 import { PincerPayClient } from "@pincerpay/merchant";
 
 const client = new PincerPayClient({
   apiKey: process.env.PINCERPAY_API_KEY!,
-  merchantAddress: "YOUR_ADDRESS",
-  facilitatorUrl: "https://facilitator.pincerpay.com", // default
-  routes: {},
+  facilitatorUrl: "https://facilitator.pincerpay.com", // default; a trailing /v1 is stripped
+  timeoutMs: 60_000,                                   // default
 });
 
-const result = await client.settle(paymentPayload, paymentRequirements);
-const status = await client.getStatus(txHash);
-const supported = await client.getSupported();
+const supported: SupportedResponse = await client.getSupported();
+const check: VerifyResponse = await client.verify(paymentPayload, paymentRequirements);
+const settled: SettleResponse = await client.settle(paymentPayload, paymentRequirements);
+const status: TransactionStatus = await client.getStatus(txHash); // the hash is URL-encoded
 ```
+
+Every non-2xx response throws `PincerPayError`. A timeout throws `PincerPayError` with status 0 and code `timeout`. A network failure throws status 0 and code `network_error`.
+
+`getStatus` throws a 404 when the facilitator has no row for the hash. Right after a successful settle that means the row is not written yet. Retry with backoff for about 30 seconds. A settle that crashed after broadcast is never recorded. A 404 therefore never proves the payment did not happen.
+
+### `buildPaymentRequirements(options): PaymentRequirements`
+
+Builds one `exact` requirement for a server-side quote. See [Selling a resource that is not an HTTP route](#selling-a-resource-that-is-not-an-http-route).
+
+```typescript
+buildPaymentRequirements({
+  chain: string;                          // shorthand or CAIP-2 id, required
+  payTo: string;                          // validated for the chain
+  price: string;                          // USDC with at most 6 decimals. Pass price or amount.
+  amount: string;                         // USDC base units
+  supported?: { kinds: SupportedKind[] }; // required on Solana for feePayer
+  extra?: Record<string, unknown>;        // merged over the namespace defaults
+  maxTimeoutSeconds?: number;             // default 300
+  feeBps?: number;                        // 0 to 10000, default 0
+}): PaymentRequirements;
+```
+
+`extra` merges in this order: the namespace defaults, then yours, then the facilitator's kind extra. The last one wins. The builder throws `PincerPayError` with status 0 and one of these codes: `unknown_chain`, `invalid_pay_to`, `invalid_price`, `invalid_amount`, `invalid_fee_bps`, `invalid_max_timeout`, `missing_fee_payer`. On Solana it never falls back to `payTo` as the fee payer.
+
+### `buildPaymentRequired(options): PaymentRequired`
+
+Wraps requirements in an x402 version 2 challenge body with `resource.url`.
+
+```typescript
+buildPaymentRequired({
+  accepts: PaymentRequirements[]; // at least one
+  resource: { url: string; description?: string; mimeType?: string };
+  error?: string;
+  extensions?: Record<string, unknown>;
+}): PaymentRequired;
+```
+
+### `matchOfferedRequirement(offered, accepted): T | undefined`
+
+Returns the offered requirement that matches the agent's accepted one on scheme, network, amount, asset, and payTo. EVM addresses compare case-insensitively. Solana addresses compare exactly. Settle against the returned offer.
+
+### `PincerPayError`
+
+```typescript
+class PincerPayError extends Error {
+  status: number;      // HTTP status, or 0 with no response
+  code?: string;       // body.error, body.errorReason, or body.invalidReason
+  body: unknown;       // parsed JSON, or the raw text
+  path: string;        // for example "/v1/settle"
+  retryAfter?: number; // seconds, from a Retry-After header
+}
+```
+
+The message keeps the format `Facilitator <path> failed (<status>): <body text>`.
+
+### Types
+
+`PaymentRequirements`, `PaymentRequired`, `ResourceInfo`, `SupportedKind`, `SupportedResponse`, `VerifyResponse`, `SettleResponse`, and `Network` are structural copies of the `@x402/core` 2.6 types. `TransactionStatus` is the body of `GET /v1/status/:txHash`.
 
 ### Config
 
@@ -239,6 +394,20 @@ interface PincerPayConfig {
   facilitatorUrl?: string;          // defaults to https://facilitator.pincerpay.com
   routes: Record<string, RoutePaywallConfig>;
   syncFacilitatorOnStart?: boolean; // defer facilitator sync to first request (default: false)
+}
+
+// The middleware takes PincerPayConfig plus an optional cut.
+type PincerPayMiddlewareConfig = PincerPayConfig & {
+  feeBps?: number;                  // basis points added on top of each price (default: 0)
+};
+
+// PincerPayClient needs no routes.
+interface PincerPayClientConfig {
+  apiKey: string;
+  facilitatorUrl?: string;          // a trailing /v1 is stripped
+  timeoutMs?: number;               // default 60000
+  merchantAddress?: string;
+  merchantAddresses?: Record<string, string>;
 }
 
 interface RoutePaywallConfig {

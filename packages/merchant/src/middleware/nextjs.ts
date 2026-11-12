@@ -4,62 +4,31 @@ import type {
   PincerPayContextVariables,
 } from "@pincerpay/core";
 import {
-  resolveChain,
-  resolveMerchantAddress,
-  validateMerchantAddressForChain,
   DEFAULT_FACILITATOR_URL,
   API_KEY_HEADER,
   FACILITATOR_ROUTES,
 } from "@pincerpay/core";
 import type { Context, Next } from "hono";
+import {
+  buildRouteAcceptsUnchecked,
+  matchOfferedRequirement,
+  mergeSupportedExtra,
+  supportedExtraByNetwork,
+  validateFeeBps,
+} from "../requirements.js";
+import type { PaymentRequirements, SupportedResponse } from "../requirements.js";
 
 export type { PincerPayPaymentInfo, PincerPayContextVariables };
 
-/**
- * Convert human-readable USDC price (e.g., "0.01") to base units (e.g., "10000").
- */
-function toBaseUnits(amount: string): string {
-  const parts = amount.split(".");
-  const whole = parts[0] ?? "0";
-  const frac = (parts[1] ?? "").padEnd(6, "0").slice(0, 6);
-  const result = BigInt(whole) * BigInt(1_000_000) + BigInt(frac);
-  return result.toString();
-}
-
-type OfferedRequirement = {
-  scheme: string;
-  network: string;
-  amount: string;
-  asset: string;
-  payTo: string;
+/** Middleware config: the shared `PincerPayConfig` plus an optional cut. */
+export type PincerPayMiddlewareConfig = PincerPayConfig & {
+  /**
+   * PincerPay's cut in basis points, added on top of each route's price:
+   * `amount = ceil(base * (10000 + feeBps) / 10000)`. Unset means 0, which
+   * leaves every 402 exactly as before.
+   */
+  feeBps?: number;
 };
-
-/**
- * Return the route's offered requirement that matches the agent's accepted
- * requirement on scheme, network, amount, asset and payTo, or undefined.
- * EVM addresses compare case-insensitively; Solana addresses are case-sensitive.
- */
-function matchOfferedRequirement<T extends OfferedRequirement>(
-  offered: T[],
-  accepted: unknown,
-): T | undefined {
-  if (!accepted || typeof accepted !== "object") return undefined;
-  const a = accepted as Record<string, unknown>;
-
-  return offered.find((o) => {
-    const sameAddress = (x: string, y: unknown) =>
-      typeof y === "string" &&
-      (o.network.startsWith("eip155:") ? x.toLowerCase() === y.toLowerCase() : x === y);
-
-    return (
-      a.scheme === o.scheme &&
-      a.network === o.network &&
-      String(a.amount) === o.amount &&
-      sameAddress(o.asset, a.asset) &&
-      sameAddress(o.payTo, a.payTo)
-    );
-  });
-}
 
 /**
  * Lightweight Next.js / Hono middleware for PincerPay x402 paywalls.
@@ -89,7 +58,9 @@ function matchOfferedRequirement<T extends OfferedRequirement>(
  * export const POST = handle(app);
  * ```
  */
-export function createPincerPayMiddleware(config: PincerPayConfig) {
+export function createPincerPayMiddleware(config: PincerPayMiddlewareConfig) {
+  const feeBps = validateFeeBps(config.feeBps);
+
   // Normalize: strip trailing /v1 if present — FACILITATOR_ROUTES already include the version prefix
   const rawUrl = config.facilitatorUrl ?? DEFAULT_FACILITATOR_URL;
   const facilitatorUrl = rawUrl.replace(/\/v1\/?$/, "");
@@ -107,80 +78,22 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
   const facilitatorExtraPromise: Promise<Map<string, Record<string, unknown>>> =
     fetch(`${facilitatorUrl}${FACILITATOR_ROUTES.supported}`)
       .then((res) => res.json())
-      .then((data: { kinds: Array<{ network: string; extra?: Record<string, unknown> }> }) => {
-        const map = new Map<string, Record<string, unknown>>();
-        for (const kind of data.kinds) {
-          if (kind.extra) map.set(kind.network, kind.extra);
-        }
-        return map;
-      })
+      .then((data: Pick<SupportedResponse, "kinds">) => supportedExtraByNetwork(data))
       .catch(() => new Map<string, Record<string, unknown>>());
 
   // Pre-resolve chain configs at init time (extra fields filled lazily from facilitator)
-  type RouteAccept = {
-    scheme: string;
-    network: string;
-    amount: string;
-    asset: string;
-    payTo: string;
-    maxTimeoutSeconds: number;
-    extra: Record<string, unknown>;
-  };
-
   const resolvedRoutes = new Map<
     string,
     {
       description: string;
-      accepts: RouteAccept[];
+      accepts: PaymentRequirements[];
     }
   >();
 
-  // Default extra fields per namespace. `feePayer` defaults to the resolved
-  // Solana payTo and is overridden by the facilitator's `/supported` response
-  // once it lands.
-  function defaultExtra(namespace: string, payTo: string): Record<string, unknown> {
-    return namespace === "solana"
-      ? { feePayer: payTo }
-      : { name: "USD Coin", version: "2" };
-  }
-
   for (const [pattern, routeConfig] of Object.entries(config.routes)) {
-    const chains =
-      routeConfig.chains ??
-      (routeConfig.chain ? [routeConfig.chain] : ["solana"]);
-
-    const accepts = chains.map((chainShorthand) => {
-      const chain = resolveChain(chainShorthand);
-      if (!chain) throw new Error(`Unknown chain: ${chainShorthand}`);
-
-      const payTo = resolveMerchantAddress(config, chainShorthand);
-      if (!payTo) {
-        throw new Error(
-          `[pincerpay] Route ${JSON.stringify(pattern)} targets chain ${JSON.stringify(chainShorthand)} but no receiving wallet was found. Set merchantAddresses.${chainShorthand} or a legacy merchantAddress.`,
-        );
-      }
-
-      const formatError = validateMerchantAddressForChain(payTo, chainShorthand);
-      if (formatError) {
-        throw new Error(
-          `[pincerpay] Route ${JSON.stringify(pattern)} targets chain ${JSON.stringify(chainShorthand)}: ${formatError}`,
-        );
-      }
-
-      return {
-        scheme: "exact" as const,
-        network: chain.caip2Id,
-        amount: toBaseUnits(routeConfig.price),
-        asset: chain.usdcAddress,
-        payTo,
-        maxTimeoutSeconds: 300,
-        extra: defaultExtra(chain.namespace, payTo),
-      };
-    });
-
     resolvedRoutes.set(pattern, {
       description: routeConfig.description ?? pattern,
-      accepts,
+      accepts: buildRouteAcceptsUnchecked(pattern, routeConfig, config, feeBps),
     });
   }
 
@@ -189,10 +102,7 @@ export function createPincerPayMiddleware(config: PincerPayConfig) {
   facilitatorExtraPromise.then((extraMap) => {
     if (extraMap.size === 0) return;
     for (const route of resolvedRoutes.values()) {
-      for (const accept of route.accepts) {
-        const extra = extraMap.get(accept.network);
-        if (extra) accept.extra = { ...accept.extra, ...extra };
-      }
+      mergeSupportedExtra(route.accepts, extraMap, feeBps);
     }
     facilitatorExtraResolved = true;
   });
