@@ -523,6 +523,8 @@ List webhook delivery attempts for the authenticated merchant.
 
 Manually retry a failed or pending webhook delivery. Resets the delivery status and queues it for immediate retry. Cannot retry already-delivered webhooks.
 
+A delivery that has already used its five attempts gets exactly one more attempt.
+
 ### Response (200)
 
 ```json

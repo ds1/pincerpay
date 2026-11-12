@@ -4,6 +4,7 @@ import { webhookDeliveries } from "@pincerpay/db";
 import { eq, and, count, desc } from "drizzle-orm";
 import type { AppEnv } from "../env.js";
 import { webhookFilterSchema } from "./schemas.js";
+import { RETRY_QUEUE_STATUS } from "../webhooks/dispatcher.js";
 
 export function createWebhookRoutes(db: Database) {
   const app = new Hono<AppEnv>();
@@ -66,11 +67,11 @@ export function createWebhookRoutes(db: Database) {
       return c.json({ error: "Webhook already delivered successfully" }, 409);
     }
 
-    // Reset for retry: set status back to pending, reset next retry time
+    // Re-queue on the status the retry worker polls, due now
     await db
       .update(webhookDeliveries)
       .set({
-        status: "pending",
+        status: RETRY_QUEUE_STATUS,
         nextRetryAt: new Date(),
         lastError: null,
       })
