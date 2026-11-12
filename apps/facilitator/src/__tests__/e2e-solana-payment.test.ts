@@ -30,6 +30,7 @@ import {
   webhookDeliveries,
 } from "@pincerpay/db";
 import type { WebhookPayload } from "../webhooks/dispatcher.js";
+import { setWebhookAllowPrivate } from "../webhooks/deliver.js";
 
 // ─── Test Constants ───
 
@@ -426,6 +427,9 @@ describe("E2E Solana payment flow", () => {
   let webhookPromise: Promise<WebhookPayload>;
 
   beforeAll(async () => {
+    // The webhook receiver is a local http server, as in local development.
+    setWebhookAllowPrivate(true);
+
     // 1. Generate Ed25519 keypairs for facilitator, agent, and merchant
     const facilitatorKeypair = await generateSolanaKeypair();
     const agentKeypair = await generateSolanaKeypair();

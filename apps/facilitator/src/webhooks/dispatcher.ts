@@ -4,6 +4,7 @@ import type { Database, Environment } from "@pincerpay/db";
 import { webhookDeliveries, merchants } from "@pincerpay/db";
 import type { Logger } from "../middleware/logging.js";
 import type { WorkerStatus } from "../workers/confirmation.js";
+import { postWebhook, WebhookDeliveryError } from "./deliver.js";
 
 /** Retry delays in ms: 1s, 5s, 30s, 2min, 10min */
 const RETRY_DELAYS = [1_000, 5_000, 30_000, 120_000, 600_000];
@@ -99,31 +100,22 @@ async function attemptDelivery(
   webhookSecret?: string,
 ): Promise<void> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
-
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (webhookSecret) {
       const { header } = computeSignatureHeader(webhookSecret, payload);
       headers["X-PincerPay-Signature"] = header;
     }
 
-    const response = await globalThis.fetch(url, {
-      method: "POST",
-      headers,
-      body: payload,
-      signal: controller.signal,
-    });
+    // SSRF-safe: refuses non-public destinations and never follows redirects.
+    const status = await postWebhook(url, payload, headers, 10_000);
 
-    clearTimeout(timeout);
-
-    if (response.ok) {
+    if (status >= 200 && status < 300) {
       // Success
       await db
         .update(webhookDeliveries)
         .set({
           status: "delivered",
-          statusCode: response.status,
+          statusCode: status,
           attempts: attempt + 1,
           deliveredAt: new Date(),
           nextRetryAt: null,
@@ -132,13 +124,20 @@ async function attemptDelivery(
 
       logger.info({ msg: "webhook_delivered", deliveryId, url, attempt: attempt + 1 });
     } else {
-      // HTTP error — schedule retry
-      await scheduleRetryOrFail(db, deliveryId, attempt, response.status, `HTTP ${response.status}`, logger);
+      // HTTP error (including redirects, which are not followed) — schedule retry
+      await scheduleRetryOrFail(db, deliveryId, attempt, status, `HTTP ${status}`, logger);
     }
   } catch (err) {
-    // Network error — schedule retry
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    await scheduleRetryOrFail(db, deliveryId, attempt, null, errorMsg, logger);
+    // lastError is shown to the merchant: store only a generic reason, log the detail.
+    const reason = err instanceof WebhookDeliveryError ? err.publicReason : "connection_failed";
+    logger.warn({
+      msg: "webhook_attempt_error",
+      deliveryId,
+      reason,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    // A blocked destination will not unblock on retry: fail it now.
+    await scheduleRetryOrFail(db, deliveryId, attempt, null, reason, logger, reason === "blocked_destination");
   }
 }
 
@@ -149,10 +148,11 @@ async function scheduleRetryOrFail(
   statusCode: number | null,
   error: string,
   logger: Logger,
+  permanent = false,
 ): Promise<void> {
   const nextAttempt = attempt + 1;
 
-  if (nextAttempt >= MAX_ATTEMPTS) {
+  if (permanent || nextAttempt >= MAX_ATTEMPTS) {
     // Max retries exhausted — mark as failed (dead letter)
     await db
       .update(webhookDeliveries)

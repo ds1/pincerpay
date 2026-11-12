@@ -44,6 +44,12 @@ const envSchema = z.object({
   RATE_LIMIT_PER_MINUTE: z.coerce.number().default(120),
 
   /**
+   * Allow http and private/internal webhook destinations (e.g. a localhost
+   * receiver). Local development only; refused when NODE_ENV=production.
+   */
+  WEBHOOK_ALLOW_PRIVATE_URLS: envBoolean.default("false"),
+
+  /**
    * Caps on fees the facilitator pays for agent-built Solana transactions.
    * The stock x402 client uses 20,000 CU at 1 microlamport/CU and 2 signers.
    */
